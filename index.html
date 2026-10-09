@@ -1,0 +1,1354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>99MS</title>
+<meta name="apple-mobile-web-app-title" content="99MS">
+<meta name="application-name" content="99MS">
+<meta name="theme-color" content="#1f2124">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=IBM+Plex+Sans:wght@400;500&display=swap">
+</head>
+<body>
+<style>
+  /* Layout: one centered readout on an empty field; controls appear only when asked for. */
+  :root {
+    --bg: #1f2124;          /* dark grey, faint cool bias */
+    --fg: #f4f5f6;          /* clock white */
+    --dim: #8a8f96;         /* labels */
+    --faint: #3a3d42;       /* hairlines, inactive */
+    --panel: #26292d;
+    --font-clock: "Share Tech Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-ui); font-size: 14px;
+    margin: 0; padding-inline: 16px; overflow: hidden;
+    -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  main {
+    height: 100%; display: grid; place-items: center; text-align: center;
+  }
+  .readout { display: grid; gap: 1.4rem; justify-items: center; width: 100%; cursor: pointer; }
+  .mode {
+    font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim);
+    background: none; border: 0; padding: 0.4rem 0.6rem; font-family: inherit; cursor: pointer;
+  }
+  .clock {
+    font-family: var(--font-clock); font-variant-numeric: tabular-nums;
+    font-size: var(--clock-size, 12vw); line-height: 1; letter-spacing: 0.02em;
+    white-space: nowrap; color: var(--fg);
+    text-shadow: 0 0 0.35em rgba(244,245,246,0.08);
+  }
+  .clock .cur { font-size: 0.32em; color: var(--dim); margin-right: 0.35em; vertical-align: 0.9em; letter-spacing: 0.08em; }
+  .clock .frac { color: var(--dim); }
+  .rate { font-family: var(--font-clock); font-size: 0.85rem; color: var(--dim); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+
+  .chrome {
+    position: fixed; inset-inline: 0; bottom: 0;
+    padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+    transition: opacity 0.6s ease;
+  }
+  body.idle .chrome { opacity: 0; pointer-events: none; }
+  body.idle { cursor: none; }
+  .icon-btn {
+    background: none; border: 1px solid var(--faint); color: var(--dim);
+    font: 500 0.72rem/1 var(--font-ui); letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.75rem 1rem; border-radius: 999px; cursor: pointer;
+  }
+  .icon-btn:hover, .icon-btn:focus-visible { color: var(--fg); border-color: var(--dim); outline: none; }
+
+  /* Setup sheet */
+  /* Every sheet scrolls when it is taller than the screen; auto margins keep short ones centred. */
+  .sheet {
+    position: fixed; inset: 0; background: var(--bg); z-index: 2;
+    display: grid; grid-template-rows: 1fr; justify-items: center; align-items: start;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+  .sheet > * { margin-block: auto; }
+  form { width: min(100%, 22rem); display: grid; gap: 1.6rem; }
+  .field { display: grid; gap: 0.55rem; }
+  .field > span { font-size: 0.7rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); text-align: left; }
+  input[type="text"] {
+    width: 100%; box-sizing: border-box; background: transparent; color: var(--fg);
+    border: 0; border-bottom: 1px solid var(--faint); border-radius: 0;
+    font: 2.4rem/1.2 var(--font-clock); padding: 0.2rem 0 0.4rem; letter-spacing: 0.02em;
+    user-select: text;
+  }
+  input[type="text"]:focus { outline: none; border-bottom-color: var(--fg); }
+  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--faint); border-radius: 999px; padding: 3px; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label {
+    text-align: center; padding: 0.6rem 0; border-radius: 999px; cursor: pointer;
+    font-size: 0.78rem; letter-spacing: 0.14em; color: var(--dim);
+  }
+  .seg input:checked + label { background: var(--fg); color: var(--bg); }
+  .seg input:focus-visible + label { outline: 1px solid var(--fg); outline-offset: 2px; }
+  .go {
+    background: var(--fg); color: var(--bg); border: 0; border-radius: 999px;
+    font: 500 0.78rem/1 var(--font-ui); letter-spacing: 0.24em; text-transform: uppercase;
+    padding: 1.05rem; cursor: pointer;
+  }
+  .go:focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+  .hint { font-size: 0.75rem; color: var(--dim); line-height: 1.55; text-align: left; margin: 0; }
+  .err.info { color: var(--dim); }
+  .err { color: #e8a3a3; font-size: 0.75rem; margin: 0; text-align: left; min-height: 1em; }
+
+  /* Desktop only: corner toggle and a phone-sized frame of the app */
+  .view-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 7; width: 40px; height: 40px; border-radius: 999px;
+    display: grid; place-items: center; background: none; border: 1px solid var(--faint); color: var(--dim); cursor: pointer;
+    transition: opacity 0.6s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .view-toggle:hover, .view-toggle:focus-visible { color: var(--fg); border-color: var(--dim); outline: none; }
+  .view-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+  body.idle .view-toggle { opacity: 0; }
+  body.phone-host main, body.phone-host .chrome { display: none; }
+  body.phone-host { cursor: default !important; }
+  .phone-stage { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box; }
+  .phone-stage iframe {
+    width: 390px; height: min(844px, calc(100vh - 48px)); max-width: 100%; border: 0; display: block;
+    border-radius: 36px; background: var(--bg); box-shadow: 0 0 0 10px #15171a, 0 0 0 11px var(--faint), 0 30px 80px rgba(0, 0, 0, 0.45);
+  }
+  .otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
+  .otp input {
+    width: 100%; min-width: 0; box-sizing: border-box; aspect-ratio: 3 / 4; max-width: 100%;
+    background: var(--panel); color: var(--fg); border: 1px solid var(--faint); border-radius: 10px;
+    font: 1.8rem/1 var(--font-clock); text-align: center; padding: 0; caret-color: var(--fg); user-select: text;
+    transition: border-color 0.15s ease;
+  }
+  .otp input:focus { outline: none; border-color: var(--fg); }
+  .otp input.filled { border-color: var(--dim); }
+  .otp.bad input { border-color: #e8a3a3; animation: shake 0.35s ease; }
+  @keyframes shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+  .done { position: fixed; inset: 0; z-index: 6; background: var(--bg); display: grid; place-content: center; justify-items: center; gap: 0.9rem; text-align: center; padding: 16px; }
+  .done svg { width: 96px; height: 96px; }
+  .done .ring, .done .tick { fill: none; stroke: var(--fg); stroke-linecap: round; stroke-linejoin: round; }
+  .done .ring { transform: rotate(-90deg); transform-origin: 48px 48px; stroke-width: 2; stroke-dasharray: 277; stroke-dashoffset: 277; animation: draw 0.6s ease-out forwards; }
+  .done .tick { stroke-width: 4; stroke-dasharray: 60; stroke-dashoffset: 60; animation: draw 0.35s 0.5s ease-out forwards; }
+  .done p { margin: 0; font: 1.2rem/1 var(--font-clock); letter-spacing: 0.24em; text-transform: uppercase; opacity: 0; animation: rise 0.4s 0.75s ease-out forwards; }
+  .done span { font-size: 0.8rem; color: var(--dim); opacity: 0; animation: rise 0.4s 0.9s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .done .ring, .done .tick { animation: none; stroke-dashoffset: 0; }
+    .done p, .done span { animation: none; opacity: 1; }
+    .otp.bad input { animation: none; }
+  }
+  .acct-line { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: 0.75rem; color: var(--dim); }
+  .acct-line span { min-width: 0; overflow-wrap: anywhere; }
+  input[type="email"], input[type="password"] {
+    width: 100%; box-sizing: border-box; background: transparent; color: var(--fg);
+    border: 0; border-bottom: 1px solid var(--faint); border-radius: 0;
+    font: 1.2rem/1.3 var(--font-ui); padding: 0.3rem 0 0.5rem; user-select: text;
+  }
+  input[type="email"]:focus, input[type="password"]:focus { outline: none; border-bottom-color: var(--fg); }
+  .brand { font: 1.1rem/1 var(--font-clock); letter-spacing: 0.3em; color: var(--fg); text-align: left; }
+  .shift-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .time-wrap { display: grid; gap: 0.55rem; min-width: 0; }
+  .time-wrap > span { font-size: 0.7rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); text-align: left; display: flex; justify-content: space-between; align-items: baseline; }
+  input[type="time"] {
+    width: 100%; box-sizing: border-box; min-width: 0; background: transparent; color: var(--fg);
+    border: 0; border-bottom: 1px solid var(--faint); border-radius: 0;
+    font: 1.6rem/1.2 var(--font-clock); padding: 0.2rem 0 0.4rem; -webkit-appearance: none; appearance: none;
+    user-select: text;
+  }
+  input[type="time"]:focus { outline: none; border-bottom-color: var(--fg); }
+  input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+  .link {
+    background: none; border: 0; padding: 0; color: var(--dim); cursor: pointer;
+    font: 400 0.7rem/1 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 3px;
+  }
+  .link:hover, .link:focus-visible { color: var(--fg); outline: none; }
+  .progress { width: min(22rem, 70vw); height: 1px; background: var(--faint); position: relative; }
+  .progress i { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--fg); }
+  .times { font-family: var(--font-clock); font-size: 0.75rem; color: var(--dim); letter-spacing: 0.08em; display: grid; grid-template-columns: 1fr auto 1fr; width: min(22rem, 70vw); }
+  .times span:first-child { text-align: left; }
+  .times span:last-child { text-align: right; }
+
+
+  /* Save shift + stats */
+  .sheet.scroll > * { margin-block: 0 auto; }
+  .page { width: min(100%, 32rem); display: grid; gap: 2.4rem; text-align: left; user-select: text; }
+  .page-head { display: flex; justify-content: space-between; align-items: center; }
+  .page-head h2, .sec-title { margin: 0; font: 500 0.72rem/1 var(--font-ui); letter-spacing: 0.28em; text-transform: uppercase; color: var(--dim); }
+  .sec { display: grid; gap: 1rem; }
+  .big { font-family: var(--font-clock); font-size: clamp(2.6rem, 12vw, 4rem); line-height: 1; font-variant-numeric: tabular-nums; }
+  .big small { font-size: 0.32em; color: var(--dim); margin-right: 0.4em; vertical-align: 0.9em; letter-spacing: 0.08em; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem 1rem; }
+  .stat { display: grid; gap: 0.35rem; min-width: 0; }
+  .stat span { font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  .stat b { font: 400 1.35rem/1.15 var(--font-clock); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .stat em { font-style: normal; font-size: 0.72rem; color: var(--dim); }
+  .inline { display: flex; gap: 0.6rem; align-items: end; }
+  .inline input[type="text"] { font-size: 1.4rem; flex: 1; min-width: 0; }
+  .ghost {
+    background: none; border: 1px solid var(--faint); color: var(--fg); border-radius: 999px;
+    font: 500 0.7rem/1 var(--font-ui); letter-spacing: 0.18em; text-transform: uppercase; padding: 0.8rem 1rem; cursor: pointer; white-space: nowrap;
+  }
+  .ghost:hover, .ghost:focus-visible { border-color: var(--dim); outline: none; }
+  .ghost.danger { color: #e8a3a3; border-color: #5a3a3a; }
+  .row-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+  .chart { display: grid; gap: 0.6rem; }
+  .chart-cap { font-family: var(--font-clock); font-size: 0.85rem; color: var(--fg); min-height: 1.2em; font-variant-numeric: tabular-nums; }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart rect.hit { fill: transparent; cursor: pointer; }
+  .chart .b { fill: var(--dim); }
+  .chart .b.on { fill: var(--fg); }
+  .chart text { fill: var(--dim); font: 10px var(--font-clock); }
+  .chart line { stroke: var(--faint); stroke-width: 1; }
+  .hist { display: grid; }
+  .hist-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.2rem 1rem; align-items: center; padding: 0.9rem 0; border-top: 1px solid var(--faint); }
+  .hist-row .d { font-size: 0.85rem; }
+  .hist-row .t { grid-column: 1; font: 0.75rem var(--font-clock); color: var(--dim); }
+  .hist-row .a { grid-row: 1 / span 2; grid-column: 2; font: 1rem var(--font-clock); text-align: right; font-variant-numeric: tabular-nums; }
+  .hist-row .a i { display: block; font: normal 0.65rem var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+  .hist-row .x { grid-row: 1 / span 2; grid-column: 3; background: none; border: 0; color: var(--dim); font: 0.7rem var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; padding: 0.5rem 0; min-width: 3.6rem; text-align: right; }
+  .hist-row .x.arm { color: #e8a3a3; }
+  .empty { color: var(--dim); font-size: 0.85rem; line-height: 1.6; margin: 0; }
+  .note { color: var(--dim); font-size: 0.72rem; line-height: 1.55; margin: 0; }
+  .check { display: flex; gap: 0.8rem; align-items: center; cursor: pointer; font-size: 0.85rem; }
+  .check input { width: 1.2rem; height: 1.2rem; accent-color: var(--fg); margin: 0; }
+  .summary { font-family: var(--font-clock); font-size: 1rem; color: var(--fg); line-height: 1.5; }
+  .summary span { color: var(--dim); font-size: 0.8rem; display: block; }
+  input[type="date"], input[type="number"] {
+    width: 100%; box-sizing: border-box; min-width: 0; background: transparent; color: var(--fg);
+    border: 0; border-bottom: 1px solid var(--faint); border-radius: 0;
+    font: 1.6rem/1.2 var(--font-clock); padding: 0.2rem 0 0.4rem; -webkit-appearance: none; appearance: none; user-select: text;
+  }
+  input[type="date"]:focus, input[type="number"]:focus { outline: none; border-bottom-color: var(--fg); }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+  .btns { display: grid; grid-template-columns: 1fr 2fr; gap: 0.6rem; }
+  .icon-btn:disabled { opacity: 0.45; cursor: default; }
+  .icon-btn.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .icon-btn.arm { color: #e8a3a3; border-color: #5a3a3a; }
+  .live-tag { color: var(--fg) !important; }
+  .toast { position: fixed; left: 50%; top: calc(20px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.6rem 1rem; border-radius: 999px; font-size: 0.78rem; letter-spacing: 0.06em; z-index: 5; }
+  @media (prefers-reduced-motion: reduce) { .chrome { transition: none; } }
+</style>
+
+<button class="view-toggle" id="view-toggle" type="button" hidden aria-label="Switch to phone view" title="Phone view">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2.2"></rect><path d="M11 18.5h2"></path></svg>
+</button>
+<div class="phone-stage" id="phone-stage" hidden></div>
+
+<main>
+  <div class="readout" id="readout" title="Tap to switch view">
+    <button class="mode" id="mode" type="button">Earned today</button>
+    <div class="clock" id="clock" aria-live="off"><span class="cur" id="cur">DKK</span><span id="int">0</span><span class="frac" id="frac">.0000</span></div>
+    <div class="rate" id="rate">—</div>
+    <div class="progress" id="progress" hidden><i id="bar"></i></div>
+    <div class="times" id="times" hidden><span id="t-start"></span><span id="t-break"></span><span id="t-end"></span></div>
+  </div>
+</main>
+
+<div class="chrome" id="chrome">
+  <button class="icon-btn" id="break-btn" type="button" hidden>Break now</button>
+  <button class="icon-btn" id="save-shift" type="button" hidden>Save shift</button>
+  <button class="icon-btn" id="open-stats" type="button">Stats</button>
+  <button class="icon-btn" id="edit" type="button">Settings</button>
+  <button class="icon-btn" id="fs" type="button">Fullscreen</button>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <form id="form" novalidate>
+    <div class="brand">99MS</div>
+    <label class="field" for="amount">
+      <span>Your salary</span>
+      <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="600 000" value="600000">
+    </label>
+    <div class="field">
+      <span>Per</span>
+      <div class="seg" role="radiogroup" aria-label="Salary period">
+        <input type="radio" name="period" id="p-year" value="year" checked><label for="p-year">YEAR</label>
+        <input type="radio" name="period" id="p-month" value="month"><label for="p-month">MONTH</label>
+        <input type="radio" name="period" id="p-hour" value="hour"><label for="p-hour">HOUR</label>
+      </div>
+    </div>
+    <div class="field">
+      <span>Currency</span>
+      <div class="seg" role="radiogroup" aria-label="Currency">
+        <input type="radio" name="currency" id="c-dkk" value="DKK" checked><label for="c-dkk">DKK</label>
+        <input type="radio" name="currency" id="c-eur" value="EUR"><label for="c-eur">EUR</label>
+        <input type="radio" name="currency" id="c-usd" value="USD"><label for="c-usd">USD</label>
+      </div>
+    </div>
+    <div class="shift-row">
+      <label class="time-wrap" for="shift-start">
+        <span>Shift start <button class="link" type="button" id="now">Now</button></span>
+        <input type="time" id="shift-start">
+      </label>
+      <label class="time-wrap" for="shift-end">
+        <span>Ends <button class="link" type="button" id="clear-end">Clear</button></span>
+        <input type="time" id="shift-end">
+      </label>
+    </div>
+    <label class="time-wrap" for="break-at">
+      <span>Break starts <button class="link" type="button" id="auto-break">Auto</button></span>
+      <input type="time" id="break-at">
+    </label>
+    <p class="hint">With a shift set, the clock counts your pay for working hours only (a 37-hour week). The end time is optional. Shifts over 4.5 hours include an unpaid 30-minute break, and the clock pauses during it. Leave the break time empty and it is placed for you: mid-shift, and never later than 4 hours in. Leave the shift start empty to count around the clock instead.</p>
+    <p class="err" id="err"></p>
+    <button class="go" type="submit">Start</button>
+    <div class="acct-line" id="acct-line" hidden>
+      <span id="acct-status">Not logged in</span>
+      <button class="link" type="button" id="acct-open">Log in</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet scroll" id="save-sheet" hidden>
+  <form class="page" id="save-form" novalidate>
+    <div class="page-head"><h2>Save shift</h2></div>
+    <p class="note" id="log-live-note" hidden>This shift is still going. Its pay goes into savings live, every millisecond, until the shift ends. Tap End shift on the clock when you clock out.</p>
+    <div class="sec" id="log-fields">
+    <label class="field" for="log-date"><span>Date</span><input type="date" id="log-date"></label>
+    <div class="shift-row">
+      <label class="time-wrap" for="log-start"><span>Started</span><input type="time" id="log-start"></label>
+      <label class="time-wrap" for="log-end"><span>Ended</span><input type="time" id="log-end"></label>
+    </div>
+    <label class="time-wrap" for="log-break"><span>Unpaid break, minutes</span><input type="number" id="log-break" inputmode="numeric" min="0" step="5"></label>
+    </div>
+    <div class="summary" id="log-summary">—</div>
+    <label class="check" for="log-savings"><input type="checkbox" id="log-savings" checked> Add this money to savings</label>
+    <p class="err" id="log-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="log-cancel">Cancel</button>
+      <button class="go" type="submit">Save shift</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet scroll" id="stats-sheet" hidden>
+  <div class="page">
+    <div class="page-head"><h2>Stats</h2><button class="ghost" type="button" id="stats-close">Close</button></div>
+
+    <section class="sec" aria-labelledby="sv-title">
+      <h3 class="sec-title" id="sv-title">Savings account</h3>
+      <div class="big" id="sv-balance"><small>DKK</small>0.00</div>
+      <form class="inline" id="sv-form" novalidate>
+        <label class="field" for="sv-amount" style="flex:1;min-width:0"><span>Amount</span><input type="text" id="sv-amount" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <button class="ghost" type="submit" data-dir="-1">Withdraw</button>
+        <button class="ghost" type="submit" data-dir="1">Deposit</button>
+      </form>
+      <p class="err" id="sv-err"></p>
+    </section>
+
+    <section class="sec" aria-labelledby="st-title">
+      <h3 class="sec-title" id="st-title">Earnings</h3>
+      <div class="grid2" id="st-grid"></div>
+    </section>
+
+    <section class="sec chart" aria-labelledby="ch-title">
+      <h3 class="sec-title" id="ch-title">Last 8 weeks</h3>
+      <div class="chart-cap" id="ch-cap"></div>
+      <svg id="ch" viewBox="0 0 320 120" role="img" aria-label="Earnings per week, last 8 weeks"></svg>
+    </section>
+
+    <section class="sec" aria-labelledby="hi-title">
+      <h3 class="sec-title" id="hi-title">Shifts</h3>
+      <div class="hist" id="hist"></div>
+    </section>
+
+    <section class="sec" aria-labelledby="bk-title">
+      <h3 class="sec-title" id="bk-title">Backup</h3>
+      <p class="note">Your shifts and savings are stored in this browser only. Export a backup now and then, and import it on a new phone or after clearing your browser.</p>
+      <div class="row-actions">
+        <button class="ghost" type="button" id="bk-export">Export backup</button>
+        <button class="ghost" type="button" id="bk-import">Import backup</button>
+        <input type="file" id="bk-file" accept="application/json,.json" hidden>
+      </div>
+      <p class="err" id="bk-err"></p>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="acct-sheet" hidden>
+  <form class="page" id="acct-form" novalidate style="width:min(100%,22rem)">
+    <div class="brand">99MS</div>
+    <p class="note">Log in to keep your shifts, savings and settings synced on every device.</p>
+    <div class="seg" role="radiogroup" aria-label="How to log in">
+      <input type="radio" name="acct-mode" id="am-code" value="code" checked><label for="am-code">EMAIL ONLY</label>
+      <input type="radio" name="acct-mode" id="am-pass" value="pass"><label for="am-pass">PASSWORD</label>
+    </div>
+    <label class="field" for="acct-email"><span>Email</span><input type="email" id="acct-email" autocomplete="username" inputmode="email" placeholder="you@example.com"></label>
+    <div class="sec" id="code-fields">
+      <p class="note" id="code-note">No password needed. We email you a login code, and your account is created the first time.</p>
+      <div class="field" id="code-wrap" hidden>
+        <span id="code-label">Code from the email</span>
+        <div class="otp" id="otp" role="group" aria-labelledby="code-label">
+          <input type="text" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+          <input type="text" inputmode="numeric" autocomplete="off" aria-label="Digit 2">
+          <input type="text" inputmode="numeric" autocomplete="off" aria-label="Digit 3">
+          <input type="text" inputmode="numeric" autocomplete="off" aria-label="Digit 4">
+          <input type="text" inputmode="numeric" autocomplete="off" aria-label="Digit 5">
+          <input type="text" inputmode="numeric" autocomplete="off" aria-label="Digit 6">
+        </div>
+      </div>
+      <button class="go" type="submit" data-act="send" id="send-btn">Email me a code</button>
+      <button class="go" type="submit" data-act="verify" id="verify-btn" hidden>Log in</button>
+      <button class="link" type="submit" data-act="send" id="resend-btn" hidden style="justify-self:start">Send a new code</button>
+    </div>
+    <div class="sec" id="pass-fields" hidden>
+      <label class="field" for="acct-pass"><span>Password</span><input type="password" id="acct-pass" autocomplete="current-password" placeholder="At least 6 characters"></label>
+      <button class="go" type="submit" data-act="login">Log in</button>
+      <button class="ghost" type="submit" data-act="signup">Create account</button>
+    </div>
+    <p class="err" id="acct-err"></p>
+    <button class="ghost" type="button" id="acct-cancel">Cancel</button>
+  </form>
+</div>
+
+<div class="done" id="done" hidden role="status" aria-live="polite">
+  <svg viewBox="0 0 96 96" aria-hidden="true"><circle class="ring" cx="48" cy="48" r="44"></circle><path class="tick" d="M28 49 L42 63 L69 34"></path></svg>
+  <p>Logged in</p>
+  <span>Your data now syncs across devices</span>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  // Phone view on desktop: the page shows the app in a phone-sized frame instead of running it full width.
+  const framed = window.self !== window.top;
+  const desktop = matchMedia("(hover: hover) and (pointer: fine)").matches && Math.min(screen.width, window.innerWidth) >= 820;
+  const PV_KEY = "99ms-phone-view";
+  const pvGet = () => { try { return localStorage.getItem(PV_KEY) === "1"; } catch { return false; } };
+  const pvSet = (on) => { try { on ? localStorage.setItem(PV_KEY, "1") : localStorage.removeItem(PV_KEY); } catch {} };
+  const toggle = document.getElementById("view-toggle");
+  if (desktop && !framed) {
+    toggle.hidden = false;
+    toggle.addEventListener("click", () => { pvSet(!pvGet()); location.reload(); });
+    if (pvGet()) {
+      document.body.classList.add("phone-host");
+      toggle.setAttribute("aria-label", "Switch to desktop view"); toggle.title = "Desktop view";
+      toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="1.6"></rect><path d="M9 20h6M12 16.5V20"></path></svg>';
+      const stage = document.getElementById("phone-stage");
+      const f = document.createElement("iframe");
+      f.src = location.pathname + "?frame=1";
+      f.title = "99MS phone view";
+      f.allow = "fullscreen; screen-wake-lock";
+      stage.appendChild(f); stage.hidden = false;
+      return; // the framed copy runs the app
+    }
+  }
+  const DAY = 86400000;
+  const MS_YEAR = 365.2425 * DAY;
+  const WORK_HOURS_YEAR = 37 * 52.1775;
+  const HOUR = 3600000;
+  const BREAK_AFTER = 4.5 * HOUR;   // shifts longer than this get a break
+  const BREAK_LEN = 30 * 60000;     // unpaid
+  const ALL_MODES = [
+    { key: "shift",   label: "Earned this shift" },
+    { key: "today",   label: "Earned today" },
+    { key: "session", label: "Since you sat down" },
+    { key: "year",    label: "Earned this year" },
+  ];
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    int: $("int"), frac: $("frac"), cur: $("cur"), rate: $("rate"), mode: $("mode"), clock: $("clock"),
+    sheet: $("sheet"), amount: $("amount"), err: $("err"), start: $("shift-start"), end: $("shift-end"),
+    progress: $("progress"), bar: $("bar"), times: $("times"), tStart: $("t-start"), tEnd: $("t-end"),
+    tBreak: $("t-break"), breakAt: $("break-at"),
+  };
+
+  let sb = null, user = null, syncT = null, syncing = false, lastSynced = 0, syncErr = ""; // account sync state
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem("salary-clock") || "null"); } catch { return null; } },
+    set(v, fromSync) {
+      if (!fromSync) v.updatedAt = Date.now();
+      try { localStorage.setItem("salary-clock", JSON.stringify(v)); } catch {}
+      if (!fromSync && typeof scheduleSync === "function") scheduleSync();
+    },
+  };
+
+  const saved = store.get();
+  let cfg = Object.assign({ amount: 600000, period: "year", currency: "DKK", mode: "today", shiftStart: "", shiftEnd: "", breakAt: "" }, saved && saved.amount > 0 ? saved : {});
+  if (typeof cfg.mode === "number") cfg.mode = "today";
+
+  const sessionStart = performance.now();
+  const sessionWall = Date.now();
+  const grouping = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+  const fmt2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const modes = () => ALL_MODES.filter((m) => m.key !== "shift" || cfg.shiftStart);
+  const currentMode = () => modes().find((m) => m.key === cfg.mode) || modes()[0];
+
+  function annual(c) {
+    if (c.period === "month") return c.amount * 12;
+    if (c.period === "hour") return c.amount * WORK_HOURS_YEAR;
+    return c.amount;
+  }
+  // Pay spread over every millisecond of the year, or only over working hours.
+  const clockPerMs = () => annual(cfg) / MS_YEAR;
+  const workPerMs = () => annual(cfg) / (WORK_HOURS_YEAR * 3600000);
+
+  function atTime(base, hhmm) {
+    const [h, m] = hhmm.split(":").map(Number);
+    return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m).getTime();
+  }
+
+  // Resolve the shift that is running now, the one about to start, or the one just finished.
+  function shiftWindow(now, c = cfg) {
+    const d = new Date(now);
+    let start = atTime(d, c.shiftStart);
+    let end = c.shiftEnd ? atTime(d, c.shiftEnd) : null;
+    const overnight = end !== null && end <= start;
+    if (overnight) end += DAY;
+    if (start > now) {
+      if (end === null) start -= DAY;                                   // open shift that began last night
+      else if (overnight && now < end - DAY) { start -= DAY; end -= DAY; } // overnight shift still running
+    }
+    return { start, end, brk: breakStart(start, end, c) };
+  }
+
+  // Start of the unpaid break, or null when the shift is 4.5 hours or shorter.
+  function breakStart(start, end, c = cfg) {
+    if (end !== null && end - start <= BREAK_AFTER) return null;
+    if (c.breakAt) {
+      let b = atTime(new Date(start), c.breakAt);
+      if (b < start) b += DAY;
+      return b;
+    }
+    return start + (end === null ? 4 * HOUR : Math.min(4 * HOUR, (end - start) / 2 - BREAK_LEN / 2));
+  }
+
+  // Manual breaks ("Break now") for the shift that started at `start`.
+  const breaksFor = (start) => (cfg.breaks && cfg.breaks.key === start ? cfg.breaks.list : []);
+  const overlap = (a, b, c, d) => Math.max(0, Math.min(b, d) - Math.max(a, c));
+
+  // Unpaid time between the shift start and t. Breaks you take count as they happen; on shifts
+  // over 4.5 hours the scheduled break tops that up to the 30-minute minimum.
+  function unpaidMs(start, t, sched, list) {
+    const manual = list.reduce((a, b) => a + overlap(start, t, b.s, b.e == null ? t : b.e), 0);
+    const auto = sched === null ? 0 : overlap(start, t, sched, sched + BREAK_LEN);
+    return Math.max(manual, auto);
+  }
+  const paidMs = (start, t, sched, list) => Math.max(0, t - start) - unpaidMs(start, t, sched, list);
+
+  let lastLen = -1;
+  function apply() {
+    const mode = currentMode();
+    cfg.mode = mode.key;
+    el.cur.textContent = cfg.currency;
+    const perSec = (mode.key === "shift" ? workPerMs() : clockPerMs()) * 1000;
+    el.rate.textContent = `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour`;
+    const shift = mode.key === "shift";
+    el.times.hidden = !shift;
+    el.progress.hidden = !(shift && cfg.shiftEnd);
+    el.tStart.textContent = cfg.shiftStart;
+    el.tEnd.textContent = cfg.shiftEnd || "open";
+    el.tBreak.textContent = "";
+    lastLen = -1;
+  }
+
+  function startOf(key) {
+    const d = new Date();
+    if (key === "today") return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    if (key === "year") return new Date(d.getFullYear(), 0, 1).getTime();
+    return sessionWall;
+  }
+
+  function fit(len) {
+    // Monospace glyphs are ~0.55em wide; leave room for the currency tag.
+    const w = window.innerWidth - 32, h = window.innerHeight;
+    const size = Math.min(w / ((len + 1.6) * 0.56), h * 0.24, 220);
+    el.clock.style.setProperty("--clock-size", size + "px");
+  }
+
+  function hm(ms) {
+    const m = Math.ceil(ms / 60000);
+    return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+  }
+
+  let label = "";
+  function setLabel(t) { if (t !== label) { label = t; el.mode.textContent = t; } }
+
+  function frame() {
+    const mode = currentMode();
+    const now = Date.now();
+    let v;
+    if (mode.key === "shift") {
+      const { start, end, brk } = shiftWindow(now);
+      const stop = end === null ? now : Math.min(now, end);
+      const list = breaksFor(start);
+      const open = list.find((b) => b.e == null);
+      const done = log.shifts.find((x) => x.start === start && !x.live);
+      v = done ? done.amount : paidMs(start, stop, brk, list) * workPerMs();
+      // Paused on the scheduled break only while it is still topping up to 30 minutes.
+      const inSched = brk !== null && now >= brk && now < brk + BREAK_LEN && unpaidMs(start, now, brk, list) > unpaidMs(start, now, null, list);
+      const bText = brk === null ? "" : "break " + new Date(brk).toTimeString().slice(0, 5);
+      if (el.tBreak.textContent !== bText) el.tBreak.textContent = bText;
+      if (now < start) setLabel(`Shift starts in ${hm(start - now)}`);
+      else if (done) setLabel("Shift complete · saved");
+      else if (end !== null && now >= end) setLabel("Shift complete");
+      else if (open) setLabel(`On break · ${hm(Math.max(60000, now - open.s))}`);
+      else if (inSched) setLabel(`On break · ${hm(brk + BREAK_LEN - now)} left`);
+      else {
+        const liveHere = log.shifts.find((x) => x.start === start && x.live);
+        const head = liveHere ? (liveHere.savings ? "Saving live" : "Logging live") : "Earned this shift";
+        setLabel(end === null ? head : `${head} · ${hm(end - now)} left`);
+      }
+      const ongoing = !done && now >= start && (end === null || now < end);
+      syncSaveBtn(now >= start, start, ongoing);
+      syncBreakBtn(ongoing, !!open);
+      if (end !== null) el.bar.style.width = (Math.min(1, Math.max(0, (now - start) / (end - start))) * 100).toFixed(3) + "%";
+    } else {
+      const elapsed = mode.key === "session" ? performance.now() - sessionStart : now - startOf(mode.key);
+      v = Math.max(0, elapsed) * clockPerMs();
+      setLabel(mode.label);
+      syncSaveBtn(false);
+      syncBreakBtn(false, false);
+    }
+    tickLive(now);
+    const whole = Math.floor(v);
+    const intStr = grouping.format(whole);
+    const fracStr = Math.min(v - whole, 0.99994).toFixed(4).slice(1);
+    if (el.int.textContent !== intStr) el.int.textContent = intStr;
+    el.frac.textContent = fracStr;
+    const len = intStr.length + 5;
+    if (len !== lastLen) { lastLen = len; fit(len); }
+    requestAnimationFrame(frame);
+  }
+
+  // Mode switching
+  function nextMode() {
+    const list = modes();
+    const i = list.findIndex((m) => m.key === cfg.mode);
+    cfg.mode = list[(i + 1) % list.length].key;
+    store.set(cfg); apply();
+  }
+  // A tap that only wakes the faded controls should not also switch the view.
+  let wokeControls = false;
+  window.addEventListener("pointerdown", () => { wokeControls = document.body.classList.contains("idle"); }, { capture: true, passive: true });
+  $("readout").addEventListener("click", () => { if (!wokeControls) nextMode(); wokeControls = false; });
+
+  // Settings sheet
+  const pad = (n) => String(n).padStart(2, "0");
+  $("now").addEventListener("click", (e) => { e.preventDefault(); const d = new Date(); el.start.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`; });
+  $("clear-end").addEventListener("click", (e) => { e.preventDefault(); el.end.value = ""; });
+  $("auto-break").addEventListener("click", (e) => { e.preventDefault(); el.breakAt.value = ""; });
+
+  function openSheet() {
+    el.amount.value = String(cfg.amount);
+    document.querySelector(`input[name=period][value=${cfg.period}]`).checked = true;
+    document.querySelector(`input[name=currency][value=${cfg.currency}]`).checked = true;
+    el.start.value = cfg.shiftStart;
+    el.end.value = cfg.shiftEnd;
+    el.breakAt.value = cfg.breakAt;
+    el.err.textContent = "";
+    el.sheet.hidden = false;
+  }
+  $("edit").addEventListener("click", (e) => { e.stopPropagation(); openSheet(); });
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const raw = el.amount.value.replace(/[\s,']/g, "").replace(/\.(?=.*\.)/g, "");
+    const amount = parseFloat(raw);
+    if (!(amount > 0)) { el.err.textContent = "Enter your salary as a number, for example 600000."; return; }
+    if (el.end.value && !el.start.value) { el.err.textContent = "Add a shift start time, or clear the end time."; return; }
+    if (el.end.value && el.end.value === el.start.value) { el.err.textContent = "The shift ends at the same time it starts. Change one of them."; return; }
+    if (el.breakAt.value && !el.start.value) { el.err.textContent = "Add a shift start time, or set the break to Auto."; return; }
+    if (el.breakAt.value && el.end.value) {
+      const c = { shiftStart: el.start.value, shiftEnd: el.end.value, breakAt: el.breakAt.value };
+      const w = shiftWindow(Date.now(), c);
+      if (w.brk !== null && (w.brk < w.start || w.brk + BREAK_LEN > w.end)) { el.err.textContent = "The break has to fit inside the shift. Pick an earlier break time, or set it to Auto."; return; }
+    }
+    const hadShift = cfg.shiftStart;
+    if (el.start.value !== cfg.shiftStart || el.end.value !== cfg.shiftEnd) endLive(Date.now());
+    cfg.amount = amount;
+    cfg.period = document.querySelector("input[name=period]:checked").value;
+    cfg.currency = document.querySelector("input[name=currency]:checked").value;
+    cfg.shiftStart = el.start.value;
+    cfg.shiftEnd = el.end.value;
+    cfg.breakAt = el.breakAt.value;
+    if (cfg.shiftStart && !hadShift) cfg.mode = "shift";
+    store.set(cfg); apply();
+    el.sheet.hidden = true;
+    document.activeElement && document.activeElement.blur();
+    wake();
+  });
+
+  // Fullscreen
+  const fsBtn = $("fs");
+  const canFs = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  if (!canFs) fsBtn.hidden = true;
+  fsBtn.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const root = document.documentElement;
+    try {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        await (document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen());
+      } else {
+        await (root.requestFullscreen ? root.requestFullscreen({ navigationUI: "hide" }) : root.webkitRequestFullscreen());
+      }
+    } catch { fsBtn.hidden = true; }
+  });
+  const syncFs = () => { fsBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? "Exit" : "Fullscreen"; };
+  document.addEventListener("fullscreenchange", syncFs);
+  document.addEventListener("webkitfullscreenchange", syncFs);
+  document.addEventListener("keydown", (e) => {
+    if (anyOpen()) return;
+    if (e.key === "f") fsBtn.click();
+    if (e.key === "b" && !breakBtn.hidden) toggleBreak();
+    if (e.key === " ") { e.preventDefault(); nextMode(); }
+  });
+
+  // Keep the screen on while visible
+  let lock = null;
+  async function wake() {
+    try { if ("wakeLock" in navigator && !lock) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => lock = null); } } catch {}
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") wake(); });
+  wake();
+
+  // Fade controls when idle
+  let idleT;
+  function poke() {
+    document.body.classList.remove("idle");
+    clearTimeout(idleT);
+    idleT = setTimeout(() => { if (!anyOpen()) document.body.classList.add("idle"); }, 3000);
+  }
+  ["pointermove", "pointerdown", "keydown", "touchstart"].forEach((t) => window.addEventListener(t, poke, { passive: true }));
+  poke();
+
+  window.addEventListener("resize", () => { lastLen = -1; });
+
+
+  // ---------- Shift log, savings and stats ----------
+  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const logStore = {
+    get() {
+      try {
+        const v = JSON.parse(localStorage.getItem("salary-clock-log") || "null");
+        if (v && Array.isArray(v.shifts) && Array.isArray(v.savings)) return v;
+      } catch {}
+      return { shifts: [], savings: [], deleted: [] };
+    },
+    set(v) { try { localStorage.setItem("salary-clock-log", JSON.stringify(v)); return true; } catch { return false; } },
+  };
+  let log = logStore.get();
+  if (!Array.isArray(log.deleted)) log.deleted = [];
+  const persist = () => { if (!logStore.set(log)) toast("Could not save. This browser is blocking storage."); scheduleSync(); };
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const money = (n) => fmt2.format(n);
+  const sheets = () => [el.sheet, $("save-sheet"), $("stats-sheet"), $("acct-sheet"), $("done")];
+  function anyOpen() { return sheets().some((x) => !x.hidden); }
+
+  let toastT;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+
+  // Live shifts: saved while still running, their pay flows into savings until they end.
+  const OPEN_SHIFT_CAP = 16 * HOUR; // an open-ended live shift closes itself after 16 hours
+  const liveRec = () => log.shifts.find((x) => x.live);
+  const liveStop = (x, now = Date.now()) => Math.min(now, x.end != null ? x.end : x.start + OPEN_SHIFT_CAP);
+  const amountOf = (x) => (x.live ? paidMs(x.start, liveStop(x), x.sched, breaksFor(x.start)) * workPerMs() : x.amount);
+
+  function finalize(x, at) {
+    const list = breaksFor(x.start).map((b) => ({ s: b.s, e: b.e == null ? at : Math.min(b.e, at) }));
+    const un = unpaidMs(x.start, at, x.sched, list);
+    x.end = at;
+    x.breakMin = Math.round(un / 60000);
+    x.amount = +(Math.max(0, at - x.start - un) * workPerMs()).toFixed(2);
+    delete x.live;
+    x.u = Date.now();
+    const tx = log.savings.find((t) => t.shiftId === x.id);
+    if (tx) { tx.amount = x.amount; tx.t = at; tx.u = Date.now(); delete tx.live; }
+    persist();
+    saveKey = "";
+    return x;
+  }
+  function endLive(now) {
+    const x = liveRec();
+    if (x) finalize(x, liveStop(x, now));
+  }
+  let lastLiveCheck = 0, lastStatsTick = 0, histLiveIds = "";
+  function tickLive(now) {
+    if (now - lastLiveCheck > 1000) {
+      lastLiveCheck = now;
+      const x = liveRec();
+      if (x && now >= liveStop(x, Infinity)) {
+        finalize(x, liveStop(x, Infinity));
+        toast(`Shift ended. ${x.currency} ${money(x.amount)} saved.`);
+        if (!$("stats-sheet").hidden) renderStats();
+      }
+    }
+    if (!$("stats-sheet").hidden && now - lastStatsTick > 200 && (liveRec() || runningShift(now))) {
+      lastStatsTick = now;
+      const shifts = statsShifts(now);
+      renderNumbers(shifts);
+      // Keep the history in step: re-render if the running shift appeared or went away.
+      const ids = shifts.filter((x) => x.live || x.unsaved).map((x) => x.id).join();
+      if (ids !== histLiveIds) renderHistory(shifts);
+      else shifts.forEach((x) => {
+        if (!x.live && !x.unsaved) return;
+        const row = document.querySelector(`[data-row="${x.id}"]`);
+        if (!row) return;
+        row.querySelector(".a").firstChild.textContent = money(x.amount);
+        row.querySelector(".t").textContent = rowTimes(x);
+      });
+    }
+  }
+
+  // Save shift button: Save shift, then End shift while live, then Shift saved.
+  const saveBtn = $("save-shift");
+  let saveKey = "";
+  function syncSaveBtn(show, start, ongoing) {
+    const rec = show ? log.shifts.find((x) => x.start === start) : null;
+    const state = !show ? "hidden" : rec ? (rec.live ? "live" : "saved") : ongoing ? "new-live" : "new";
+    if (state === saveKey) return;
+    saveKey = state;
+    saveBtn.hidden = !show;
+    saveBtn.disabled = state === "saved";
+    saveBtn.classList.remove("arm");
+    saveBtn.textContent = state === "saved" ? "Shift saved" : state === "live" ? "End shift" : "Save shift";
+  }
+
+  // Break now / End break
+  const breakBtn = $("break-btn");
+  let breakKey = "";
+  function syncBreakBtn(show, onBreak) {
+    const key = show ? (onBreak ? "on" : "off") : "hidden";
+    if (key === breakKey) return;
+    breakKey = key;
+    breakBtn.hidden = !show;
+    breakBtn.classList.toggle("on", onBreak);
+    breakBtn.textContent = onBreak ? "End break" : "Break now";
+  }
+  function toggleBreak() {
+    const now = Date.now();
+    const { start } = shiftWindow(now);
+    if (!cfg.breaks || cfg.breaks.key !== start) cfg.breaks = { key: start, list: [] };
+    const open = cfg.breaks.list.find((b) => b.e == null);
+    if (open) { open.e = now; toast(`Back to work. Break was ${hm(Math.max(60000, now - open.s))}.`); }
+    else { cfg.breaks.list.push({ s: now, e: null }); toast("On break. The clock is paused."); }
+    store.set(cfg);
+    breakKey = "";
+  }
+  breakBtn.addEventListener("click", (e) => { e.stopPropagation(); toggleBreak(); });
+
+  const f = {
+    date: $("log-date"), start: $("log-start"), end: $("log-end"), brk: $("log-break"),
+    sum: $("log-summary"), toSav: $("log-savings"), err: $("log-err"),
+  };
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const hhmm = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  function formShift() {
+    if (!f.date.value || !f.start.value || !f.end.value) return null;
+    const [y, mo, d] = f.date.value.split("-").map(Number);
+    const base = new Date(y, mo - 1, d);
+    const start = atTime(base, f.start.value);
+    let end = atTime(base, f.end.value);
+    if (end <= start) end += DAY;
+    const breakMin = Math.max(0, Math.round(Number(f.brk.value) || 0));
+    const paidMs = Math.max(0, end - start - breakMin * 60000);
+    return { start, end, breakMin, paidMs, amount: paidMs * workPerMs() };
+  }
+  function autoBreak() {
+    const s = formShift();
+    if (s) f.brk.value = s.end - s.start > BREAK_AFTER ? 30 : 0;
+  }
+  function renderSummary() {
+    const s = formShift();
+    f.sum.innerHTML = s
+      ? `${cfg.currency} ${money(s.amount)}<span>${hm(s.paidMs)} paid at ${money(workPerMs() * HOUR)} / hour</span>`
+      : "Fill in the date and times.";
+  }
+  [f.date, f.start, f.end].forEach((x) => x.addEventListener("input", () => { autoBreak(); renderSummary(); }));
+  f.brk.addEventListener("input", renderSummary);
+
+  let saveLive = false;
+  function openSave() {
+    const now = Date.now();
+    const w = shiftWindow(now);
+    const ended = w.end !== null && now >= w.end;
+    saveLive = !ended;
+    $("log-fields").hidden = saveLive;
+    $("log-live-note").hidden = !saveLive;
+    f.date.value = ymd(new Date(w.start));
+    f.start.value = cfg.shiftStart;
+    f.end.value = cfg.shiftEnd;
+    f.brk.value = ended ? Math.round(unpaidMs(w.start, w.end, w.brk, breaksFor(w.start)) / 60000) : 0;
+    f.toSav.checked = true;
+    f.err.textContent = "";
+    if (saveLive) {
+      const so = paidMs(w.start, now, w.brk, breaksFor(w.start)) * workPerMs();
+      f.sum.innerHTML = `${cfg.currency} ${money(so)}<span>earned so far · ${money(workPerMs() * HOUR)} / hour</span>`;
+    } else renderSummary();
+    $("save-sheet").hidden = false;
+  }
+  saveBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (saveKey !== "live") return openSave();
+    if (!saveBtn.classList.contains("arm")) {
+      saveBtn.classList.add("arm"); saveBtn.textContent = "Tap to end";
+      setTimeout(() => { if (saveKey === "live") { saveBtn.classList.remove("arm"); saveBtn.textContent = "End shift"; } }, 3000);
+      return;
+    }
+    const x = liveRec();
+    if (x) { finalize(x, liveStop(x)); toast(`Shift ended. ${x.currency} ${money(x.amount)} saved.`); }
+  });
+  $("log-cancel").addEventListener("click", () => { $("save-sheet").hidden = true; });
+  $("save-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (saveLive) {
+      const now = Date.now();
+      const w = shiftWindow(now);
+      if (log.shifts.some((x) => x.start === w.start)) { f.err.textContent = "This shift is already saved."; return; }
+      endLive(now);
+      const x = { id: uid(), start: w.start, end: w.end, sched: w.brk, breakMin: 0, amount: 0, currency: cfg.currency, savings: f.toSav.checked, live: true, u: now };
+      log.shifts.push(x);
+      if (x.savings) log.savings.push({ id: uid(), t: now, amount: 0, currency: x.currency, shiftId: x.id, kind: "shift", live: true, u: now });
+      persist();
+      saveKey = "";
+      $("save-sheet").hidden = true;
+      toast(x.savings ? "Saved. Your pay now flows into savings live." : "Saved. The shift is logged live until it ends.");
+      return;
+    }
+    const s = formShift();
+    if (!s) { f.err.textContent = "Fill in the date, start and end time."; return; }
+    if (s.paidMs <= 0) { f.err.textContent = "The break is as long as the shift. Shorten the break."; return; }
+    if (log.shifts.some((x) => x.start === s.start)) { f.err.textContent = "A shift starting at that time is already saved."; return; }
+    const shift = { id: uid(), start: s.start, end: s.end, breakMin: s.breakMin, amount: +s.amount.toFixed(2), currency: cfg.currency, savings: f.toSav.checked, u: Date.now() };
+    log.shifts.push(shift);
+    if (shift.savings) log.savings.push({ id: uid(), t: s.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: Date.now() });
+    persist();
+    saveKey = "";
+    $("save-sheet").hidden = true;
+    toast(shift.savings ? `Saved. ${shift.currency} ${money(shift.amount)} added to savings.` : "Shift saved.");
+  });
+
+  // Stats
+  const sum = (arr, k) => arr.reduce((a, x) => a + x[k], 0);
+  const paidOf = (x) => x.end - x.start - x.breakMin * 60000;
+  function weekStart(t) {
+    const d = new Date(t); const day = (d.getDay() + 6) % 7; // Monday first
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - day).getTime();
+  }
+  function isoWeek(t) {
+    const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const w1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - w1) / DAY - 3 + ((w1.getDay() + 6) % 7)) / 7);
+  }
+  const dateFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+
+  function balance() {
+    return log.savings.filter((t) => t.currency === cfg.currency).reduce((a, t) => {
+      if (!t.live) return a + t.amount;
+      const x = log.shifts.find((s) => s.id === t.shiftId);
+      return a + (x ? amountOf(x) : 0);
+    }, 0);
+  }
+
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  function stat(label, value, sub) {
+    return `<div class="stat"><span>${label}</span><b>${value}</b>${sub ? `<em>${sub}</em>` : ""}</div>`;
+  }
+
+  // The shift running right now that has not been saved yet, as a stats entry.
+  function runningShift(now = Date.now()) {
+    if (!cfg.shiftStart) return null;
+    const { start, end, brk } = shiftWindow(now);
+    if (now < start || (end !== null && now >= end) || log.shifts.some((x) => x.start === start)) return null;
+    const list = breaksFor(start);
+    return { id: "now", unsaved: true, start, end: now, sched: brk, currency: cfg.currency,
+      amount: paidMs(start, now, brk, list) * workPerMs(), breakMin: Math.round(unpaidMs(start, now, brk, list) / 60000) };
+  }
+
+  // Saved shifts in the current currency, newest first, with live and running shifts at their current value.
+  function statsShifts(now = Date.now()) {
+    const list = log.shifts.filter((x) => x.currency === cfg.currency).map((x) => {
+      if (!x.live) return x;
+      const stop = liveStop(x, now);
+      return { ...x, end: stop, amount: amountOf(x), breakMin: Math.round(unpaidMs(x.start, stop, x.sched, breaksFor(x.start)) / 60000) };
+    });
+    const run = runningShift(now);
+    if (run) list.push(run);
+    return list.sort((a, b) => b.start - a.start);
+  }
+
+  function renderStats() {
+    const shifts = statsShifts();
+    renderNumbers(shifts);
+    renderHistory(shifts);
+  }
+
+  function renderNumbers(shifts) {
+    const cur = cfg.currency;
+    const other = log.shifts.filter((x) => x.currency !== cur).length;
+    $("sv-balance").innerHTML = `<small>${cur}</small>${money(balance())}`;
+
+    const now = Date.now();
+    const wk = weekStart(now);
+    const d = new Date(now); const mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    const yr = new Date(d.getFullYear(), 0, 1).getTime();
+    const inRange = (from) => shifts.filter((x) => x.start >= from);
+    const total = sum(shifts, "amount");
+    const paid = shifts.reduce((a, x) => a + paidOf(x), 0);
+    const best = shifts.reduce((b, x) => (!b || x.amount > b.amount ? x : b), null);
+    const byDay = Array(7).fill(0); shifts.forEach((x) => byDay[new Date(x.start).getDay()]++);
+    const topDay = shifts.length ? DAYS[byDay.indexOf(Math.max(...byDay))] : "—";
+    const c = (n) => `${cur} ${money(n)}`;
+    $("st-grid").innerHTML = [
+      stat("Total earned", c(total), other ? `${other} shift${other > 1 ? "s" : ""} in other currencies not counted` : ""),
+      stat("Shifts", shifts.length, shifts.length ? `since ${dateFmt.format(shifts[shifts.length - 1].start)}` : ""),
+      stat("This week", c(sum(inRange(wk), "amount")), plural(inRange(wk).length, "shift")),
+      stat("This month", c(sum(inRange(mo), "amount")), plural(inRange(mo).length, "shift")),
+      stat("This year", c(sum(inRange(yr), "amount")), plural(inRange(yr).length, "shift")),
+      stat("Hours paid", hm(paid), shifts.length ? `${hm(paid / shifts.length)} per shift` : ""),
+      stat("Per shift", shifts.length ? c(total / shifts.length) : "—", "average"),
+      stat("Best shift", best ? c(best.amount) : "—", best ? dateFmt.format(best.start) : ""),
+      stat("Most worked day", topDay, shifts.length ? plural(Math.max(...byDay), "shift") : ""),
+      stat("Breaks taken", shifts.filter((x) => x.breakMin > 0).length, shifts.length ? `${hm(sum(shifts, "breakMin") * 60000)} unpaid` : ""),
+    ].join("");
+
+    renderChart(shifts, cur);
+  }
+
+  function renderChart(shifts, cur) {
+    const svg = $("ch"), cap = $("ch-cap");
+    const thisWk = weekStart(Date.now());
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) {
+      const from = new Date(thisWk); from.setDate(from.getDate() - i * 7);
+      const to = new Date(from); to.setDate(to.getDate() + 7);
+      const list = shifts.filter((x) => x.start >= from.getTime() && x.start < to.getTime());
+      weeks.push({ from: from.getTime(), amount: sum(list, "amount"), n: list.length });
+    }
+    const W = 320, H = 120, top = 6, base = 100, gap = 10, bw = (W - gap * 7) / 8;
+    const max = Math.max(...weeks.map((w) => w.amount)) || 1;
+    let out = `<line x1="0" x2="${W}" y1="${base}" y2="${base}"></line>`;
+    weeks.forEach((w, i) => {
+      const x = i * (bw + gap);
+      const h = w.amount > 0 ? Math.max(2, (w.amount / max) * (base - top)) : 0;
+      const y = base - h, r = Math.min(4, bw / 2, h);
+      // Rounded top, square base
+      if (h > 0) out += `<path class="b${i === 7 ? " on" : ""}" data-i="${i}" d="M${x},${base} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${base} Z"></path>`;
+      out += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">W${isoWeek(w.from)}</text>`;
+      out += `<rect class="hit" data-i="${i}" x="${x - gap / 2}" y="0" width="${bw + gap}" height="${H}"><title>Week ${isoWeek(w.from)}: ${cur} ${money(w.amount)}</title></rect>`;
+    });
+    svg.innerHTML = out;
+    const show = (i) => {
+      chartSel = i;
+      const w = weeks[i];
+      cap.textContent = `Week ${isoWeek(w.from)} · ${cur} ${money(w.amount)} · ${w.n} shift${w.n === 1 ? "" : "s"}`;
+      svg.querySelectorAll(".b").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
+    };
+    svg.querySelectorAll(".hit").forEach((h) => {
+      h.addEventListener("pointerenter", () => show(+h.dataset.i));
+      h.addEventListener("click", () => show(+h.dataset.i));
+    });
+    show(chartSel);
+  }
+  let chartSel = 7;
+
+  const rowTimes = (x) => `${hhmm(new Date(x.start))}–${x.live || x.unsaved ? "now" : hhmm(new Date(x.end))} · ${hm(paidOf(x))}${x.breakMin ? ` · ${x.breakMin}m break` : ""}`;
+
+  function renderHistory(shifts) {
+    const box = $("hist");
+    histLiveIds = shifts.filter((x) => x.live || x.unsaved).map((x) => x.id).join();
+    if (!shifts.length) {
+      box.innerHTML = `<p class="empty">No shifts saved yet. Set a shift start in Settings, then tap Save shift on the clock. A shift that is running shows up here live.</p>`;
+      return;
+    }
+    box.innerHTML = shifts.map((x) => `
+      <div class="hist-row" data-row="${x.id}">
+        <div class="d">${dateFmt.format(x.start)}</div>
+        <div class="t">${rowTimes(x)}</div>
+        <div class="a">${money(x.amount)}${x.unsaved ? '<i class="live-tag">now · not saved</i>' : x.live ? `<i class="live-tag">${x.savings ? "saving live" : "live now"}</i>` : x.savings ? "<i>to savings</i>" : ""}</div>
+        ${x.unsaved ? '<button class="x save-now" type="button">Save</button>' : `<button class="x" type="button" data-id="${x.id}">Delete</button>`}
+      </div>`).join("");
+    box.querySelectorAll(".save-now").forEach((b) => b.addEventListener("click", () => { $("stats-sheet").hidden = true; openSave(); }));
+    box.querySelectorAll(".x[data-id]").forEach((b) => b.addEventListener("click", () => {
+      if (!b.classList.contains("arm")) {
+        b.classList.add("arm"); b.textContent = "Sure?";
+        setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000);
+        return;
+      }
+      const id = b.dataset.id;
+      log.deleted.push(id, ...log.savings.filter((x) => x.shiftId === id).map((x) => x.id));
+      log.shifts = log.shifts.filter((x) => x.id !== id);
+      log.savings = log.savings.filter((x) => x.shiftId !== id);
+      persist(); saveKey = ""; renderStats();
+      toast("Shift deleted. Its savings deposit was removed too.");
+    }));
+  }
+
+  // Savings deposit / withdraw
+  let svDir = 1;
+  $("sv-form").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { svDir = +b.dataset.dir; }));
+  $("sv-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("sv-err");
+    const n = parseFloat($("sv-amount").value.replace(/[\s,']/g, ""));
+    if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
+    const bal = balance();
+    if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${cfg.currency} ${money(bal)} saved.`; return; }
+    err.textContent = "";
+    log.savings.push({ id: uid(), t: Date.now(), amount: svDir * +n.toFixed(2), currency: cfg.currency, kind: svDir < 0 ? "withdraw" : "deposit", u: Date.now() });
+    persist();
+    $("sv-amount").value = "";
+    renderStats();
+    toast(svDir < 0 ? `Withdrew ${cfg.currency} ${money(n)}.` : `Deposited ${cfg.currency} ${money(n)}.`);
+  });
+
+  // Backup
+  $("bk-export").addEventListener("click", () => {
+    try {
+      const blob = new Blob([JSON.stringify({ app: "salary-clock", version: 1, exported: new Date().toISOString(), settings: cfg, ...log }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = `99ms-${ymd(new Date())}.json`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    } catch { $("bk-err").textContent = "This browser blocked the download."; }
+  });
+  $("bk-import").addEventListener("click", () => $("bk-file").click());
+  $("bk-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0]; e.target.value = "";
+    if (!file) return;
+    try {
+      const v = JSON.parse(await file.text());
+      if (!Array.isArray(v.shifts) || !Array.isArray(v.savings)) throw 0;
+      const have = new Set([...log.shifts, ...log.savings].map((x) => x.id));
+      const ns = v.shifts.filter((x) => !have.has(x.id)), nv = v.savings.filter((x) => !have.has(x.id));
+      log.shifts.push(...ns); log.savings.push(...nv);
+      persist(); saveKey = ""; renderStats();
+      $("bk-err").textContent = "";
+      toast(`Imported ${ns.length} shifts and ${nv.length} savings entries.`);
+    } catch { $("bk-err").textContent = "That file is not a 99MS backup. Pick a file made with Export backup."; }
+  });
+
+  $("open-stats").addEventListener("click", (e) => { e.stopPropagation(); renderStats(); $("stats-sheet").hidden = false; $("stats-sheet").scrollTop = 0; });
+  $("stats-close").addEventListener("click", () => { $("stats-sheet").hidden = true; });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { $("stats-sheet").hidden = true; $("save-sheet").hidden = true; }
+  });
+
+
+  // ---------- Account and sync (Supabase) ----------
+  // Fill these in from Supabase: Project Settings → API. The anon key is meant to be public;
+  // row level security keeps every account's data private.
+  const SYNC = {
+    url: "https://ayiretwrdtfkeakoinnj.supabase.co",
+    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5aXJldHdyZHRma2Vha29pbm5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzUwNzQsImV4cCI6MjEwNzExMTA3NH0.HUk_td6OdvWWSr7z-Sfhno3s7dyvUHc7zdrdXENYebE",
+  };
+  const SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
+
+  function newest(a, b) { return (b.u || 0) > (a.u || 0) ? b : a; }
+  function mergeData(local, remote) {
+    const deleted = [...new Set([...(local.log.deleted || []), ...((remote && remote.log && remote.log.deleted) || [])])];
+    const gone = new Set(deleted);
+    const byId = (a, b) => {
+      const m = new Map();
+      [...a, ...b].forEach((x) => { if (!gone.has(x.id)) m.set(x.id, m.has(x.id) ? newest(m.get(x.id), x) : x); });
+      return [...m.values()];
+    };
+    const r = remote && remote.log ? remote.log : { shifts: [], savings: [] };
+    const rc = remote && remote.cfg;
+    const c = rc && (rc.updatedAt || 0) > (local.cfg.updatedAt || 0) ? { ...rc, mode: local.cfg.mode } : local.cfg;
+    return { cfg: c, log: { shifts: byId(local.log.shifts, r.shifts || []), savings: byId(local.log.savings, r.savings || []), deleted } };
+  }
+
+  function scheduleSync(delay = 1200) {
+    if (!user) return;
+    clearTimeout(syncT);
+    syncT = setTimeout(syncNow, delay);
+  }
+
+  async function syncNow() {
+    if (!sb || !user || syncing) return;
+    syncing = true;
+    try {
+      const { data: row, error } = await sb.from("user_data").select("data").eq("user_id", user.id).maybeSingle();
+      if (error) throw error;
+      const merged = mergeData({ cfg, log }, row && row.data);
+      const { error: upErr } = await sb.from("user_data").upsert({ user_id: user.id, data: merged, updated_at: new Date().toISOString() });
+      if (upErr) throw upErr;
+      const changed = JSON.stringify(merged.cfg) !== JSON.stringify(cfg) || JSON.stringify(merged.log) !== JSON.stringify(log);
+      if (changed) {
+        cfg = merged.cfg; log = merged.log;
+        store.set(cfg, true); logStore.set(log);
+        apply(); saveKey = ""; breakKey = "";
+        if (!$("stats-sheet").hidden) renderStats();
+      }
+      lastSynced = Date.now(); syncErr = "";
+    } catch (e) {
+      syncErr = navigator.onLine === false ? "Offline. Will sync when you are back online." : "Sync failed. Retrying soon.";
+    } finally {
+      syncing = false;
+      renderAcct();
+    }
+  }
+
+  function renderAcct() {
+    if (!sb) return;
+    $("acct-line").hidden = false;
+    $("acct-open").textContent = user ? "Log out" : "Log in";
+    $("acct-status").textContent = !user ? "Log in to sync across devices"
+      : syncErr || (lastSynced ? `Synced as ${user.email} · ${hhmm(new Date(lastSynced))}` : `Logged in as ${user.email}`);
+  }
+
+  function loadScript(src) {
+    return new Promise((res, rej) => { const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = rej; document.head.appendChild(t); });
+  }
+
+  async function initSync() {
+    if (!SYNC.url || !SYNC.anonKey) return;
+    try { await loadScript(SUPABASE_JS); } catch { return; }
+    sb = window.supabase.createClient(SYNC.url, SYNC.anonKey, { auth: { persistSession: true, autoRefreshToken: true } });
+    const { data } = await sb.auth.getSession();
+    user = data.session ? data.session.user : null;
+    sb.auth.onAuthStateChange((_e, session) => {
+      const was = user && user.id;
+      user = session ? session.user : null;
+      renderAcct();
+      if (user && user.id !== was) syncNow();
+    });
+    renderAcct();
+    if (user) syncNow();
+    setInterval(() => { if (user && document.visibilityState === "visible") syncNow(); }, 20000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(100); });
+    window.addEventListener("online", () => scheduleSync(100));
+  }
+
+  const acct = { email: $("acct-email"), pass: $("acct-pass"), err: $("acct-err") };
+  const info = (t) => { acct.err.textContent = t; acct.err.classList.add("info"); };
+  let acctAct = "login";
+  $("acct-form").querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => { acctAct = b.dataset.act; }));
+  $("acct-open").addEventListener("click", async () => {
+    if (user) {
+      await sb.auth.signOut();
+      user = null; renderAcct();
+      toast("Logged out. Your data stays on this device.");
+      return;
+    }
+    acct.err.classList.remove("info"); acct.err.textContent = "";
+    codeUI(false);
+    $("acct-sheet").hidden = false;
+  });
+  $("acct-cancel").addEventListener("click", () => { $("acct-sheet").hidden = true; });
+  // Email-only login: Supabase emails a one-time code (and a link) and creates the account on first use.
+  const codeUI = (sent) => {
+    $("code-wrap").hidden = !sent; $("verify-btn").hidden = !sent; $("resend-btn").hidden = !sent; $("send-btn").hidden = sent;
+    clearOtp();
+    if (sent) setTimeout(() => otpBoxes[0].focus(), 50);
+  };
+  document.querySelectorAll("input[name=acct-mode]").forEach((r) => r.addEventListener("change", () => {
+    const code = $("am-code").checked;
+    $("code-fields").hidden = !code; $("pass-fields").hidden = code; acct.err.classList.remove("info"); acct.err.textContent = "";
+  }));
+  async function emailOnly(email) {
+    if (acctAct === "send") {
+      info("Sending…");
+      const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
+      if (error) {
+        acct.err.classList.remove("info"); acct.err.textContent = /rate|seconds/i.test(error.message || "") ? "Too many emails in a short time. Wait a minute and try again." : error.message || "Could not send the email. Try again.";
+        return;
+      }
+      codeUI(true);
+      info(`Sent to ${email}. Enter the code, or tap the link in the email on this device.`);
+      return;
+    }
+    const token = otpValue();
+    if (!/^\d{6,10}$/.test(token)) { acct.err.classList.remove("info"); acct.err.textContent = "Enter the code from the email."; return; }
+    info("Logging in…");
+    const { error } = await sb.auth.verifyOtp({ email, token, type: "email" });
+    if (error) {
+      acct.err.classList.remove("info"); acct.err.textContent = "That code is wrong or has expired. Try again or send a new code.";
+      const o = $("otp"); o.classList.remove("bad"); void o.offsetWidth; o.classList.add("bad");
+      clearOtp(); otpBoxes[0].focus();
+      return;
+    }
+    codeUI(false); acct.err.classList.remove("info"); acct.err.textContent = "";
+    loggedIn();
+  }
+
+  // Six digit boxes: typing moves forward, backspace moves back, paste or autofill fills them all.
+  const otpBoxes = [...$("otp").querySelectorAll("input")];
+  const otpValue = () => otpBoxes.map((b) => b.value).join("");
+  function clearOtp() { otpBoxes.forEach((b) => { b.value = ""; b.classList.remove("filled"); }); }
+  function fillFrom(i, digits) {
+    for (const d of digits) { if (i >= otpBoxes.length) break; otpBoxes[i].value = d; otpBoxes[i].classList.add("filled"); i++; }
+    otpBoxes[Math.min(i, otpBoxes.length - 1)].focus();
+    if (otpValue().length === otpBoxes.length) { $("otp").classList.remove("bad"); acctAct = "verify"; $("acct-form").requestSubmit($("verify-btn")); }
+  }
+  otpBoxes.forEach((b, i) => {
+    b.addEventListener("input", () => {
+      const digits = b.value.replace(/\D/g, "");
+      b.value = ""; b.classList.remove("filled");
+      if (digits) fillFrom(i, digits);
+    });
+    b.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !b.value && i > 0) { otpBoxes[i - 1].value = ""; otpBoxes[i - 1].classList.remove("filled"); otpBoxes[i - 1].focus(); e.preventDefault(); }
+      if (e.key === "ArrowLeft" && i > 0) otpBoxes[i - 1].focus();
+      if (e.key === "ArrowRight" && i < otpBoxes.length - 1) otpBoxes[i + 1].focus();
+    });
+    b.addEventListener("paste", (e) => {
+      const digits = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "");
+      if (!digits) return;
+      e.preventDefault();
+      fillFrom(i, digits);
+    });
+    b.addEventListener("focus", () => b.select());
+  });
+
+  // Checkmark, then back to the clock.
+  function loggedIn() {
+    const d = $("done");
+    d.hidden = false;
+    $("acct-sheet").hidden = true; el.sheet.hidden = true;
+    setTimeout(() => { d.hidden = true; }, 1900);
+  }
+
+  $("acct-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    // Enter key: send the code first, then verify it; in password mode, log in.
+    acctAct = (e.submitter && e.submitter.offsetParent !== null && e.submitter.dataset.act) || ($("am-code").checked ? ($("code-wrap").hidden ? "send" : "verify") : "login");
+    const email = acct.email.value.trim(), password = acct.pass.value;
+    if (!/^\S+@\S+\.\S+$/.test(email)) { acct.err.classList.remove("info"); acct.err.textContent = "Enter your email address."; return; }
+    if (acctAct === "send" || acctAct === "verify") return emailOnly(email);
+    if (password.length < 6) { acct.err.classList.remove("info"); acct.err.textContent = "The password needs at least 6 characters."; return; }
+    info(acctAct === "signup" ? "Creating account…" : "Logging in…");
+    const res = acctAct === "signup"
+      ? await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + location.pathname } })
+      : await sb.auth.signInWithPassword({ email, password });
+    if (res.error) {
+      const m = res.error.message || "";
+      acct.err.classList.remove("info"); acct.err.textContent = /invalid login/i.test(m) ? "Wrong email or password."
+        : /already registered/i.test(m) ? "That email already has an account. Log in instead."
+        : /not confirmed/i.test(m) ? "Confirm your email first. Check your inbox for the link from 99MS."
+        : m || "Something went wrong. Try again.";
+      return;
+    }
+    if (acctAct === "signup" && !res.data.session) {
+      info("Check your inbox and tap the confirmation link, then log in here.");
+      return;
+    }
+    acct.pass.value = ""; acct.err.classList.remove("info"); acct.err.textContent = "";
+    loggedIn();
+  });
+
+  apply();
+  initSync();
+  if (!saved) openSheet();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
