@@ -17,6 +17,8 @@
 <style>
   /* Layout: one centered readout on an empty field; controls appear only when asked for. */
   :root {
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
     --bg: #1f2124;          /* dark grey, faint cool bias */
     --fg: #f4f5f6;          /* clock white */
     --dim: #8a8f96;         /* labels */
@@ -55,7 +57,7 @@
 
   .chrome {
     position: fixed; inset-inline: 0; bottom: 0;
-    padding: 0 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    padding: 0 16px calc(18px + var(--sab));
     display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem;
     transition: opacity 0.6s ease;
   }
@@ -74,7 +76,7 @@
     position: fixed; inset: 0; background: var(--bg); z-index: 2;
     display: grid; grid-template-rows: 1fr; justify-items: center; align-items: start;
     overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-    padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: calc(24px + var(--sat)) 16px calc(32px + var(--sab));
     box-sizing: border-box;
   }
   .sheet > * { margin-block: auto; }
@@ -117,11 +119,31 @@
   body.idle .view-toggle { opacity: 0; }
   body.phone-host main, body.phone-host .chrome { display: none; }
   body.phone-host { cursor: default !important; }
-  .phone-stage { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box; }
-  .phone-stage iframe {
-    width: 390px; height: min(844px, calc(100vh - 48px)); max-width: 100%; border: 0; display: block;
-    border-radius: 36px; background: var(--bg); box-shadow: 0 0 0 10px #15171a, 0 0 0 11px var(--faint), 0 30px 80px rgba(0, 0, 0, 0.45);
+  /* iPhone 16 Pro: 402 x 874 pt screen, Dynamic Island, 62 / 34 pt safe areas */
+  html.in-frame { --sat: 62px; --sab: 34px; }
+  .phone-stage { position: fixed; inset: 0; overflow: hidden; }
+  .device {
+    position: relative; width: 402px; height: 874px; padding: 11px; border-radius: 68px; flex: none;
+    position: absolute; left: 50%; top: 50%; box-sizing: content-box;
+    background: #0b0c0e; transform: translate(-50%, -50%) scale(var(--s, 1)); transform-origin: center;
+    box-shadow: inset 0 0 0 1.5px #4a4e55, 0 0 0 1px #2c2f34, 0 0 0 4px #3b3f45, 0 0 0 5px #1a1c1f, 0 40px 100px rgba(0, 0, 0, 0.55);
   }
+  .device::before, .device::after { content: ""; position: absolute; width: 4px; border-radius: 2px; background: #3b3f45; }
+  .device::before { left: -8px; top: 150px; height: 34px; box-shadow: 0 62px 0 0 #3b3f45, 0 128px 0 0 #3b3f45; } /* action button, volume up / down */
+  .device::after { right: -8px; top: 220px; height: 100px; box-shadow: 0 190px 0 -30px #3b3f45; }               /* side button, camera control */
+  .device-screen { position: relative; width: 402px; height: 874px; border-radius: 57px; overflow: hidden; background: var(--bg); }
+  .device-screen iframe { width: 100%; height: 100%; border: 0; display: block; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 126px; height: 37px; border-radius: 19px; background: #000; z-index: 2; pointer-events: none; }
+  .island::after { content: ""; position: absolute; right: 13px; top: 50%; width: 11px; height: 11px; border-radius: 50%; transform: translateY(-50%); background: radial-gradient(circle at 35% 35%, #2a3550, #0a0c12 60%); }
+  .statusbar {
+    position: absolute; inset: 0 0 auto 0; height: 59px; z-index: 2; pointer-events: none;
+    display: grid; grid-template-columns: 1fr 126px 1fr; align-items: center; color: var(--fg);
+    font: 600 17px/1 -apple-system, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; letter-spacing: -0.01em;
+  }
+  .statusbar .sb-time { justify-self: center; padding-left: 12px; font-variant-numeric: tabular-nums; }
+  .statusbar .sb-icons { justify-self: center; display: flex; gap: 6px; align-items: center; padding-right: 10px; }
+  .statusbar svg { display: block; fill: currentColor; }
+  .home-ind { position: absolute; bottom: 8px; left: 50%; width: 140px; height: 5px; border-radius: 3px; transform: translateX(-50%); background: var(--fg); opacity: 0.9; z-index: 2; pointer-events: none; }
   .otp { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; }
   .otp input {
     width: 100%; min-width: 0; box-sizing: border-box; aspect-ratio: 3 / 4; max-width: 100%;
@@ -236,7 +258,7 @@
   .icon-btn.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
   .icon-btn.arm { color: #e8a3a3; border-color: #5a3a3a; }
   .live-tag { color: var(--fg) !important; }
-  .toast { position: fixed; left: 50%; top: calc(20px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.6rem 1rem; border-radius: 999px; font-size: 0.78rem; letter-spacing: 0.06em; z-index: 5; }
+  .toast { position: fixed; left: 50%; top: calc(20px + var(--sat)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.6rem 1rem; border-radius: 999px; font-size: 0.78rem; letter-spacing: 0.06em; z-index: 5; }
   @media (prefers-reduced-motion: reduce) { .chrome { transition: none; } }
 </style>
 
@@ -424,6 +446,7 @@
 (() => {
   // Phone view on desktop: the page shows the app in a phone-sized frame instead of running it full width.
   const framed = window.self !== window.top;
+  if (framed) document.documentElement.classList.add("in-frame");
   const desktop = matchMedia("(hover: hover) and (pointer: fine)").matches && Math.min(screen.width, window.innerWidth) >= 820;
   const PV_KEY = "99ms-phone-view";
   const pvGet = () => { try { return localStorage.getItem(PV_KEY) === "1"; } catch { return false; } };
@@ -437,11 +460,31 @@
       toggle.setAttribute("aria-label", "Switch to desktop view"); toggle.title = "Desktop view";
       toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="12.5" rx="1.6"></rect><path d="M9 20h6M12 16.5V20"></path></svg>';
       const stage = document.getElementById("phone-stage");
-      const f = document.createElement("iframe");
-      f.src = location.pathname + "?frame=1";
-      f.title = "99MS phone view";
-      f.allow = "fullscreen; screen-wake-lock";
-      stage.appendChild(f); stage.hidden = false;
+      stage.innerHTML = `
+        <div class="device" id="device">
+          <div class="device-screen">
+            <iframe title="99MS phone view" allow="fullscreen; screen-wake-lock"></iframe>
+            <div class="statusbar" aria-hidden="true">
+              <span class="sb-time" id="sb-time"></span><span></span>
+              <span class="sb-icons">
+                <svg width="19" height="12" viewBox="0 0 19 12"><rect x="0" y="8" width="3.2" height="4" rx="1"/><rect x="5" y="5.5" width="3.2" height="6.5" rx="1"/><rect x="10" y="3" width="3.2" height="9" rx="1"/><rect x="15" y="0" width="3.2" height="12" rx="1"/></svg>
+                <svg width="17" height="12" viewBox="0 0 17 12"><path d="M8.5 2.3c2.4 0 4.6.9 6.3 2.5l1.2-1.2A10.6 10.6 0 0 0 8.5.6 10.6 10.6 0 0 0 1 3.6l1.2 1.2a9 9 0 0 1 6.3-2.5Zm0 3.4c1.5 0 2.9.6 3.9 1.5l1.2-1.2a7.3 7.3 0 0 0-10.2 0l1.2 1.2c1-.9 2.4-1.5 3.9-1.5Zm0 3.4c.6 0 1.1.2 1.5.6L8.5 11.2 7 9.7c.4-.4.9-.6 1.5-.6Z"/></svg>
+                <svg width="27" height="13" viewBox="0 0 27 13"><rect x="0.5" y="0.5" width="23" height="12" rx="3.8" fill="none" stroke="currentColor" stroke-opacity="0.4"/><rect x="2" y="2" width="20" height="9" rx="2.5"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" fill-opacity="0.45"/></svg>
+              </span>
+            </div>
+            <div class="island" aria-hidden="true"></div>
+            <div class="home-ind" aria-hidden="true"></div>
+          </div>
+        </div>`;
+      stage.querySelector("iframe").src = location.pathname + "?frame=1";
+      stage.hidden = false;
+      // Scale the whole phone down when the window is shorter or narrower than the device.
+      const device = document.getElementById("device");
+      const fitDevice = () => device.style.setProperty("--s", Math.min(1, (innerHeight - 40) / 896, (innerWidth - 40) / 424).toFixed(4));
+      fitDevice(); addEventListener("resize", fitDevice);
+      const clockFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+      const tickTime = () => { document.getElementById("sb-time").textContent = clockFmt.format(new Date()).replace(/\s?[AP]M$/i, ""); };
+      tickTime(); setInterval(tickTime, 10000);
       return; // the framed copy runs the app
     }
   }
