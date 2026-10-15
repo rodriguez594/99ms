@@ -56,12 +56,12 @@
   #sal-stats { padding-top: 32px; }
   .tabbar {
     position: fixed; inset: auto 0 0 0; z-index: 1; height: var(--tabh); box-sizing: border-box;
-    padding: 6px 4px var(--sab); display: grid; grid-template-columns: repeat(5, 1fr);
+    padding: 6px 2px var(--sab); display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
     background: var(--bg); border-top: 1px solid var(--faint); transition: opacity 0.6s ease;
   }
   .tabbar button {
     background: none; border: 0; color: var(--dim); display: grid; justify-items: center; align-content: center; gap: 5px;
-    font: 500 0.6rem/1 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; padding: 0; min-width: 0;
+    font: 500 0.56rem/1 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; padding: 0; min-width: 0;
   }
   .tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .tabbar button[aria-current="page"] { color: var(--fg); }
@@ -148,6 +148,70 @@
   .err.info { color: var(--dim); }
   .err { color: #e8a3a3; font-size: 0.75rem; margin: 0; text-align: left; min-height: 1em; }
 
+
+  /* Goals + pay period */
+  select {
+    width: 100%; box-sizing: border-box; min-width: 0; background: transparent; color: var(--fg); border: 0; border-bottom: 1px solid var(--faint);
+    border-radius: 0; font: 1.05rem/1.3 var(--font-ui); padding: 0.35rem 0 0.5rem; -webkit-appearance: none; appearance: none;
+  }
+  select:focus { outline: none; border-bottom-color: var(--fg); }
+  select option { background: var(--panel); color: var(--fg); }
+  input[type="text"]#gl-name, input[type="text"]#gl-target, input[type="text"]#gl-amount { font-size: 1.3rem; }
+  .goals { display: grid; gap: 0.75rem; }
+  .goal { border: 1px solid var(--faint); border-radius: 14px; padding: 1rem; display: grid; gap: 0.6rem; }
+  .goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .goal-head b { font-size: 1rem; font-weight: 500; overflow-wrap: anywhere; }
+  .goal-head .pct { font: 1rem var(--font-clock); color: var(--dim); }
+  .goal .amt { font: 1.25rem var(--font-clock); font-variant-numeric: tabular-nums; }
+  .goal .amt small { color: var(--dim); font-size: 0.75em; }
+  .goal .track { height: 4px; border-radius: 2px; background: var(--faint); overflow: hidden; }
+  .goal .track i { display: block; height: 100%; width: 0; background: var(--fg); border-radius: 2px; }
+  .goal .m { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+  .goal .a { display: flex; gap: 1rem; }
+  .goal .a button { background: none; border: 0; padding: 0.3rem 0; color: var(--dim); font: 0.68rem var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+  .goal .a button:hover, .goal .a button:focus-visible { color: var(--fg); outline: none; }
+  .goal .a button.arm { color: #e8a3a3; }
+  .goal.done { opacity: 0.55; }
+  .cal-day.payday .n::after { content: "PAY"; display: block; font-size: 0.5rem; letter-spacing: 0.1em; color: var(--dim); margin-top: 2px; }
+  .cal-day.ps { box-shadow: inset 2px 0 0 var(--dim); }
+  /* Calendar */
+  .cal-nav { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+  .cal-nav b { font: 400 1.1rem/1 var(--font-clock); letter-spacing: 0.14em; text-transform: uppercase; text-align: center; }
+  .cal-nav .ghost { padding: 0.55rem 1rem; font-size: 1rem; letter-spacing: 0; }
+  .cal-sum { font: 0.95rem/1.5 var(--font-clock); font-variant-numeric: tabular-nums; }
+  .cal-sum span { display: block; color: var(--dim); font-size: 0.75rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal-dow { font-size: 0.6rem; letter-spacing: 0.14em; color: var(--dim); text-align: center; padding-bottom: 2px; }
+  .cal-day {
+    min-height: 56px; min-width: 0; border-radius: 10px; background: var(--panel); border: 1px solid transparent; color: var(--fg);
+    padding: 6px 2px; display: grid; align-content: start; justify-items: center; gap: 3px; cursor: pointer; font: inherit;
+  }
+  .cal-day:focus-visible { outline: 1px solid var(--fg); outline-offset: 1px; }
+  .cal-day.out { opacity: 0.35; }
+  .cal-day.today { border-color: var(--dim); }
+  .cal-day.sel { border-color: var(--fg); }
+  .cal-day .n { font: 0.9rem/1 var(--font-clock); }
+  .cal-day .s { font: 0.58rem/1.1 var(--font-clock); color: var(--fg); max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+  .cal-day .s.off { color: var(--dim); text-decoration: line-through; }
+  .cal-day .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--fg); }
+  .cal-list { display: grid; }
+  .cal-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 1rem; align-items: center; padding: 0.85rem 0; border-top: 1px solid var(--faint); }
+  .cal-item .t { font: 1rem var(--font-clock); font-variant-numeric: tabular-nums; }
+  .cal-item .m { grid-column: 1; font-size: 0.72rem; color: var(--dim); letter-spacing: 0.04em; }
+  .cal-item .a { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 0.9rem; }
+  .cal-item .a button { background: none; border: 0; color: var(--dim); font: 0.68rem var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; padding: 0.4rem 0; }
+  .cal-item .a button:hover, .cal-item .a button:focus-visible { color: var(--fg); outline: none; }
+  .cal-item .a button.arm { color: #e8a3a3; }
+  .cal-item.off .t { color: var(--dim); text-decoration: line-through; }
+  .cal-form { display: grid; gap: 1.1rem; padding-top: 0.6rem; border-top: 1px solid var(--faint); }
+  .btns:has(> [hidden]:first-child) { grid-template-columns: 1fr; }
+  .days-pick { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .days-pick button {
+    border: 1px solid var(--faint); background: none; color: var(--dim); border-radius: 999px; padding: 0.6rem 0;
+    font: 500 0.7rem var(--font-ui); letter-spacing: 0.06em; cursor: pointer; min-width: 0;
+  }
+  .days-pick button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .days-pick button:focus-visible { outline: 1px solid var(--fg); outline-offset: 2px; }
   /* Desktop only: corner toggle and a phone-sized frame of the app */
   .view-toggle {
     position: fixed; top: 16px; right: 16px; z-index: 7; width: 40px; height: 40px; border-radius: 999px;
@@ -351,6 +415,12 @@
   </section>
 
   <div class="page" id="sal-stats">
+    <section class="sec" aria-labelledby="per-title">
+      <h3 class="sec-title" id="per-title">Pay period</h3>
+      <div class="big" id="per-big"><small>DKK</small>0.00</div>
+      <div class="summary" id="per-lines"></div>
+    </section>
+
     <section class="sec" aria-labelledby="st-title">
       <h3 class="sec-title" id="st-title">Earnings</h3>
       <div class="grid2" id="st-grid"></div>
@@ -380,7 +450,30 @@
         <button class="ghost" type="submit" data-dir="1">Deposit</button>
       </form>
       <p class="err" id="sv-err"></p>
+      <div class="note" id="sv-split"></div>
     </section>
+
+    <section class="sec" aria-labelledby="gl-title">
+      <h3 class="sec-title" id="gl-title">Goals</h3>
+      <div class="goals" id="goals"></div>
+      <form class="cal-form" id="gl-move" novalidate hidden>
+        <div class="shift-row">
+          <label class="time-wrap" for="gl-pick"><span>Goal</span><select id="gl-pick"></select></label>
+          <label class="time-wrap" for="gl-amount"><span>Amount</span><input type="text" id="gl-amount" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        </div>
+        <div class="btns" style="grid-template-columns:1fr 1fr"><button class="ghost" type="submit" data-dir="-1">Take out</button><button class="go" type="submit" data-dir="1">Put in</button></div>
+        <p class="err" id="gl-move-err"></p>
+      </form>
+      <form class="cal-form" id="gl-form" novalidate>
+        <div class="shift-row">
+          <label class="time-wrap" for="gl-name"><span>New goal</span><input type="text" id="gl-name" autocomplete="off" placeholder="New camera" maxlength="40"></label>
+          <label class="time-wrap" for="gl-target"><span>Target</span><input type="text" id="gl-target" inputmode="decimal" autocomplete="off" placeholder="8000"></label>
+        </div>
+        <p class="err" id="gl-err"></p>
+        <button class="ghost" type="submit">Create goal</button>
+      </form>
+    </section>
+
     <section class="sec" aria-labelledby="sa-title">
       <h3 class="sec-title" id="sa-title">Activity</h3>
       <div class="hist" id="sv-hist"></div>
@@ -431,6 +524,7 @@
   <button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"/></svg><span>Home</span></button>
   <button type="button" data-tab="portfolio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Portfolio</span></button>
   <button type="button" data-tab="salary"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Salary</span></button>
+  <button type="button" data-tab="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg><span>Calendar</span></button>
   <button type="button" data-tab="savings"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.5"/><path d="M5 6.5v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5M5 11.5v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5"/></svg><span>Savings</span></button>
   <button type="button" data-tab="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Settings</span></button>
 </nav>
@@ -464,7 +558,12 @@
       <span>Break starts <button class="link" type="button" id="auto-break">Auto</button></span>
       <input type="time" id="break-at">
     </label>
-    <p class="hint">With a shift set, the clock counts your pay for working hours only (a 37-hour week). The end time is optional. Shifts over 4.5 hours include an unpaid 30-minute break, and the clock pauses during it. Leave the break time empty and it is placed for you: mid-shift, and never later than 4 hours in. Leave the shift start empty to count around the clock instead.</p>
+    <div class="shift-row">
+      <label class="time-wrap" for="pay-start"><span>Pay period from day</span><input type="number" id="pay-start" inputmode="numeric" min="1" max="28" placeholder="1"></label>
+      <label class="time-wrap" for="pay-day"><span>Payday <button class="link" type="button" id="pay-none">None</button></span><input type="number" id="pay-day" inputmode="numeric" min="1" max="31" placeholder="—"></label>
+    </div>
+    <p class="hint">Pay period: for example from day 19 means the 19th to the 18th of the next month. Payday is the day of the month the period is paid out, after it ends.</p>
+    <p class="hint">With a shift set, the clock counts your pay for working hours only (a 37-hour week). The end time is optional. Shifts over 4.5 hours include an unpaid 30-minute break, and the clock pauses during it. Leave the break time empty and it is placed for you: mid-shift, and never later than 4 hours in. Leave the shift start empty to count around the clock instead. For shifts on different days, use Calendar: once it has shifts, the clock follows it.</p>
     <p class="err" id="err"></p>
     <div class="btns">
       <button class="ghost" type="button" id="setup-cancel">Cancel</button>
@@ -487,6 +586,7 @@
     </div>
     <div class="summary" id="log-summary">—</div>
     <label class="check" for="log-savings"><input type="checkbox" id="log-savings" checked> Add this money to savings</label>
+    <label class="time-wrap" for="log-goal" id="log-goal-wrap" hidden><span>Put it towards</span><select id="log-goal"></select></label>
     <p class="err" id="log-err"></p>
     <div class="btns">
       <button class="ghost" type="button" id="log-cancel">Cancel</button>
@@ -532,6 +632,56 @@
   <svg viewBox="0 0 96 96" aria-hidden="true"><circle class="ring" cx="48" cy="48" r="44"></circle><path class="tick" d="M28 49 L42 63 L69 34"></path></svg>
   <p>Logged in</p>
   <span>Your data now syncs across devices</span>
+</div>
+
+
+<div class="view" id="v-calendar" hidden>
+  <div class="page">
+    <div class="page-head"><h2>Calendar</h2></div>
+
+    <section class="sec" aria-label="Month">
+      <div class="cal-nav">
+        <button class="ghost" type="button" id="cal-prev" aria-label="Previous month">‹</button>
+        <b id="cal-title"></b>
+        <button class="ghost" type="button" id="cal-next" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-sum" id="cal-sum"></div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </section>
+
+    <section class="sec" aria-labelledby="day-title">
+      <h3 class="sec-title" id="day-title"></h3>
+      <div class="cal-list" id="day-list"></div>
+      <form class="cal-form" id="day-form" novalidate>
+        <div class="shift-row">
+          <label class="time-wrap" for="df-start"><span>Starts</span><input type="time" id="df-start"></label>
+          <label class="time-wrap" for="df-end"><span>Ends</span><input type="time" id="df-end"></label>
+        </div>
+        <label class="time-wrap" for="df-break"><span>Break starts <button class="link" type="button" id="df-auto">Auto</button></span><input type="time" id="df-break"></label>
+        <p class="err" id="df-err"></p>
+        <div class="btns"><button class="ghost" type="button" id="df-cancel" hidden>Cancel</button><button class="go" type="submit" id="df-submit">Add shift this day</button></div>
+      </form>
+    </section>
+
+    <section class="sec" aria-labelledby="fx-title">
+      <h3 class="sec-title" id="fx-title">Fixed shifts · every week</h3>
+      <div class="cal-list" id="fx-list"></div>
+      <form class="cal-form" id="fx-form" novalidate>
+        <div class="field"><span>Days</span><div class="days-pick" id="fx-days"></div></div>
+        <div class="shift-row">
+          <label class="time-wrap" for="fx-start"><span>Starts</span><input type="time" id="fx-start"></label>
+          <label class="time-wrap" for="fx-end"><span>Ends</span><input type="time" id="fx-end"></label>
+        </div>
+        <label class="time-wrap" for="fx-break"><span>Break starts <button class="link" type="button" id="fx-auto">Auto</button></span><input type="time" id="fx-break"></label>
+        <div class="shift-row">
+          <label class="time-wrap" for="fx-from"><span>From</span><input type="date" id="fx-from"></label>
+          <label class="time-wrap" for="fx-until"><span>Until <button class="link" type="button" id="fx-nountil">None</button></span><input type="date" id="fx-until"></label>
+        </div>
+        <p class="err" id="fx-err"></p>
+        <div class="btns"><button class="ghost" type="button" id="fx-cancel" hidden>Cancel</button><button class="go" type="submit" id="fx-submit">Add fixed shift</button></div>
+      </form>
+    </section>
+  </div>
 </div>
 
 <div class="toast" id="toast" role="status" hidden></div>
@@ -601,7 +751,7 @@
     progress: $("progress"), bar: $("bar"), times: $("times"), tStart: $("t-start"), tEnd: $("t-end"),
     tBreak: $("t-break"), breakAt: $("break-at"),
   };
-  const TABS = ["home", "portfolio", "salary", "savings", "settings"];
+  const TABS = ["home", "portfolio", "salary", "calendar", "savings", "settings"];
   const TAB_KEY = "99ms-tab";
   let tab = (() => { try { const t = localStorage.getItem(TAB_KEY); return TABS.includes(t) ? t : "home"; } catch { return "home"; } })();
   const home = { int: $("h-int"), frac: $("h-frac"), label: $("h-sal-label"), cur: $("h-cur") };
@@ -617,7 +767,7 @@
   };
 
   const saved = store.get();
-  let cfg = Object.assign({ amount: 600000, period: "year", currency: "DKK", mode: "today", shiftStart: "", shiftEnd: "", breakAt: "" }, saved && saved.amount > 0 ? saved : {});
+  let cfg = Object.assign({ amount: 600000, period: "year", currency: "DKK", mode: "today", shiftStart: "", shiftEnd: "", breakAt: "", payStart: 1, payDay: 0 }, saved && saved.amount > 0 ? saved : {});
   if (typeof cfg.mode === "number") cfg.mode = "today";
 
   const sessionStart = performance.now();
@@ -625,7 +775,7 @@
   const grouping = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
   const fmt2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const modes = () => ALL_MODES.filter((m) => m.key !== "shift" || cfg.shiftStart);
+  const modes = () => ALL_MODES.filter((m) => m.key !== "shift" || currentShift(Date.now()));
   const currentMode = () => modes().find((m) => m.key === cfg.mode) || modes()[0];
 
   function annual(c) {
@@ -642,8 +792,24 @@
     return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m).getTime();
   }
 
-  // Resolve the shift that is running now, the one about to start, or the one just finished.
+  // The shift the clock should follow: from the calendar when it has shifts, otherwise from Settings.
+  let curCache = { sec: -1, v: null };
+  function currentShift(now) {
+    const sec = Math.floor(now / 1000);
+    if (curCache.sec === sec) return curCache.v;
+    let v = null;
+    if (calendarUsed()) v = calendarWindow(now);
+    else if (cfg.shiftStart) v = settingsWindow(now, cfg);
+    curCache = { sec, v };
+    return v;
+  }
   function shiftWindow(now, c = cfg) {
+    if (c !== cfg) return settingsWindow(now, c);
+    return currentShift(now) || settingsWindow(now, cfg.shiftStart ? cfg : { shiftStart: "00:00", shiftEnd: "00:01", breakAt: "" });
+  }
+
+  // Resolve the Settings shift that is running now, the one about to start, or the one just finished.
+  function settingsWindow(now, c = cfg) {
     const d = new Date(now);
     let start = atTime(d, c.shiftStart);
     let end = c.shiftEnd ? atTime(d, c.shiftEnd) : null;
@@ -718,7 +884,17 @@
   let label = "";
   function setLabel(t) { if (t !== label) { label = t; el.mode.textContent = t; } }
 
+  // When a shift starts or comes up (calendar or Settings), show it on the clock once; tapping can still switch away.
+  let lastShiftKey;
+  function followShift(now) {
+    const cs = currentShift(now), key = cs ? cs.start : null;
+    if (key === lastShiftKey) return;
+    lastShiftKey = key;
+    if (cs && cfg.mode !== "shift") { cfg.mode = "shift"; apply(); }
+  }
+
   function frame() {
+    followShift(Date.now());
     const mode = currentMode();
     const now = Date.now();
     let v;
@@ -786,6 +962,7 @@
   const pad = (n) => String(n).padStart(2, "0");
   $("now").addEventListener("click", (e) => { e.preventDefault(); const d = new Date(); el.start.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`; });
   $("clear-end").addEventListener("click", (e) => { e.preventDefault(); el.end.value = ""; });
+  $("pay-none").addEventListener("click", (e) => { e.preventDefault(); $("pay-day").value = ""; });
   $("auto-break").addEventListener("click", (e) => { e.preventDefault(); el.breakAt.value = ""; });
 
   function openSheet() {
@@ -794,6 +971,8 @@
     el.start.value = cfg.shiftStart;
     el.end.value = cfg.shiftEnd;
     el.breakAt.value = cfg.breakAt;
+    $("pay-start").value = cfg.payStart > 1 ? cfg.payStart : "";
+    $("pay-day").value = cfg.payDay || "";
     el.err.textContent = "";
     el.sheet.hidden = false;
   }
@@ -820,6 +999,8 @@
     cfg.shiftStart = el.start.value;
     cfg.shiftEnd = el.end.value;
     cfg.breakAt = el.breakAt.value;
+    cfg.payStart = Math.min(28, Math.max(1, Math.round(+$("pay-start").value) || 1));
+    cfg.payDay = Math.min(31, Math.max(0, Math.round(+$("pay-day").value) || 0));
     if (cfg.shiftStart && !hadShift) cfg.mode = "shift";
     store.set(cfg); apply();
     el.sheet.hidden = true;
@@ -883,13 +1064,12 @@
         const v = JSON.parse(localStorage.getItem("salary-clock-log") || "null");
         if (v && Array.isArray(v.shifts) && Array.isArray(v.savings)) return v;
       } catch {}
-      return { shifts: [], savings: [], items: [], deleted: [] };
+      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [] };
     },
     set(v) { try { localStorage.setItem("salary-clock-log", JSON.stringify(v)); return true; } catch { return false; } },
   };
   let log = logStore.get();
-  if (!Array.isArray(log.deleted)) log.deleted = [];
-  if (!Array.isArray(log.items)) log.items = [];
+  ["deleted", "items", "fixed", "planned", "skips", "goals"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
   const persist = () => { if (!logStore.set(log)) toast("Could not save. This browser is blocking storage."); scheduleSync(); };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const money = (n) => fmt2.format(n);
@@ -1040,6 +1220,8 @@
     f.end.value = cfg.shiftEnd;
     f.brk.value = ended ? Math.round(unpaidMs(w.start, w.end, w.brk, breaksFor(w.start)) / 60000) : 0;
     f.toSav.checked = true;
+    fillGoalSelect($("log-goal"), true);
+    $("log-goal-wrap").hidden = !activeGoals().length;
     f.err.textContent = "";
     if (saveLive) {
       const so = paidMs(w.start, now, w.brk, breaksFor(w.start)) * workPerMs();
@@ -1068,7 +1250,7 @@
       endLive(now);
       const x = { id: uid(), start: w.start, end: w.end, sched: w.brk, breakMin: 0, amount: 0, currency: cfg.currency, savings: f.toSav.checked, live: true, u: now };
       log.shifts.push(x);
-      if (x.savings) log.savings.push({ id: uid(), t: now, amount: 0, currency: x.currency, shiftId: x.id, kind: "shift", live: true, u: now });
+      if (x.savings) log.savings.push({ id: uid(), t: now, amount: 0, currency: x.currency, shiftId: x.id, kind: "shift", live: true, u: now, ...goalPick() });
       persist();
       saveKey = "";
       $("save-sheet").hidden = true;
@@ -1081,7 +1263,7 @@
     if (log.shifts.some((x) => x.start === s.start)) { f.err.textContent = "A shift starting at that time is already saved."; return; }
     const shift = { id: uid(), start: s.start, end: s.end, breakMin: s.breakMin, amount: +s.amount.toFixed(2), currency: cfg.currency, savings: f.toSav.checked, u: Date.now() };
     log.shifts.push(shift);
-    if (shift.savings) log.savings.push({ id: uid(), t: s.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: Date.now() });
+    if (shift.savings) log.savings.push({ id: uid(), t: s.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: Date.now(), ...goalPick() });
     persist();
     saveKey = "";
     $("save-sheet").hidden = true;
@@ -1102,13 +1284,16 @@
   }
   const dateFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
-  function balance() {
-    return log.savings.filter((t) => t.currency === cfg.currency).reduce((a, t) => {
-      if (!t.live) return a + t.amount;
-      const x = log.shifts.find((s) => s.id === t.shiftId);
-      return a + (x ? amountOf(x) : 0);
-    }, 0);
+  // Savings: every transaction, live ones at their current value. goalId puts money in a goal.
+  function txAmount(t) {
+    if (!t.live) return t.amount;
+    const x = log.shifts.find((s) => s.id === t.shiftId);
+    return x ? amountOf(x) : 0;
   }
+  const curTx = () => log.savings.filter((t) => t.currency === cfg.currency);
+  const balance = () => curTx().reduce((a, t) => a + txAmount(t), 0);
+  const freeBalance = () => curTx().filter((t) => !t.goalId).reduce((a, t) => a + txAmount(t), 0);
+  const goalBalance = (id) => log.savings.filter((t) => t.goalId === id).reduce((a, t) => a + txAmount(t), 0);
 
   const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
   function stat(label, value, sub) {
@@ -1117,7 +1302,7 @@
 
   // The shift running right now that has not been saved yet, as a stats entry.
   function runningShift(now = Date.now()) {
-    if (!cfg.shiftStart) return null;
+    if (!currentShift(now)) return null;
     const { start, end, brk } = shiftWindow(now);
     if (now < start || (end !== null && now >= end) || log.shifts.some((x) => x.start === start)) return null;
     const list = breaksFor(start);
@@ -1146,6 +1331,7 @@
   function renderNumbers(shifts) {
     const cur = cfg.currency;
     const other = log.shifts.filter((x) => x.currency !== cur).length;
+    renderPayPeriod();
 
     const now = Date.now();
     const wk = weekStart(now);
@@ -1163,6 +1349,11 @@
       stat("Shifts", shifts.length, shifts.length ? `since ${dateFmt.format(shifts[shifts.length - 1].start)}` : ""),
       stat("This week", c(sum(inRange(wk), "amount")), plural(inRange(wk).length, "shift")),
       stat("This month", c(sum(inRange(mo), "amount")), plural(inRange(mo).length, "shift")),
+      ...(calendarUsed() ? (() => {
+        const pl = monthPlan(d.getFullYear(), d.getMonth(), now);
+        return [stat("Still planned", c(pl.upcoming), `${plural(pl.upcomingN, "shift")} left this month`),
+                stat("Month forecast", c(sum(inRange(mo), "amount") + pl.upcoming), "earned + planned")];
+      })() : []),
       stat("This year", c(sum(inRange(yr), "amount")), plural(inRange(yr).length, "shift")),
       stat("Hours paid", hm(paid), shifts.length ? `${hm(paid / shifts.length)} per shift` : ""),
       stat("Per shift", shifts.length ? c(total / shifts.length) : "—", "average"),
@@ -1251,8 +1442,8 @@
     const err = $("sv-err");
     const n = parseFloat($("sv-amount").value.replace(/[\s,']/g, ""));
     if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
-    const bal = balance();
-    if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${cfg.currency} ${money(bal)} saved.`; return; }
+    const bal = freeBalance();
+    if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${cfg.currency} ${money(bal)} outside your goals. Take money out of a goal first.`; return; }
     err.textContent = "";
     log.savings.push({ id: uid(), t: Date.now(), amount: svDir * +n.toFixed(2), currency: cfg.currency, kind: svDir < 0 ? "withdraw" : "deposit", u: Date.now() });
     persist();
@@ -1313,7 +1504,8 @@
     if (tab === "home") renderHome();
     else if (tab === "portfolio") renderPortfolio();
     else if (tab === "salary") renderStats();
-    else if (tab === "savings") renderSavings();
+    else if (tab === "calendar") renderCal();
+    else if (tab === "savings") { renderGoals(); renderSavings(); }
     else renderSettings();
   }
   document.addEventListener("keydown", (e) => {
@@ -1331,8 +1523,9 @@
     const cur = cfg.currency;
     if (home.cur.textContent !== cur) home.cur.textContent = cur;
     $("h-date").textContent = dayFmt.format(now);
-    $("h-sal-sub").textContent = cfg.shiftStart
-      ? `Shift ${cfg.shiftStart}–${cfg.shiftEnd || "open"} · ${money(workPerMs() * HOUR)} / hour`
+    const cs = currentShift(now);
+    $("h-sal-sub").textContent = cs
+      ? `Shift ${hhmm(new Date(cs.start))}–${cs.end ? hhmm(new Date(cs.end)) : "open"} · ${money(workPerMs() * HOUR)} / hour`
       : `${money(clockPerMs() * HOUR)} / hour, around the clock`;
     const live = liveRec();
     $("h-sav").textContent = money(balance());
@@ -1350,10 +1543,13 @@
   }
 
   // Savings: balance, deposit / withdraw, and every movement.
-  const KIND = { shift: "Shift pay", deposit: "Deposit", withdraw: "Withdrawal" };
+  const KIND = { shift: "Shift pay", deposit: "Deposit", withdraw: "Withdrawal", move: "Moved", spent: "Spent from goal" };
   function renderSavings() {
     const cur = cfg.currency;
     $("sv-balance").innerHTML = `<small>${cur}</small>${money(balance())}`;
+    const inGoals = balance() - freeBalance();
+    $("sv-split").textContent = inGoals > 0.004 ? `Free ${cur} ${money(freeBalance())} · in goals ${cur} ${money(inGoals)}` : "";
+    tickGoals();
     const list = log.savings.filter((t) => t.currency === cur).sort((a, b) => b.t - a.t).slice(0, 100);
     const box = $("sv-hist");
     if (!list.length) { box.innerHTML = `<p class="empty">Nothing yet. Saved shifts can pay into savings, and you can deposit or withdraw above.</p>`; return; }
@@ -1455,6 +1651,380 @@
   }));
 
 
+
+
+  // ---------- Pay periods (lønperioder) ----------
+  function periodFor(date) {
+    const s = cfg.payStart || 1;
+    const from = date.getDate() >= s ? new Date(date.getFullYear(), date.getMonth(), s) : new Date(date.getFullYear(), date.getMonth() - 1, s);
+    return { from, to: new Date(from.getFullYear(), from.getMonth() + 1, s - 1) };
+  }
+  function payoutFor(per) {
+    if (!cfg.payDay) return null;
+    const at = (y, m) => new Date(y, m, Math.min(cfg.payDay, new Date(y, m + 1, 0).getDate()));
+    let d = at(per.to.getFullYear(), per.to.getMonth());
+    if (d <= per.to) d = at(per.to.getFullYear(), per.to.getMonth() + 1);
+    return d;
+  }
+  const shortDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+  const longDate = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const rangeText = (per) => `${shortDate.format(per.from)} – ${shortDate.format(per.to)}`;
+  function renderPayPeriod() {
+    const now = Date.now(), cur = cfg.currency;
+    const per = periodFor(new Date(now));
+    const plan = rangePlan(per.from, per.to, now);
+    const run = runningShift(now);
+    const earned = plan.earned + (run ? run.amount : 0);
+    const pay = payoutFor(per);
+    const days = pay ? Math.ceil((pay - new Date(new Date(now).toDateString())) / DAY) : 0;
+    $("per-title").textContent = `Pay period · ${rangeText(per)}`;
+    $("per-big").innerHTML = `<small>${cur}</small>${money(earned)}`;
+    const prev = periodFor(addDays(per.from, -1)), prevPlan = rangePlan(prev.from, prev.to, now), prevPay = payoutFor(prev);
+    $("per-lines").innerHTML = `earned so far${plan.upcomingN ? ` · ${cur} ${money(plan.upcoming)} still planned in ${plural(plan.upcomingN, "shift")}` : ""}`
+      + `<span>Forecast for the period ${cur} ${money(earned + plan.upcoming)}${pay ? ` · paid out ${longDate.format(pay)}, in ${plural(days, "day")}` : " · set your payday in Settings"}</span>`
+      + `<span>Last period (${rangeText(prev)}) ${cur} ${money(prevPlan.earned)}${prevPay ? `, paid ${prevPay <= new Date(now) ? "" : "out "}${longDate.format(prevPay)}` : ""}</span>`;
+  }
+
+  // ---------- Goals ----------
+  const activeGoals = () => log.goals.filter((g) => !g.done && g.currency === cfg.currency);
+  function fillGoalSelect(sel, withSavings) {
+    const keep = sel.value;
+    sel.innerHTML = (withSavings ? `<option value="">Savings (no goal)</option>` : "") + activeGoals().map((g) => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join("");
+    if ([...sel.options].some((o) => o.value === keep)) sel.value = keep;
+  }
+  const goalPick = () => { const v = $("log-goal").value; return v && activeGoals().some((g) => g.id === v) ? { goalId: v } : {}; };
+  const escapeHtml = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // How many future calendar shifts it takes to cover `need`, if all their pay goes to the goal.
+  function goalEta(need) {
+    if (need <= 0) return "";
+    const now = Date.now();
+    if (calendarUsed()) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let acc = 0, n = 0;
+      for (let i = 0; i < 400; i++) {
+        for (const o of occurrences(addDays(today, i))) {
+          if (o.off || o.start <= now || log.shifts.some((x) => x.start === o.start)) continue;
+          acc += expectedPay(o); n++;
+          if (acc >= need) return `${plural(n, "shift")} away · around ${longDate.format(new Date(o.end))} if all your pay goes here`;
+        }
+      }
+    }
+    const done = log.shifts.filter((x) => !x.live && x.currency === cfg.currency && x.amount > 0);
+    if (!done.length) return "";
+    const avg = done.reduce((a, x) => a + x.amount, 0) / done.length;
+    return `about ${plural(Math.ceil(need / avg), "shift")} at your average shift pay`;
+  }
+
+  function renderGoals() {
+    const cur = cfg.currency;
+    const list = log.goals.filter((g) => g.currency === cur).sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0) || a.created - b.created);
+    $("goals").innerHTML = list.map((g) => `
+      <div class="goal${g.done ? " done" : ""}" data-g="${g.id}">
+        <div class="goal-head"><b>${escapeHtml(g.name)}</b><span class="pct"></span></div>
+        <div class="amt"></div>
+        <div class="track"><i></i></div>
+        <div class="m"></div>
+        <div class="a">${g.done ? "" : `<button type="button" data-act="bought" data-id="${g.id}">Bought it</button>`}<button type="button" data-act="del" data-id="${g.id}">Delete</button></div>
+      </div>`).join("") || `<p class="empty">No goals yet. Create one below, like a new camera, then put money in it or send a shift's pay straight to it.</p>`;
+    $("goals").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => goalAction(b)));
+    $("gl-move").hidden = !activeGoals().length;
+    fillGoalSelect($("gl-pick"), false);
+    tickGoals();
+  }
+  function tickGoals() {
+    const cur = cfg.currency;
+    $("goals").querySelectorAll(".goal").forEach((el) => {
+      const g = log.goals.find((x) => x.id === el.dataset.g); if (!g) return;
+      const have = g.done ? g.spent || 0 : goalBalance(g.id);
+      const pct = Math.min(100, (have / g.target) * 100);
+      el.querySelector(".pct").textContent = g.done ? "done" : `${Math.floor(pct)}%`;
+      el.querySelector(".amt").innerHTML = `${money(have)} <small>/ ${cur} ${money(g.target)}</small>`;
+      el.querySelector(".track i").style.width = pct.toFixed(2) + "%";
+      const need = g.target - have;
+      const m = g.done ? `Bought ${longDate.format(g.done)}` : need <= 0.004 ? "Goal reached. Tap Bought it when you spend it." : `${cur} ${money(need)} to go${goalEtaCache(g.id, need)}`;
+      if (el.querySelector(".m").textContent !== m) el.querySelector(".m").textContent = m;
+    });
+  }
+  let etaCache = {};
+  function goalEtaCache(id, need) {
+    const k = Math.round(need / 50);
+    if (!etaCache[id] || etaCache[id].k !== k) { const t = goalEta(need); etaCache[id] = { k, t: t ? ` · ${t}` : "" }; }
+    return etaCache[id].t;
+  }
+  function goalAction(b) {
+    const g = log.goals.find((x) => x.id === b.dataset.id); if (!g) return;
+    if (!b.classList.contains("arm")) {
+      const label = b.textContent; b.classList.add("arm"); b.textContent = "Sure?";
+      setTimeout(() => { b.classList.remove("arm"); b.textContent = label; }, 3000); return;
+    }
+    const have = goalBalance(g.id);
+    if (b.dataset.act === "bought") {
+      if (have > 0) log.savings.push({ id: uid(), t: Date.now(), amount: -+have.toFixed(2), currency: g.currency, goalId: g.id, kind: "spent", u: Date.now() });
+      g.done = Date.now(); g.spent = +have.toFixed(2); g.u = Date.now();
+      toast(`Enjoy the ${g.name}! ${g.currency} ${money(have)} spent from the goal.`);
+    } else {
+      // Money in the goal goes back to free savings.
+      log.savings.forEach((t) => { if (t.goalId === g.id) { delete t.goalId; t.u = Date.now(); } });
+      log.goals = log.goals.filter((x) => x.id !== g.id); log.deleted.push(g.id);
+      toast(have > 0 ? `Goal deleted. ${g.currency} ${money(have)} went back to savings.` : "Goal deleted.");
+    }
+    persist(); renderTab();
+  }
+  $("gl-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("gl-name").value.trim(), target = parseFloat($("gl-target").value.replace(/[\s,']/g, ""));
+    if (!name) { $("gl-err").textContent = "Give the goal a name, like New camera."; return; }
+    if (!(target > 0)) { $("gl-err").textContent = "Enter how much you need, for example 8000."; return; }
+    $("gl-err").textContent = "";
+    log.goals.push({ id: uid(), name, target: +target.toFixed(2), currency: cfg.currency, created: Date.now(), u: Date.now() });
+    $("gl-name").value = ""; $("gl-target").value = "";
+    persist(); renderTab(); toast(`Goal created: ${name}.`);
+  });
+  let glDir = 1;
+  $("gl-move").querySelectorAll("button[data-dir]").forEach((b) => b.addEventListener("click", () => { glDir = +b.dataset.dir; }));
+  $("gl-move").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("gl-move-err"), id = $("gl-pick").value, g = log.goals.find((x) => x.id === id);
+    const n = parseFloat($("gl-amount").value.replace(/[\s,']/g, ""));
+    if (!g) { err.textContent = "Pick a goal."; return; }
+    if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
+    if (glDir > 0 && n > freeBalance() + 0.001) { err.textContent = `You have ${cfg.currency} ${money(freeBalance())} in savings outside your goals. Deposit first, or put in less.`; return; }
+    if (glDir < 0 && n > goalBalance(id) + 0.001) { err.textContent = `${g.name} only has ${cfg.currency} ${money(goalBalance(id))}.`; return; }
+    err.textContent = "";
+    const t = Date.now(), amt = +n.toFixed(2);
+    log.savings.push({ id: uid(), t, amount: -glDir * amt, currency: g.currency, kind: "move", u: t });
+    log.savings.push({ id: uid(), t, amount: glDir * amt, currency: g.currency, goalId: id, kind: "move", u: t });
+    $("gl-amount").value = "";
+    persist(); renderTab();
+    toast(glDir > 0 ? `Put ${g.currency} ${money(amt)} towards ${g.name}.` : `Took ${g.currency} ${money(amt)} out of ${g.name}.`);
+  });
+  $("log-savings").addEventListener("change", () => { $("log-goal-wrap").hidden = !$("log-savings").checked || !activeGoals().length; });
+
+  // ---------- Calendar: fixed weekly shifts, single shifts, days off ----------
+  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];      // display order
+  const DOW_JS = [1, 2, 3, 4, 5, 6, 0];                                // matching Date.getDay()
+  const monthFmt = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
+  function calendarUsed() { return log.fixed.length > 0 || log.planned.length > 0; }
+  const parseYmd = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const skipId = (fid, ds) => `${fid}@${ds}`;
+  const isSkipped = (fid, ds) => log.skips.some((k) => k.id === skipId(fid, ds));
+
+  // Every shift on a given day, with its times in ms. Skipped fixed shifts are included, marked off.
+  function occurrences(day) {
+    const ds = ymd(day), out = [];
+    const win = (o) => {
+      const start = atTime(day, o.start);
+      let end = atTime(day, o.end); if (end <= start) end += DAY;
+      return { start, end };
+    };
+    log.fixed.forEach((fx) => {
+      if (!fx.days.includes(day.getDay()) || ds < fx.from || (fx.until && ds > fx.until)) return;
+      out.push({ key: skipId(fx.id, ds), kind: "fixed", ref: fx, date: ds, breakAt: fx.breakAt || "", off: isSkipped(fx.id, ds), ...win(fx) });
+    });
+    log.planned.filter((pl) => pl.date === ds).forEach((pl) => out.push({ key: pl.id, kind: "single", ref: pl, date: ds, breakAt: pl.breakAt || "", off: false, ...win(pl) }));
+    return out.sort((a, b) => a.start - b.start);
+  }
+  const expectedPay = (o) => { const dur = o.end - o.start; return Math.max(0, dur - (dur > BREAK_AFTER ? BREAK_LEN : 0)) * workPerMs(); };
+
+  // Running shift, or the one that just ended, or the next one coming up.
+  function calendarWindow(now) {
+    const today = new Date(now); today.setHours(0, 0, 0, 0);
+    const wins = [-1, 0, 1].flatMap((n) => occurrences(addDays(today, n))).filter((o) => !o.off);
+    const pick = wins.find((o) => o.start <= now && now < o.end)
+      || wins.filter((o) => o.end <= now && now - o.end < 2 * HOUR).sort((a, b) => b.end - a.end)[0]
+      || wins.filter((o) => o.start > now && o.start - now < 18 * HOUR).sort((a, b) => a.start - b.start)[0]
+      || wins.filter((o) => o.end <= now && now - o.end < 6 * HOUR).sort((a, b) => b.end - a.end)[0];
+    if (!pick) return null;
+    return { start: pick.start, end: pick.end, brk: breakStart(pick.start, pick.end, { breakAt: pick.breakAt }) };
+  }
+
+  // Totals for days from..to (inclusive): saved pay where a shift was saved, expected pay for the rest.
+  const monthPlan = (y, m, now = Date.now()) => rangePlan(new Date(y, m, 1), new Date(y, m + 1, 0), now);
+  function rangePlan(from, to, now = Date.now()) {
+    const res = { shifts: 0, ms: 0, expected: 0, earned: 0, upcoming: 0, upcomingN: 0 };
+    const savedIn = log.shifts.filter((x) => x.currency === cfg.currency);
+    const matched = new Set();
+    const lastDs = ymd(to);
+    for (let d = new Date(from.getFullYear(), from.getMonth(), from.getDate()); ymd(d) <= lastDs; d = addDays(d, 1)) {
+      occurrences(d).filter((o) => !o.off).forEach((o) => {
+        const sv = savedIn.find((x) => x.start === o.start);
+        const pay = sv ? amountOf(sv) : expectedPay(o);
+        if (sv) { matched.add(sv.id); res.earned += pay; }
+        res.shifts++; res.ms += o.end - o.start; res.expected += pay;
+        if (!sv && o.start > now) { res.upcoming += pay; res.upcomingN++; }
+      });
+    }
+    const fromDs = ymd(from);
+    savedIn.forEach((x) => {
+      const ds = ymd(new Date(x.start));
+      if (ds >= fromDs && ds <= lastDs && !matched.has(x.id)) { const a = amountOf(x); res.shifts++; res.ms += (x.end || Date.now()) - x.start; res.expected += a; res.earned += a; }
+    });
+    return res;
+  }
+
+  let calMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  let calSel = ymd(new Date());
+  const changed = () => { persist(); curCache.sec = -1; saveKey = ""; renderCal(); };
+  const touch = (o) => { o.u = Date.now(); return o; };
+  const hh = (t) => t.replace(/^0/, "").replace(/:00$/, "");
+
+  function renderCal() {
+    if (tab !== "calendar") return;
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    $("cal-title").textContent = monthFmt.format(calMonth);
+    const plan = monthPlan(y, m);
+    const cur = cfg.currency;
+    const per = periodFor(parseYmd(calSel)), perPlan = rangePlan(per.from, per.to), perPay = payoutFor(per);
+    $("cal-sum").innerHTML = `${cur} ${money(plan.expected)} · ${plural(plan.shifts, "shift")} · ${hm(plan.ms)}`
+      + `<span>${plan.upcomingN ? `${cur} ${money(plan.upcoming)} still to earn in ${plural(plan.upcomingN, "planned shift")}` : "Expected pay for the month, using saved pay where a shift is saved"}</span>`
+      + `<span>Pay period ${rangeText(per)}: ${cur} ${money(perPlan.expected)}${perPay ? `, paid out ${longDate.format(perPay)}` : ""}</span>`;
+    const paydays = new Set(); if (cfg.payDay) for (let k = -1; k <= 1; k++) { const pp = periodFor(new Date(y, m + k, 15)); const pd = payoutFor(pp); if (pd) paydays.add(ymd(pd)); }
+
+    const todayS = ymd(new Date());
+    const first = new Date(y, m, 1);
+    const lead = (first.getDay() + 6) % 7;
+    let html = DOW.map((d) => `<div class="cal-dow">${d.slice(0, 2).toUpperCase()}</div>`).join("");
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(first, i - lead);
+      if (i >= 35 && d.getMonth() !== m) break;
+      const ds = ymd(d);
+      const occ = occurrences(d);
+      const on = occ.filter((o) => !o.off);
+      const saved = log.shifts.some((x) => ymd(new Date(x.start)) === ds);
+      const label = on.length ? `${hh(on[0].ref.start)}–${hh(on[0].ref.end)}${on.length > 1 ? " +" : ""}` : occ.length ? "off" : "";
+      html += `<button type="button" class="cal-day${paydays.has(ds) ? " payday" : ""}${cfg.payStart > 1 && d.getDate() === cfg.payStart ? " ps" : ""}${d.getMonth() !== m ? " out" : ""}${ds === todayS ? " today" : ""}${ds === calSel ? " sel" : ""}" data-d="${ds}" aria-label="${dayFmt.format(d)}${on.length ? `, ${plural(on.length, "shift")}` : ""}">`
+        + `<span class="n">${d.getDate()}</span>${label ? `<span class="s${on.length ? "" : " off"}">${label}</span>` : ""}${saved ? '<span class="dot" title="Saved"></span>' : ""}</button>`;
+    }
+    $("cal-grid").innerHTML = html;
+    $("cal-grid").querySelectorAll(".cal-day").forEach((b) => b.addEventListener("click", () => { calSel = b.dataset.d; resetDayForm(); renderCal(); }));
+    renderDay();
+    renderFixed();
+  }
+
+  function renderDay() {
+    const day = parseYmd(calSel);
+    $("day-title").textContent = dayFmt.format(day);
+    const occ = occurrences(day);
+    const saved = log.shifts.filter((x) => ymd(new Date(x.start)) === calSel);
+    const rows = occ.map((o) => {
+      const sv = saved.find((x) => x.start === o.start);
+      const meta = o.off ? "Fixed shift · day off" : `${o.kind === "fixed" ? "Fixed shift" : "Single shift"} · ${sv ? `saved ${cfg.currency} ${money(amountOf(sv))}` : `about ${cfg.currency} ${money(expectedPay(o))}`}`;
+      const acts = o.kind === "fixed"
+        ? `<button type="button" data-act="${o.off ? "unskip" : "skip"}" data-id="${o.ref.id}">${o.off ? "Undo day off" : "Day off"}</button>`
+        : `<button type="button" data-act="edit" data-id="${o.ref.id}">Edit</button><button type="button" data-act="del" data-id="${o.ref.id}">Delete</button>`;
+      return `<div class="cal-item${o.off ? " off" : ""}"><div class="t">${o.ref.start}–${o.ref.end}</div><div class="m">${meta}</div><div class="a">${acts}</div></div>`;
+    });
+    saved.filter((x) => !occ.some((o) => o.start === x.start)).forEach((x) => {
+      rows.push(`<div class="cal-item"><div class="t">${hhmm(new Date(x.start))}–${x.live ? "now" : hhmm(new Date(x.end))}</div><div class="m">Saved shift · ${x.currency} ${money(amountOf(x))}</div><div class="a"></div></div>`);
+    });
+    $("day-list").innerHTML = rows.join("") || `<p class="empty">No shifts this day. Add one below, or set up fixed shifts further down.</p>`;
+    $("day-list").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => dayAction(b)));
+  }
+
+  function dayAction(b) {
+    const { act, id } = b.dataset;
+    if (act === "skip") { log.skips.push(touch({ id: skipId(id, calSel), fixedId: id, date: calSel })); log.deleted = log.deleted.filter((x) => x !== skipId(id, calSel)); changed(); toast("Day off. The fixed shift is skipped this day."); }
+    if (act === "unskip") { const k = skipId(id, calSel); log.skips = log.skips.filter((x) => x.id !== k); log.deleted.push(k); changed(); }
+    if (act === "edit") {
+      const pl = log.planned.find((x) => x.id === id); if (!pl) return;
+      $("df-start").value = pl.start; $("df-end").value = pl.end; $("df-break").value = pl.breakAt || "";
+      dfEditing = id; $("df-submit").textContent = "Save changes"; $("df-cancel").hidden = false; $("df-start").focus();
+    }
+    if (act === "del") {
+      if (!b.classList.contains("arm")) { b.classList.add("arm"); b.textContent = "Sure?"; setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000); return; }
+      log.planned = log.planned.filter((x) => x.id !== id); log.deleted.push(id); changed();
+    }
+  }
+
+  let dfEditing = null;
+  function resetDayForm() {
+    dfEditing = null; $("df-start").value = ""; $("df-end").value = ""; $("df-break").value = "";
+    $("df-err").textContent = ""; $("df-submit").textContent = "Add shift this day"; $("df-cancel").hidden = true;
+  }
+  const timesError = (st, en, br) => {
+    if (!st || !en) return "Pick a start and an end time.";
+    if (st === en) return "The shift ends at the same time it starts.";
+    if (br) {
+      const base = new Date(2000, 0, 3), s0 = atTime(base, st); let e0 = atTime(base, en); if (e0 <= s0) e0 += DAY;
+      let b0 = atTime(base, br); if (b0 < s0) b0 += DAY;
+      if (b0 + BREAK_LEN > e0) return "The break has to fit inside the shift.";
+    }
+    return "";
+  };
+  $("df-auto").addEventListener("click", (e) => { e.preventDefault(); $("df-break").value = ""; });
+  $("df-cancel").addEventListener("click", resetDayForm);
+  $("day-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const st = $("df-start").value, en = $("df-end").value, br = $("df-break").value;
+    const err = timesError(st, en, br); if (err) { $("df-err").textContent = err; return; }
+    if (dfEditing) Object.assign(log.planned.find((x) => x.id === dfEditing) || {}, touch({ start: st, end: en, breakAt: br }));
+    else log.planned.push(touch({ id: uid(), date: calSel, start: st, end: en, breakAt: br }));
+    const msg = dfEditing ? "Shift updated." : "Shift added.";
+    resetDayForm(); changed(); toast(msg);
+  });
+
+  // Fixed shifts
+  let fxDays = new Set(), fxEditing = null;
+  function renderFixedDays() {
+    $("fx-days").innerHTML = DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${fxDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
+    $("fx-days").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      const n = +b.dataset.day; fxDays.has(n) ? fxDays.delete(n) : fxDays.add(n); b.setAttribute("aria-pressed", fxDays.has(n));
+    }));
+  }
+  function resetFixedForm() {
+    fxEditing = null; fxDays = new Set();
+    ["fx-start", "fx-end", "fx-break", "fx-until"].forEach((id) => { $(id).value = ""; });
+    $("fx-from").value = ymd(new Date()); $("fx-err").textContent = "";
+    $("fx-submit").textContent = "Add fixed shift"; $("fx-cancel").hidden = true;
+    renderFixedDays();
+  }
+  const daysText = (days) => DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", ");
+  function renderFixed() {
+    const short = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+    $("fx-list").innerHTML = log.fixed.map((fx) => `
+      <div class="cal-item"><div class="t">${fx.start}–${fx.end}</div>
+        <div class="m">${daysText(fx.days)} · from ${short.format(parseYmd(fx.from))}${fx.until ? ` to ${short.format(parseYmd(fx.until))}` : ""}${fx.breakAt ? ` · break ${fx.breakAt}` : ""}</div>
+        <div class="a"><button type="button" data-act="edit" data-id="${fx.id}">Edit</button><button type="button" data-act="del" data-id="${fx.id}">Delete</button></div></div>`).join("")
+      || `<p class="empty">No fixed shifts yet. Pick the weekdays you always work and the times.</p>`;
+    $("fx-list").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => {
+      const fx = log.fixed.find((x) => x.id === b.dataset.id); if (!fx) return;
+      if (b.dataset.act === "edit") {
+        fxEditing = fx.id; fxDays = new Set(fx.days); renderFixedDays();
+        $("fx-start").value = fx.start; $("fx-end").value = fx.end; $("fx-break").value = fx.breakAt || "";
+        $("fx-from").value = fx.from; $("fx-until").value = fx.until || "";
+        $("fx-submit").textContent = "Save changes"; $("fx-cancel").hidden = false;
+        $("fx-form").scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (!b.classList.contains("arm")) { b.classList.add("arm"); b.textContent = "Sure?"; setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000); return; }
+      log.fixed = log.fixed.filter((x) => x.id !== fx.id); log.deleted.push(fx.id);
+      if (fxEditing === fx.id) resetFixedForm();
+      changed(); toast("Fixed shift deleted. Saved shifts are kept.");
+    }));
+  }
+  $("fx-auto").addEventListener("click", (e) => { e.preventDefault(); $("fx-break").value = ""; });
+  $("fx-nountil").addEventListener("click", (e) => { e.preventDefault(); $("fx-until").value = ""; });
+  $("fx-cancel").addEventListener("click", resetFixedForm);
+  $("fx-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const st = $("fx-start").value, en = $("fx-end").value, br = $("fx-break").value, from = $("fx-from").value, until = $("fx-until").value;
+    if (!fxDays.size) { $("fx-err").textContent = "Pick at least one weekday."; return; }
+    const err = timesError(st, en, br); if (err) { $("fx-err").textContent = err; return; }
+    if (!from) { $("fx-err").textContent = "Pick the date the fixed shift starts."; return; }
+    if (until && until < from) { $("fx-err").textContent = "The end date is before the start date."; return; }
+    const data = touch({ days: [...fxDays], start: st, end: en, breakAt: br, from, until });
+    if (fxEditing) Object.assign(log.fixed.find((x) => x.id === fxEditing) || {}, data);
+    else log.fixed.push({ id: uid(), ...data });
+    const msg = fxEditing ? "Fixed shift updated." : `Fixed shift added: ${daysText([...fxDays])}, ${st}–${en}.`;
+    resetFixedForm(); changed(); toast(msg);
+  });
+
+  $("cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCal(); });
+  $("cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCal(); });
+  resetFixedForm(); resetDayForm();
+
   // ---------- Account and sync (Supabase) ----------
   // Fill these in from Supabase: Project Settings → API. The anon key is meant to be public;
   // row level security keeps every account's data private.
@@ -1476,7 +2046,13 @@
     const r = remote && remote.log ? remote.log : { shifts: [], savings: [] };
     const rc = remote && remote.cfg;
     const c = rc && (rc.updatedAt || 0) > (local.cfg.updatedAt || 0) ? { ...rc, mode: local.cfg.mode } : local.cfg;
-    return { cfg: c, log: { shifts: byId(local.log.shifts, r.shifts || []), savings: byId(local.log.savings, r.savings || []), items: byId(local.log.items || [], r.items || []), deleted } };
+    const L = local.log;
+    return { cfg: c, log: {
+      shifts: byId(L.shifts, r.shifts || []), savings: byId(L.savings, r.savings || []), items: byId(L.items || [], r.items || []),
+      fixed: byId(L.fixed || [], r.fixed || []), planned: byId(L.planned || [], r.planned || []), skips: byId(L.skips || [], r.skips || []),
+      goals: byId(L.goals || [], r.goals || []),
+      deleted,
+    } };
   }
 
   function scheduleSync(delay = 1200) {
@@ -1499,6 +2075,7 @@
         cfg = merged.cfg; log = merged.log;
         store.set(cfg, true); logStore.set(log);
         apply(); saveKey = ""; breakKey = "";
+        curCache.sec = -1;
         renderTab();
       }
       lastSynced = Date.now(); syncErr = "";
