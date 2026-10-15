@@ -149,6 +149,19 @@
   .err { color: #e8a3a3; font-size: 0.75rem; margin: 0; text-align: left; min-height: 1em; }
 
 
+  /* Setup questions */
+  .wiz .page { gap: 1.4rem; }
+  .wiz-top { display: flex; justify-content: space-between; align-items: center; }
+  .wiz-step { font: 0.75rem var(--font-clock); color: var(--dim); letter-spacing: 0.1em; }
+  .wiz-bar { height: 2px; background: var(--faint); border-radius: 1px; overflow: hidden; }
+  .wiz-bar i { display: block; height: 100%; width: 0; background: var(--fg); transition: width 0.3s ease; }
+  .wiz-q { margin: 0; font: 400 1.7rem/1.2 var(--font-clock); letter-spacing: 0.02em; text-wrap: balance; }
+  .wiz-body { display: grid; gap: 1.2rem; }
+  .wiz-sup { display: grid; grid-template-columns: minmax(0, 1fr) 7rem; gap: 1rem; align-items: end; }
+  .wiz-sup b { font-weight: 500; font-size: 0.95rem; display: block; }
+  .wiz-sup small { color: var(--dim); font-size: 0.72rem; }
+  .wiz-sup input { font-size: 1.3rem !important; text-align: right; }
+  @media (prefers-reduced-motion: reduce) { .wiz-bar i { transition: none; } }
   /* Goals + pay period */
   select {
     width: 100%; box-sizing: border-box; min-width: 0; background: transparent; color: var(--fg); border: 0; border-bottom: 1px solid var(--faint);
@@ -491,6 +504,31 @@
       <div class="row-actions"><button class="ghost" type="button" id="set-edit">Edit salary and shift</button></div>
     </section>
 
+    <section class="sec" aria-labelledby="se-sup">
+      <h3 class="sec-title" id="se-sup">Supplements · tillæg</h3>
+      <p class="note">Extra pay on certain days or hours, like Saturdays, Sundays or evenings. It is added on top of your normal pay in the clock, saved shifts, the calendar and the pay period.</p>
+      <div class="cal-list" id="sup-list"></div>
+      <form class="cal-form" id="sup-form" novalidate>
+        <label class="time-wrap" for="sup-name"><span>Name</span><input type="text" id="sup-name" autocomplete="off" maxlength="30" placeholder="Saturday"></label>
+        <div class="field"><span>Days</span><div class="days-pick" id="sup-days"></div></div>
+        <div class="shift-row">
+          <label class="time-wrap" for="sup-from"><span>From <button class="link" type="button" id="sup-allday">All day</button></span><input type="time" id="sup-from"></label>
+          <label class="time-wrap" for="sup-to"><span>To</span><input type="time" id="sup-to"></label>
+        </div>
+        <div class="shift-row">
+          <label class="time-wrap" for="sup-amount"><span>Extra</span><input type="text" id="sup-amount" inputmode="decimal" autocomplete="off" placeholder="30"></label>
+          <div class="field"><span>Per</span>
+            <div class="seg" role="radiogroup" aria-label="Supplement type">
+              <input type="radio" name="sup-type" id="st-kr" value="kr" checked><label for="st-kr" id="st-kr-label">DKK / H</label>
+              <input type="radio" name="sup-type" id="st-pct" value="pct"><label for="st-pct">% OF PAY</label>
+            </div>
+          </div>
+        </div>
+        <p class="err" id="sup-err"></p>
+        <div class="btns"><button class="ghost" type="button" id="sup-cancel" hidden>Cancel</button><button class="go" type="submit" id="sup-submit">Add supplement</button></div>
+      </form>
+    </section>
+
     <section class="sec" aria-labelledby="se-cur">
       <h3 class="sec-title" id="se-cur">Currency</h3>
       <div class="seg" role="radiogroup" aria-label="Currency">
@@ -505,6 +543,12 @@
       <h3 class="sec-title" id="se-acct">Account</h3>
       <p class="note" id="acct-status">Connecting…</p>
       <div class="row-actions"><button class="ghost" type="button" id="acct-open" hidden>Log in</button></div>
+    </section>
+
+    <section class="sec" aria-labelledby="se-reset">
+      <h3 class="sec-title" id="se-reset">Start over</h3>
+      <p class="note">Erases your shifts, savings, goals, calendar and settings on every device you are logged in on, then asks a few questions to set 99MS up again. Export a backup first if you might want anything back.</p>
+      <div class="row-actions"><button class="ghost danger" type="button" id="reset-btn">Reset and set up again</button><button class="ghost" type="button" id="wiz-open">Run setup questions</button></div>
     </section>
 
     <section class="sec" aria-labelledby="bk-title">
@@ -625,6 +669,22 @@
     <button class="go" type="submit" id="send-btn">Email me a login link</button>
     <p class="err" id="acct-err"></p>
     <button class="ghost" type="button" id="acct-cancel">Cancel</button>
+  </form>
+</div>
+
+<div class="sheet wiz" id="wiz" hidden role="dialog" aria-modal="true" aria-labelledby="wiz-q">
+  <form class="page" id="wiz-form" novalidate style="width:min(100%,24rem)">
+    <div class="wiz-top"><span class="brand">99MS</span><span class="wiz-step" id="wiz-step"></span></div>
+    <div class="wiz-bar"><i id="wiz-prog"></i></div>
+    <h2 class="wiz-q" id="wiz-q"></h2>
+    <p class="note" id="wiz-help"></p>
+    <div class="wiz-body" id="wiz-body"></div>
+    <p class="err" id="wiz-err"></p>
+    <div class="btns" id="wiz-btns">
+      <button class="ghost" type="button" id="wiz-back">Back</button>
+      <button class="go" type="submit" id="wiz-next">Next</button>
+    </div>
+    <button class="link" type="button" id="wiz-skip" style="justify-self:center">Skip this step</button>
   </form>
 </div>
 
@@ -893,6 +953,7 @@
     if (cs && cfg.mode !== "shift") { cfg.mode = "shift"; apply(); }
   }
 
+  let lastRateTick = 0;
   function frame() {
     followShift(Date.now());
     const mode = currentMode();
@@ -904,7 +965,13 @@
       const list = breaksFor(start);
       const open = list.find((b) => b.e == null);
       const done = log.shifts.find((x) => x.start === start && !x.live);
-      v = done ? done.amount : paidMs(start, stop, brk, list) * workPerMs();
+      v = done ? done.amount : shiftPay(start, stop, brk, list);
+      if (now - lastRateTick > 1000) {
+        lastRateTick = now;
+        const act = (log.supps || []).filter((rule) => suppBetweenRule(rule, now));
+        const perSec = (workPerMs() + suppBetween(now, now + 1)) * 1000;
+        el.rate.textContent = `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour${act.length ? `   ·   ${act.map((x) => x.name).join(" + ")}` : ""}`;
+      }
       // Paused on the scheduled break only while it is still topping up to 30 minutes.
       const inSched = brk !== null && now >= brk && now < brk + BREAK_LEN && unpaidMs(start, now, brk, list) > unpaidMs(start, now, null, list);
       const bText = brk === null ? "" : "break " + new Date(brk).toTimeString().slice(0, 5);
@@ -1064,16 +1131,16 @@
         const v = JSON.parse(localStorage.getItem("salary-clock-log") || "null");
         if (v && Array.isArray(v.shifts) && Array.isArray(v.savings)) return v;
       } catch {}
-      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [] };
+      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [] };
     },
     set(v) { try { localStorage.setItem("salary-clock-log", JSON.stringify(v)); return true; } catch { return false; } },
   };
   let log = logStore.get();
-  ["deleted", "items", "fixed", "planned", "skips", "goals"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
+  ["deleted", "items", "fixed", "planned", "skips", "goals", "supps"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
   const persist = () => { if (!logStore.set(log)) toast("Could not save. This browser is blocking storage."); scheduleSync(); };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const money = (n) => fmt2.format(n);
-  const sheets = () => [el.sheet, $("save-sheet"), $("item-sheet"), $("acct-sheet"), $("done")];
+  const sheets = () => [el.sheet, $("save-sheet"), $("item-sheet"), $("acct-sheet"), $("done"), $("wiz")];
   function anyOpen() { return sheets().some((x) => !x.hidden); }
 
   let toastT;
@@ -1086,14 +1153,14 @@
   const OPEN_SHIFT_CAP = 16 * HOUR; // an open-ended live shift closes itself after 16 hours
   const liveRec = () => log.shifts.find((x) => x.live);
   const liveStop = (x, now = Date.now()) => Math.min(now, x.end != null ? x.end : x.start + OPEN_SHIFT_CAP);
-  const amountOf = (x) => (x.live ? paidMs(x.start, liveStop(x), x.sched, breaksFor(x.start)) * workPerMs() : x.amount);
+  const amountOf = (x) => (x.live ? shiftPay(x.start, liveStop(x), x.sched, breaksFor(x.start)) : x.amount);
 
   function finalize(x, at) {
     const list = breaksFor(x.start).map((b) => ({ s: b.s, e: b.e == null ? at : Math.min(b.e, at) }));
     const un = unpaidMs(x.start, at, x.sched, list);
     x.end = at;
     x.breakMin = Math.round(un / 60000);
-    x.amount = +(Math.max(0, at - x.start - un) * workPerMs()).toFixed(2);
+    x.amount = +shiftPay(x.start, at, x.sched, list).toFixed(2);
     delete x.live;
     x.u = Date.now();
     const tx = log.savings.find((t) => t.shiftId === x.id);
@@ -1192,7 +1259,7 @@
     if (end <= start) end += DAY;
     const breakMin = Math.max(0, Math.round(Number(f.brk.value) || 0));
     const paidMs = Math.max(0, end - start - breakMin * 60000);
-    return { start, end, breakMin, paidMs, amount: paidMs * workPerMs() };
+    return { start, end, breakMin, paidMs, amount: payFor(start, end, breakMin) };
   }
   function autoBreak() {
     const s = formShift();
@@ -1224,7 +1291,7 @@
     $("log-goal-wrap").hidden = !activeGoals().length;
     f.err.textContent = "";
     if (saveLive) {
-      const so = paidMs(w.start, now, w.brk, breaksFor(w.start)) * workPerMs();
+      const so = shiftPay(w.start, now, w.brk, breaksFor(w.start));
       f.sum.innerHTML = `${cfg.currency} ${money(so)}<span>earned so far · ${money(workPerMs() * HOUR)} / hour</span>`;
     } else renderSummary();
     $("save-sheet").hidden = false;
@@ -1307,7 +1374,7 @@
     if (now < start || (end !== null && now >= end) || log.shifts.some((x) => x.start === start)) return null;
     const list = breaksFor(start);
     return { id: "now", unsaved: true, start, end: now, sched: brk, currency: cfg.currency,
-      amount: paidMs(start, now, brk, list) * workPerMs(), breakMin: Math.round(unpaidMs(start, now, brk, list) / 60000) };
+      amount: shiftPay(start, now, brk, list), breakMin: Math.round(unpaidMs(start, now, brk, list) / 60000) };
   }
 
   // Saved shifts in the current currency, newest first, with live and running shifts at their current value.
@@ -1640,8 +1707,9 @@
   function renderSettings() {
     document.querySelector(`input[name=currency][value=${cfg.currency}]`).checked = true;
     const amt = Number.isInteger(cfg.amount) ? grouping.format(cfg.amount) : money(cfg.amount);
-    $("set-sal").textContent = `${cfg.currency} ${amt} per ${cfg.period}. ` +
-      (cfg.shiftStart ? `Shift ${cfg.shiftStart} to ${cfg.shiftEnd || "open end"}.` : "No shift set, so the clock counts around the clock.");
+    $("set-sal").textContent = `${cfg.job ? cfg.job + ": " : ""}${cfg.currency} ${amt} per ${cfg.period}. ` +
+      (calendarUsed() ? "Your shifts come from the calendar." : cfg.shiftStart ? `Shift ${cfg.shiftStart} to ${cfg.shiftEnd || "open end"}.` : "No shift set, so the clock counts around the clock.");
+    renderSupps();
     renderAcct();
   }
   document.querySelectorAll("input[name=currency]").forEach((r) => r.addEventListener("change", () => {
@@ -1826,7 +1894,7 @@
     log.planned.filter((pl) => pl.date === ds).forEach((pl) => out.push({ key: pl.id, kind: "single", ref: pl, date: ds, breakAt: pl.breakAt || "", off: false, ...win(pl) }));
     return out.sort((a, b) => a.start - b.start);
   }
-  const expectedPay = (o) => { const dur = o.end - o.start; return Math.max(0, dur - (dur > BREAK_AFTER ? BREAK_LEN : 0)) * workPerMs(); };
+  const expectedPay = (o) => { const dur = o.end - o.start; return payFor(o.start, o.end, dur > BREAK_AFTER ? BREAK_LEN / 60000 : 0); };
 
   // Running shift, or the one that just ended, or the next one coming up.
   function calendarWindow(now) {
@@ -2025,6 +2093,289 @@
   $("cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCal(); });
   resetFixedForm(); resetDayForm();
 
+
+  // ---------- Supplements (tillæg): extra pay per hour in set day/time windows ----------
+  // A rule: { id, name, days:[getDay()], from:"HH:MM"|"", to:"HH:MM"|"", amount, type:"kr"|"pct" }. Empty times = all day.
+  function suppRatePerMs(rule) { return rule.type === "pct" ? workPerMs() * rule.amount / 100 : rule.amount / HOUR; }
+  function suppBetween(a, b) {
+    if (!(b > a) || !log.supps || !log.supps.length) return 0;
+    let total = 0;
+    const first = new Date(a); first.setHours(0, 0, 0, 0);
+    for (const rule of log.supps) {
+      const rate = suppRatePerMs(rule);
+      if (!(rate > 0)) continue;
+      for (let d = new Date(first.getFullYear(), first.getMonth(), first.getDate() - 1); d.getTime() < b; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+        if (!rule.days.includes(d.getDay())) continue;
+        const ws = rule.from ? atTime(d, rule.from) : d.getTime();
+        let we = rule.to ? atTime(d, rule.to) : new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+        if (we <= ws) we += DAY; // e.g. 23:00–06:00 runs into the next morning
+        total += Math.max(0, Math.min(b, we) - Math.max(a, ws)) * rate;
+      }
+    }
+    return total;
+  }
+  function suppBetweenRule(rule, t) { const keep = log.supps; log.supps = [rule]; const v = suppBetween(t, t + 1); log.supps = keep; return v > 0; }
+
+  // Pay for a shift from start until t: base pay for paid time, plus supplements for the paid hours.
+  function shiftPay(start, t, sched, list) {
+    const base = paidMs(start, t, sched, list) * workPerMs();
+    if (!log.supps || !log.supps.length || t <= start) return base;
+    let extra = suppBetween(start, t);
+    let manual = 0;
+    list.forEach((b) => {
+      const s0 = Math.max(start, b.s), e0 = Math.min(t, b.e == null ? t : b.e);
+      if (e0 > s0) { extra -= suppBetween(s0, e0); manual += e0 - s0; }
+    });
+    if (sched !== null) {
+      const s0 = Math.max(start, sched), e0 = Math.min(t, sched + BREAK_LEN), ov = Math.max(0, e0 - s0);
+      const topup = Math.max(0, ov - manual);
+      if (topup > 0 && ov > 0) extra -= suppBetween(s0, e0) * (topup / ov);
+    }
+    return base + Math.max(0, extra);
+  }
+  // Pay for a finished shift with a break in minutes (break hours are spread evenly).
+  function payFor(start, end, breakMin) {
+    const dur = Math.max(1, end - start), paid = Math.max(0, dur - breakMin * 60000);
+    return paid * workPerMs() + suppBetween(start, end) * (paid / dur);
+  }
+
+  const supDaysText = (days) => days.length === 7 ? "Every day" : (days.join() === "1,2,3,4,5" ? "Mon–Fri" : DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", "));
+  const supText = (rule) => `${rule.type === "pct" ? `+${rule.amount}%` : `+${cfg.currency} ${money(rule.amount)} / hour`} · ${supDaysText(rule.days)} · ${rule.from || rule.to ? `${rule.from || "00:00"}–${rule.to || "24:00"}` : "all day"}`;
+  let supDays = new Set(), supEditing = null;
+  function renderSupDays() {
+    $("sup-days").innerHTML = DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${supDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
+    $("sup-days").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      const n = +b.dataset.day; supDays.has(n) ? supDays.delete(n) : supDays.add(n); b.setAttribute("aria-pressed", supDays.has(n));
+    }));
+  }
+  function resetSupForm() {
+    supEditing = null; supDays = new Set();
+    ["sup-name", "sup-from", "sup-to", "sup-amount"].forEach((id) => { $(id).value = ""; });
+    $("st-kr").checked = true; $("sup-err").textContent = "";
+    $("sup-submit").textContent = "Add supplement"; $("sup-cancel").hidden = true;
+    renderSupDays();
+  }
+  function renderSupps() {
+    $("st-kr-label").textContent = `${cfg.currency} / H`;
+    $("sup-list").innerHTML = (log.supps || []).map((rule) => `
+      <div class="cal-item"><div class="t">${esc(rule.name)}</div><div class="m">${supText(rule)}</div>
+        <div class="a"><button type="button" data-act="edit" data-id="${rule.id}">Edit</button><button type="button" data-act="del" data-id="${rule.id}">Delete</button></div></div>`).join("")
+      || `<p class="empty">No supplements yet. Example: Saturday, Sa, all day, +30 ${cfg.currency} per hour.</p>`;
+    $("sup-list").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => {
+      const rule = log.supps.find((x) => x.id === b.dataset.id); if (!rule) return;
+      if (b.dataset.act === "edit") {
+        supEditing = rule.id; supDays = new Set(rule.days); renderSupDays();
+        $("sup-name").value = rule.name; $("sup-from").value = rule.from; $("sup-to").value = rule.to;
+        $("sup-amount").value = String(rule.amount); $(rule.type === "pct" ? "st-pct" : "st-kr").checked = true;
+        $("sup-submit").textContent = "Save changes"; $("sup-cancel").hidden = false;
+        $("sup-form").scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (!b.classList.contains("arm")) { b.classList.add("arm"); b.textContent = "Sure?"; setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000); return; }
+      log.supps = log.supps.filter((x) => x.id !== rule.id); log.deleted.push(rule.id);
+      if (supEditing === rule.id) resetSupForm();
+      persist(); renderSupps(); toast("Supplement deleted. Shifts already saved keep their pay.");
+    }));
+  }
+  $("sup-allday").addEventListener("click", (e) => { e.preventDefault(); $("sup-from").value = ""; $("sup-to").value = ""; });
+  $("sup-cancel").addEventListener("click", resetSupForm);
+  $("sup-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("sup-name").value.trim(), amount = parseFloat($("sup-amount").value.replace(/[\s,']/g, "").replace(/%$/, ""));
+    const from = $("sup-from").value, to = $("sup-to").value, type = $("st-pct").checked ? "pct" : "kr";
+    if (!name) { $("sup-err").textContent = "Give it a name, like Saturday or Evening."; return; }
+    if (!supDays.size) { $("sup-err").textContent = "Pick the days it applies to."; return; }
+    if (from && to && from === to) { $("sup-err").textContent = "From and to are the same time. Use All day instead."; return; }
+    if (!(amount > 0)) { $("sup-err").textContent = type === "pct" ? "Enter the percentage, for example 50." : "Enter the extra pay per hour, for example 30."; return; }
+    const data = { name: name.slice(0, 30), days: [...supDays], from, to, amount: +amount.toFixed(2), type, u: Date.now() };
+    if (supEditing) Object.assign(log.supps.find((x) => x.id === supEditing) || {}, data);
+    else log.supps.push({ id: uid(), ...data });
+    const msg = supEditing ? "Supplement updated." : `Supplement added: ${data.name}.`;
+    resetSupForm(); persist(); renderSupps(); curCache.sec = -1; toast(msg);
+  });
+
+
+  // ---------- Setup questions (new account, first run, or Reset) ----------
+  const SUP_PRESETS = [
+    { key: "evening", name: "Evening", days: [1, 2, 3, 4, 5], from: "18:00", to: "23:00", help: "Mon–Fri 18–23" },
+    { key: "night", name: "Night", days: [0, 1, 2, 3, 4, 5, 6], from: "23:00", to: "06:00", help: "Every day 23–06" },
+    { key: "sat", name: "Saturday", days: [6], from: "", to: "", help: "All day" },
+    { key: "sun", name: "Sunday", days: [0], from: "", to: "", help: "All day" },
+  ];
+  let wz = null, wzStep = 0;
+  const wzVal = (id) => ($(id) ? $(id).value.trim() : "");
+  const wzNum = (id) => parseFloat(wzVal(id).replace(/[\s,']/g, ""));
+  const WZ = [
+    {
+      q: "What's your work called?", help: "Just a name for you, like the shop or company. You can leave it empty.",
+      body: () => `<label class="field" for="wz-job"><span>Workplace</span><input type="text" id="wz-job" autocomplete="organization" maxlength="40" placeholder="Netto Nørrebro" value="${esc(wz.job)}"></label>`,
+      take: () => { wz.job = wzVal("wz-job"); },
+    },
+    {
+      q: "What do you earn?", help: "Your normal pay before supplements. Hourly pay is the most precise for shift work.",
+      body: () => `<label class="field" for="wz-amt"><span>Pay</span><input type="text" id="wz-amt" inputmode="decimal" autocomplete="off" placeholder="150" value="${wz.amount || ""}"></label>
+        <div class="field"><span>Per</span><div class="seg" role="radiogroup" aria-label="Per">${["hour", "month", "year"].map((x) => `<input type="radio" name="wz-per" id="wz-p-${x}" value="${x}"${wz.period === x ? " checked" : ""}><label for="wz-p-${x}">${x.toUpperCase()}</label>`).join("")}</div></div>
+        <div class="field"><span>Currency</span><div class="seg" role="radiogroup" aria-label="Currency">${["DKK", "EUR", "USD"].map((x) => `<input type="radio" name="wz-cur" id="wz-c-${x}" value="${x}"${wz.currency === x ? " checked" : ""}><label for="wz-c-${x}">${x}</label>`).join("")}</div></div>`,
+      take: () => {
+        const a = wzNum("wz-amt");
+        if (!(a > 0)) return "Enter your pay as a number, for example 150.";
+        wz.amount = a; wz.period = document.querySelector("input[name=wz-per]:checked").value; wz.currency = document.querySelector("input[name=wz-cur]:checked").value;
+      },
+      required: true,
+    },
+    {
+      q: "When is your pay period?", help: "Example: from the 19th to the 18th of the next month, paid out on the 1st. Leave it as 1 if it follows the calendar month.",
+      body: () => `<div class="shift-row">
+          <label class="field" for="wz-ps"><span>Starts on day</span><input type="number" id="wz-ps" inputmode="numeric" min="1" max="28" value="${wz.payStart}"></label>
+          <label class="field" for="wz-pd"><span>Payday</span><input type="number" id="wz-pd" inputmode="numeric" min="1" max="31" placeholder="—" value="${wz.payDay || ""}"></label>
+        </div>`,
+      take: () => {
+        const ps = Math.round(wzNum("wz-ps")) || 1, pd = Math.round(wzNum("wz-pd")) || 0;
+        if (ps < 1 || ps > 28) return "The pay period can start on day 1 to 28.";
+        if (pd < 0 || pd > 31) return "Payday is a day of the month, 1 to 31.";
+        wz.payStart = ps; wz.payDay = pd;
+      },
+    },
+    {
+      q: "Which days do you always work?", help: "Your fixed shifts (faste vagter). They repeat every week in the calendar. Skip if your shifts change every week.",
+      body: () => `<div class="field"><span>Days</span><div class="days-pick" id="wz-days">${DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${wz.days.includes(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("")}</div></div>
+        <div class="shift-row">
+          <label class="time-wrap" for="wz-fs"><span>Starts</span><input type="time" id="wz-fs" value="${wz.start}"></label>
+          <label class="time-wrap" for="wz-fe"><span>Ends</span><input type="time" id="wz-fe" value="${wz.end}"></label>
+        </div>`,
+      after: () => $("wz-days").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+        const n = +b.dataset.day; wz.days = wz.days.includes(n) ? wz.days.filter((x) => x !== n) : [...wz.days, n]; b.setAttribute("aria-pressed", wz.days.includes(n));
+      })),
+      take: () => {
+        wz.start = wzVal("wz-fs"); wz.end = wzVal("wz-fe");
+        if (!wz.days.length && !wz.start && !wz.end) return;
+        if (!wz.days.length) return "Pick the days, or skip this step.";
+        const e = timesError(wz.start, wz.end, ""); if (e) return e;
+      },
+    },
+    {
+      q: "Do you get supplements?", help: () => `Tillæg: extra ${wz.currency} per hour on top of your pay. Fill in the ones you get and leave the rest empty. You can change times and add more in Settings.`,
+      body: () => SUP_PRESETS.map((x) => `<label class="wiz-sup" for="wz-s-${x.key}"><span><b>${x.name}</b><small>${x.help}</small></span><input type="text" id="wz-s-${x.key}" inputmode="decimal" autocomplete="off" placeholder="+0 / h" value="${wz.sup[x.key] || ""}"></label>`).join(""),
+      take: () => {
+        for (const x of SUP_PRESETS) {
+          const v = wzVal("wz-s-" + x.key); const n = parseFloat(v.replace(/[\s,'+]/g, ""));
+          if (v && !(n > 0)) return `Enter the ${x.name.toLowerCase()} supplement as a number, or leave it empty.`;
+          wz.sup[x.key] = v ? n : 0;
+        }
+      },
+    },
+    {
+      q: "Any extra shifts coming up?", help: "Shifts this month that are not part of your fixed days. Add as many as you like, or skip.",
+      body: () => `${wz.extra.length ? `<div class="cal-list">${wz.extra.map((x, i) => `<div class="cal-item"><div class="t">${x.start}–${x.end}</div><div class="m">${longDate.format(parseYmd(x.date))}</div><div class="a"><button type="button" data-rm="${i}">Remove</button></div></div>`).join("")}</div>` : ""}
+        <label class="time-wrap" for="wz-xd"><span>Date</span><input type="date" id="wz-xd" value="${ymd(new Date())}"></label>
+        <div class="shift-row">
+          <label class="time-wrap" for="wz-xs"><span>Starts</span><input type="time" id="wz-xs"></label>
+          <label class="time-wrap" for="wz-xe"><span>Ends</span><input type="time" id="wz-xe"></label>
+        </div>
+        <button class="ghost" type="button" id="wz-xadd">Add this shift</button>`,
+      after: () => {
+        $("wz-xadd").addEventListener("click", () => {
+          const d = wzVal("wz-xd"), st = wzVal("wz-xs"), en = wzVal("wz-xe");
+          const e = !d ? "Pick a date." : timesError(st, en, "");
+          if (e) { $("wiz-err").textContent = e; return; }
+          wz.extra.push({ date: d, start: st, end: en }); renderWiz();
+        });
+        $("wiz-body").querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", () => { wz.extra.splice(+b.dataset.rm, 1); renderWiz(); }));
+      },
+      take: () => {
+        const st = wzVal("wz-xs"), en = wzVal("wz-xe"), d = wzVal("wz-xd");
+        if (st || en) { const e = timesError(st, en, ""); if (e) return e; wz.extra.push({ date: d || ymd(new Date()), start: st, end: en }); }
+      },
+    },
+    {
+      q: "Saving up for something?", help: "A goal, like a new camera. You can send your pay straight to it. Skip if not.",
+      body: () => `<div class="shift-row">
+          <label class="time-wrap" for="wz-gn"><span>Goal</span><input type="text" id="wz-gn" autocomplete="off" maxlength="40" placeholder="New camera" value="${esc(wz.goalName)}"></label>
+          <label class="time-wrap" for="wz-gt"><span>Target</span><input type="text" id="wz-gt" inputmode="decimal" autocomplete="off" placeholder="8000" value="${wz.goalTarget || ""}"></label>
+        </div>`,
+      take: () => {
+        wz.goalName = wzVal("wz-gn"); const t = wzNum("wz-gt");
+        if (!wz.goalName && !wzVal("wz-gt")) { wz.goalTarget = 0; return; }
+        if (!wz.goalName) return "Give the goal a name, or clear the target.";
+        if (!(t > 0)) return "Enter how much you need, for example 8000.";
+        wz.goalTarget = t;
+      },
+    },
+  ];
+
+  function openWizard() {
+    wz = { job: cfg.job || "", amount: cfg.amount || 0, period: cfg.period || "hour", currency: cfg.currency || "DKK", payStart: cfg.payStart || 1, payDay: cfg.payDay || 0,
+      days: [], start: "", end: "", sup: {}, extra: [], goalName: "", goalTarget: 0 };
+    if (!cfg.setupDone && !log.shifts.length) { wz.amount = 0; wz.period = "hour"; }
+    wzStep = 0; renderWiz(); $("wiz").hidden = false; $("wiz").scrollTop = 0;
+  }
+  function renderWiz() {
+    const st = WZ[wzStep];
+    $("wiz-step").textContent = `${wzStep + 1} / ${WZ.length}`;
+    $("wiz-prog").style.width = `${((wzStep + 1) / WZ.length) * 100}%`;
+    $("wiz-q").textContent = st.q;
+    $("wiz-help").textContent = typeof st.help === "function" ? st.help() : st.help;
+    $("wiz-body").innerHTML = st.body();
+    if (st.after) st.after();
+    $("wiz-err").textContent = "";
+    $("wiz-back").textContent = wzStep ? "Back" : "Not now";
+    $("wiz-next").textContent = wzStep === WZ.length - 1 ? "Finish" : "Next";
+    $("wiz-skip").hidden = !!st.required || wzStep === 0;
+    const first = $("wiz-body").querySelector("input:not([type=radio])"); if (first && matchMedia("(pointer: fine)").matches) setTimeout(() => first.focus(), 30);
+  }
+  function wizNext(skip) {
+    const st = WZ[wzStep];
+    if (!skip) { const e = st.take(); if (e) { $("wiz-err").textContent = e; return; } }
+    if (wzStep < WZ.length - 1) { wzStep++; renderWiz(); $("wiz").scrollTop = 0; return; }
+    finishWizard();
+  }
+  function finishWizard() {
+    const now = Date.now();
+    Object.assign(cfg, { job: wz.job, amount: wz.amount || cfg.amount, period: wz.period, currency: wz.currency, payStart: wz.payStart, payDay: wz.payDay, setupDone: true });
+    if (wz.days.length && wz.start && wz.end) log.fixed.push({ id: uid(), days: wz.days, start: wz.start, end: wz.end, breakAt: "", from: ymd(new Date()), until: "", u: now });
+    SUP_PRESETS.forEach((x) => { if (wz.sup[x.key] > 0) log.supps.push({ id: uid(), name: x.name, days: x.days, from: x.from, to: x.to, amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now }); });
+    wz.extra.forEach((x) => log.planned.push({ id: uid(), date: x.date, start: x.start, end: x.end, breakAt: "", u: now }));
+    if (wz.goalName && wz.goalTarget > 0) log.goals.push({ id: uid(), name: wz.goalName, target: +wz.goalTarget.toFixed(2), currency: wz.currency, created: now, u: now });
+    store.set(cfg); persist(); curCache.sec = -1; saveKey = "";
+    $("wiz").hidden = true;
+    apply(); go("home"); renderTab();
+    showDone("You're set up", wz.job ? `99MS is ready for ${wz.job}` : "99MS is ready");
+  }
+  $("wiz-form").addEventListener("submit", (e) => { e.preventDefault(); wizNext(false); });
+  $("wiz-skip").addEventListener("click", () => {
+    const st = WZ[wzStep];
+    if (wzStep === 3) { wz.days = []; wz.start = ""; wz.end = ""; }
+    if (wzStep === 4) wz.sup = {};
+    if (wzStep === 6) { wz.goalName = ""; wz.goalTarget = 0; }
+    if (wzStep < WZ.length - 1) { wzStep++; renderWiz(); } else finishWizard();
+  });
+  $("wiz-back").addEventListener("click", () => {
+    if (wzStep) { wzStep--; renderWiz(); return; }
+    $("wiz").hidden = true; cfg.setupDone = true; store.set(cfg);
+  });
+  $("wiz-open").addEventListener("click", openWizard);
+
+  // Reset: a new "epoch" wins over older data on every synced device.
+  $("reset-btn").addEventListener("click", async () => {
+    const b = $("reset-btn");
+    if (!b.classList.contains("arm")) {
+      b.classList.add("arm"); b.textContent = "Tap again to erase everything";
+      setTimeout(() => { b.classList.remove("arm"); b.textContent = "Reset and set up again"; }, 4000);
+      return;
+    }
+    b.classList.remove("arm"); b.textContent = "Reset and set up again";
+    const epoch = Date.now();
+    log = { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [], epoch };
+    cfg = { amount: cfg.amount, period: cfg.period, currency: cfg.currency || "DKK", mode: "today", shiftStart: "", shiftEnd: "", breakAt: "", payStart: 1, payDay: 0, setupDone: false };
+    store.set(cfg); logStore.set(log); curCache.sec = -1; saveKey = ""; breakKey = "";
+    if (sb && user) {
+      try { await sb.from("user_data").upsert({ user_id: user.id, data: { cfg, log }, updated_at: new Date().toISOString() }); } catch {}
+    }
+    apply(); renderTab();
+    toast("Everything was erased. Let's set you up again.");
+    openWizard();
+  });
+
   // ---------- Account and sync (Supabase) ----------
   // Fill these in from Supabase: Project Settings → API. The anon key is meant to be public;
   // row level security keeps every account's data private.
@@ -2036,22 +2387,29 @@
 
   function newest(a, b) { return (b.u || 0) > (a.u || 0) ? b : a; }
   function mergeData(local, remote) {
-    const deleted = [...new Set([...(local.log.deleted || []), ...((remote && remote.log && remote.log.deleted) || [])])];
+    const le0 = local.log.epoch || 0, re0 = (remote && remote.log && remote.log.epoch) || 0;
+    const deleted = [...new Set([...(re0 > le0 ? [] : local.log.deleted || []), ...(le0 > re0 ? [] : (remote && remote.log && remote.log.deleted) || [])])];
     const gone = new Set(deleted);
     const byId = (a, b) => {
       const m = new Map();
       [...a, ...b].forEach((x) => { if (!gone.has(x.id)) m.set(x.id, m.has(x.id) ? newest(m.get(x.id), x) : x); });
       return [...m.values()];
     };
-    const r = remote && remote.log ? remote.log : { shifts: [], savings: [] };
+    let r = remote && remote.log ? remote.log : { shifts: [], savings: [] };
+    let L = local.log;
     const rc = remote && remote.cfg;
-    const c = rc && (rc.updatedAt || 0) > (local.cfg.updatedAt || 0) ? { ...rc, mode: local.cfg.mode } : local.cfg;
-    const L = local.log;
+    // After a reset ("Start over"), the newer epoch wins and older data is dropped.
+    const le = L.epoch || 0, re = r.epoch || 0, empty = { shifts: [], savings: [], deleted: [] };
+    let c = rc && (rc.updatedAt || 0) > (local.cfg.updatedAt || 0) ? { ...rc, mode: local.cfg.mode } : local.cfg;
+    if (re > le) { L = empty; if (rc) c = { ...rc, mode: local.cfg.mode }; }
+    if (le > re) { r = empty; c = local.cfg; }
     return { cfg: c, log: {
       shifts: byId(L.shifts, r.shifts || []), savings: byId(L.savings, r.savings || []), items: byId(L.items || [], r.items || []),
       fixed: byId(L.fixed || [], r.fixed || []), planned: byId(L.planned || [], r.planned || []), skips: byId(L.skips || [], r.skips || []),
       goals: byId(L.goals || [], r.goals || []),
+      supps: byId(L.supps || [], r.supps || []),
       deleted,
+      epoch: Math.max(le, re) || undefined,
     } };
   }
 
@@ -2067,6 +2425,7 @@
     try {
       const { data: row, error } = await sb.from("user_data").select("data").eq("user_id", user.id).maybeSingle();
       if (error) throw error;
+      const fresh = !row && !cfg.setupDone && !log.shifts.length && !log.fixed.length && !log.planned.length;
       const merged = mergeData({ cfg, log }, row && row.data);
       const { error: upErr } = await sb.from("user_data").upsert({ user_id: user.id, data: merged, updated_at: new Date().toISOString() });
       if (upErr) throw upErr;
@@ -2079,6 +2438,8 @@
         renderTab();
       }
       lastSynced = Date.now(); syncErr = "";
+      if (firstRunPending) { firstRunPending = false; if (!row && $("wiz").hidden) openWizard(); }
+      else if (fresh && $("wiz").hidden) openWizard();
     } catch (e) {
       syncErr = navigator.onLine === false ? "Offline. Will sync when you are back online." : "Sync failed. Retrying soon.";
     } finally {
@@ -2105,12 +2466,13 @@
     return new Promise((res, rej) => { const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = rej; document.head.appendChild(t); });
   }
 
+  let firstRunPending = false;
   async function initSync() {
     if (!SYNC.url || !SYNC.anonKey) return;
     // A login link lands here with the session, or an error, in the URL hash.
     const fromLink = /access_token=/.test(location.hash);
     const linkErr = /error_code=|error_description=/.test(location.hash);
-    try { await loadScript(SUPABASE_JS); } catch { syncLoadErr = true; renderAcct(); return; }
+    try { await loadScript(SUPABASE_JS); } catch { syncLoadErr = true; renderAcct(); if (firstRunPending) { firstRunPending = false; openWizard(); } return; }
     sb = window.supabase.createClient(SYNC.url, SYNC.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
     const { data } = await sb.auth.getSession();
     user = data.session ? data.session.user : null;
@@ -2126,6 +2488,7 @@
     });
     renderAcct();
     if (user) syncNow();
+    else if (firstRunPending) { firstRunPending = false; openWizard(); }
     setInterval(() => { if (user && document.visibilityState === "visible") syncNow(); }, 20000);
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkLinkLogin(); scheduleSync(100); } });
     window.addEventListener("online", () => scheduleSync(100));
@@ -2178,12 +2541,16 @@
   });
 
   // Checkmark, then back to the app.
+  function showDone(title, sub) {
+    const d = $("done");
+    d.querySelector("p").textContent = title; d.querySelector("span").textContent = sub;
+    d.hidden = true; void d.offsetWidth; d.hidden = false; // restart the animation
+    setTimeout(() => { d.hidden = true; }, 1900);
+  }
   function loggedIn() {
     stopWaiting();
-    const d = $("done");
-    d.hidden = false;
     $("acct-sheet").hidden = true;
-    setTimeout(() => { d.hidden = true; }, 1900);
+    showDone("Logged in", "Your data now syncs across devices");
   }
 
   // ---------- Moving in from the old address ----------
@@ -2231,11 +2598,17 @@
     return !!takeCfg;
   }
 
+  resetSupForm();
   const moved = importFromHash();
   apply();
   initSync();
   go(saved || moved ? tab : "salary");
-  if (!saved && !moved) openSheet();
+  // First run: ask the setup questions, unless a logged-in account already has data (the first sync decides).
+  if (!saved && !moved) {
+    firstRunPending = true;
+    if (!SYNC.url) { firstRunPending = false; openWizard(); }
+    else setTimeout(() => { if (firstRunPending && !user) { firstRunPending = false; openWizard(); } }, 4000);
+  }
   requestAnimationFrame(frame);
 })();
 </script>
