@@ -1030,6 +1030,10 @@
       const ongoing = !done && now >= start && (end === null || now < end);
       syncSaveBtn(now >= start, start, ongoing);
       syncBreakBtn(ongoing, !!open);
+      const tS = hhmm(new Date(start)), tE = end !== null ? hhmm(new Date(end)) : "open";
+      if (el.tStart.textContent !== tS) el.tStart.textContent = tS;
+      if (el.tEnd.textContent !== tE) el.tEnd.textContent = tE;
+      if (el.progress.hidden === (end !== null)) el.progress.hidden = end === null;
       if (end !== null) el.bar.style.width = (Math.min(1, Math.max(0, (now - start) / (end - start))) * 100).toFixed(3) + "%";
     } else {
       const elapsed = mode.key === "session" ? performance.now() - sessionStart : now - startOf(mode.key);
@@ -2077,9 +2081,29 @@
   }
 
   // An hourly pay that is far too high was usually typed as "110,10" and read as 11010 by an older version.
+  // A supplement this high is almost always a misread comma too (31,20 stored as 3120).
+  const suppTooHigh = (rule) => rule.ok !== rule.amount && (rule.type === "pct" ? rule.amount > 300 : rule.amount > (cfg.currency === "DKK" ? 300 : 50));
+  let pcRule = null;
   function checkPay() {
-    if (!hourlyTooHigh(cfg.amount, cfg.period, cfg.currency) || cfg.payOk === cfg.amount) return;
     if (!$("wiz").hidden || !el.sheet.hidden || !$("paycheck").hidden) return;
+    pcRule = null;
+    if (!hourlyTooHigh(cfg.amount, cfg.period, cfg.currency) || cfg.payOk === cfg.amount) {
+      const rule = (log.supps || []).find(suppTooHigh);
+      if (!rule) return;
+      pcRule = rule;
+      const fmtDa = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const guess = Math.round(rule.amount) / 100, cur = cfg.currency, unit = rule.type === "pct" ? "%" : ` ${cur} per hour`;
+      $("pc-q").textContent = "Check your supplement";
+      $("pc-text").textContent = `Your ${rule.name} supplement is saved as +${fmtDa(rule.amount)}${unit}, on top of your pay of ${cur} ${fmtDa(workPerMs() * HOUR)} per hour. That makes every ${rule.name.toLowerCase()} shift far too high. An older version of 99MS read a comma wrong.`;
+      $("pc-fix").textContent = `Fix it: +${fmtDa(guess)}${unit}`;
+      $("pc-fix").dataset.v = guess;
+      $("pc-other").textContent = "Edit supplements";
+      $("pc-ok").textContent = `+${fmtDa(rule.amount)}${unit} is right`;
+      $("paycheck").hidden = false;
+      return;
+    }
+    $("pc-q").textContent = "Check your pay";
+    $("pc-other").textContent = "Enter it again";
     const guess = Math.round(cfg.amount) / 100, cur = cfg.currency;
     const fmtDa = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     $("pc-text").textContent = `Your pay is saved as ${cur} ${fmtDa(cfg.amount)} per hour, which makes every shift and total far too high. An older version of 99MS read a comma wrong, so ${fmtDa(guess)} became ${fmtDa(cfg.amount)}.`;
@@ -2089,15 +2113,35 @@
     $("paycheck").hidden = false;
   }
   $("pc-fix").addEventListener("click", () => {
+    if (pcRule) {
+      pcRule.amount = +$("pc-fix").dataset.v; pcRule.u = Date.now(); persist();
+      $("paycheck").hidden = true;
+      const n = offerRecalc(true);
+      lastPledgeCheck = 0; processCalendar(Date.now());
+      apply(); renderTab();
+      showDone("Supplement fixed", `${pcRule.name} +${money(pcRule.amount)}${pcRule.type === "pct" ? "%" : " / hour"}${n ? ` · ${plural(n, "saved shift")} recalculated` : ""}`);
+      setTimeout(checkPay, 2200);
+      return;
+    }
     cfg.amount = +$("pc-fix").dataset.v; store.set(cfg);
     $("paycheck").hidden = true;
     const n = offerRecalc(true);
     lastPledgeCheck = 0; processCalendar(Date.now());
     apply(); renderTab();
     showDone("Pay fixed", `${cfg.currency} ${money(cfg.amount)} per hour${n ? ` · ${plural(n, "saved shift")} recalculated` : ""}`);
+    setTimeout(checkPay, 2200);
   });
-  $("pc-ok").addEventListener("click", () => { cfg.payOk = cfg.amount; store.set(cfg); $("paycheck").hidden = true; });
-  $("pc-other").addEventListener("click", () => { $("paycheck").hidden = true; openSheet(); });
+  $("pc-ok").addEventListener("click", () => {
+    if (pcRule) { pcRule.ok = pcRule.amount; persist(); } else { cfg.payOk = cfg.amount; store.set(cfg); }
+    $("paycheck").hidden = true; setTimeout(checkPay, 300);
+  });
+  $("pc-other").addEventListener("click", () => {
+    $("paycheck").hidden = true;
+    if (!pcRule) { openSheet(); return; }
+    go("settings");
+    const b = $("sup-list").querySelector(`button[data-act="edit"][data-id="${pcRule.id}"]`);
+    if (b) b.click();
+  });
 
   function processPledges(now) {
     let changedAny = false;
