@@ -834,6 +834,19 @@
   const home = { int: $("h-int"), frac: $("h-frac"), label: $("h-sal-label"), cur: $("h-cur") };
 
   let sb = null, user = null, syncT = null, syncing = false, lastSynced = 0, syncErr = ""; // account sync state
+  // Amounts as people type them: "110,10" and "110.10" are 110.1; "1.234,50", "1,234.50" and "600 000" are thousands.
+  function parseAmount(v) {
+    let t = String(v == null ? "" : v).trim().replace(/[\s'’]/g, "").replace(/^\+/, "").replace(/(kr\.?|dkk|eur|usd|€|\$|%)$/i, "");
+    const lc = t.lastIndexOf(","), ld = t.lastIndexOf(".");
+    if (lc >= 0 && ld >= 0) t = lc > ld ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+    else if (lc >= 0) { const parts = t.split(","); t = parts.length === 2 && parts[1].length !== 3 ? parts.join(".") : parts.join(""); }
+    else if (ld >= 0) { const parts = t.split("."); if (parts.length > 2 || (parts[1].length === 3 && parts[0].length <= 3 && parts[0] !== "0")) t = parts.join(""); }
+    return t && /^-?\d*\.?\d+$/.test(t) ? Number(t) : NaN;
+  }
+  // An hourly pay this high is almost always a typo (for example a monthly salary with Hour picked).
+  const hourlyTooHigh = (amount, period, currency) => period === "hour" && amount > (currency === "DKK" ? 1000 : 150);
+  let payWarned = null;
+
   const store = {
     get() { try { return JSON.parse(localStorage.getItem("salary-clock") || "null"); } catch { return null; } },
     set(v, fromSync) {
@@ -1065,9 +1078,14 @@
   $("setup-cancel").addEventListener("click", () => { el.sheet.hidden = true; });
   $("form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const raw = el.amount.value.replace(/[\s,']/g, "").replace(/\.(?=.*\.)/g, "");
-    const amount = parseFloat(raw);
-    if (!(amount > 0)) { el.err.textContent = "Enter your salary as a number, for example 600000."; return; }
+    const amount = parseAmount(el.amount.value);
+    if (!(amount > 0)) { el.err.textContent = "Enter your pay as a number, for example 110,10 per hour or 25000 per month."; return; }
+    const perSel = document.querySelector("input[name=period]:checked").value;
+    if (hourlyTooHigh(amount, perSel, cfg.currency) && payWarned !== amount) {
+      payWarned = amount;
+      el.err.textContent = `That is ${cfg.currency} ${money(amount)} per hour. If that is your monthly pay, pick MONTH. Press again to keep it.`;
+      return;
+    }
     if (el.end.value && !el.start.value) { el.err.textContent = "Add a shift start time, or clear the end time."; return; }
     if (el.end.value && el.end.value === el.start.value) { el.err.textContent = "The shift ends at the same time it starts. Change one of them."; return; }
     if (el.breakAt.value && !el.start.value) { el.err.textContent = "Add a shift start time, or set the break to Auto."; return; }
@@ -1078,8 +1096,11 @@
     }
     const hadShift = cfg.shiftStart;
     if (el.start.value !== cfg.shiftStart || el.end.value !== cfg.shiftEnd) endLive(Date.now());
+    const payChanged = amount !== cfg.amount || perSel !== cfg.period;
     cfg.amount = amount;
-    cfg.period = document.querySelector("input[name=period]:checked").value;
+    cfg.period = perSel;
+    payWarned = null;
+    if (payChanged) setTimeout(offerRecalc, 300);
     cfg.shiftStart = el.start.value;
     cfg.shiftEnd = el.end.value;
     cfg.breakAt = el.breakAt.value;
@@ -1193,7 +1214,7 @@
   let lastLiveCheck = 0, lastStatsTick = 0, lastViewTick = 0, histLiveIds = "";
   let lastPledgeCheck = 0;
   function tickLive(now) {
-    if (now - lastPledgeCheck > 5000) { lastPledgeCheck = now; processPledges(now); }
+    if (now - lastPledgeCheck > 5000) { lastPledgeCheck = now; processCalendar(now); }
     if (now - lastLiveCheck > 1000) {
       lastLiveCheck = now;
       const x = liveRec();
@@ -1520,6 +1541,8 @@
         return;
       }
       const id = b.dataset.id;
+      const gone = log.shifts.find((x) => x.id === id);
+      if (gone && gone.auto && gone.key) markOccurrence(gone.key, ymd(new Date(gone.start)), "skipped");
       log.deleted.push(id, ...log.savings.filter((x) => x.shiftId === id).map((x) => x.id));
       log.shifts = log.shifts.filter((x) => x.id !== id);
       log.savings = log.savings.filter((x) => x.shiftId !== id);
@@ -1534,7 +1557,7 @@
   $("sv-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const err = $("sv-err");
-    const n = parseFloat($("sv-amount").value.replace(/[\s,']/g, ""));
+    const n = parseAmount($("sv-amount").value);
     if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
     const bal = freeBalance();
     if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${cfg.currency} ${money(bal)} outside your goals. Take money out of a goal first.`; return; }
@@ -1609,7 +1632,7 @@
   const signed = (n) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
   const pct = (g, base) => (base > 0 ? `${g < 0 ? "−" : "+"}${(Math.abs(g) / base * 100).toFixed(1)}%` : "");
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const num = (v) => parseFloat(String(v).replace(/[\s,']/g, ""));
+  const num = (v) => parseAmount(v);
 
   // Home: the clock, savings, portfolio and this week at a glance.
   const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -1869,7 +1892,7 @@
   }
   $("gl-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const name = $("gl-name").value.trim(), target = parseFloat($("gl-target").value.replace(/[\s,']/g, ""));
+    const name = $("gl-name").value.trim(), target = parseAmount($("gl-target").value);
     if (!name) { $("gl-err").textContent = "Give the goal a name, like New camera."; return; }
     if (!(target > 0)) { $("gl-err").textContent = "Enter how much you need, for example 8000."; return; }
     $("gl-err").textContent = "";
@@ -1882,7 +1905,7 @@
   $("gl-move").addEventListener("submit", (e) => {
     e.preventDefault();
     const err = $("gl-move-err"), id = $("gl-pick").value, g = log.goals.find((x) => x.id === id);
-    const n = parseFloat($("gl-amount").value.replace(/[\s,']/g, ""));
+    const n = parseAmount($("gl-amount").value);
     if (!g) { err.textContent = "Pick a goal."; return; }
     if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
     if (glDir > 0 && n > freeBalance() + 0.001) { err.textContent = `You have ${cfg.currency} ${money(freeBalance())} in savings outside your goals. Deposit first, or put in less.`; return; }
@@ -1968,6 +1991,79 @@
   });
 
   // When a marked shift has ended: deposit its pay and log the shift (once).
+  // Ended calendar shifts are logged automatically (unless sick/skipped/day off), at your current pay.
+  // Automatic entries follow later changes to pay, supplements and the calendar; marked ones also pay into savings.
+  const BACKFILL_DAYS = 62;
+  function processCalendar(now) {
+    if (!calendarUsed()) return processPledges(now);
+    let ch = false, added = 0;
+    const today = new Date(now); today.setHours(0, 0, 0, 0);
+    const windowStart = addDays(today, -BACKFILL_DAYS).getTime();
+    const valid = new Set();
+    const dropShift = (rec) => {
+      const txs = log.savings.filter((t) => t.shiftId === rec.id);
+      log.savings = log.savings.filter((t) => t.shiftId !== rec.id);
+      log.shifts = log.shifts.filter((x) => x !== rec);
+      log.deleted.push(rec.id, ...txs.map((t) => t.id));
+      ch = true;
+    };
+    for (let i = BACKFILL_DAYS; i >= 0; i--) {
+      for (const o of occurrences(addDays(today, -i))) {
+        const rec = log.shifts.find((x) => x.start === o.start);
+        if (o.off) { if (rec && rec.auto) dropShift(rec); continue; }
+        valid.add(o.start);
+        if (o.end > now || (rec && rec.live)) continue;
+        const pl = pledgeFor(o.key);
+        const goal = pl && pl.dest && log.goals.find((g) => g.id === pl.dest && !g.done) ? { goalId: pl.dest } : {};
+        if (!rec) {
+          const dur = o.end - o.start, breakMin = dur > BREAK_AFTER ? BREAK_LEN / 60000 : 0;
+          const shift = { id: uid(), key: o.key, start: o.start, end: o.end, sched: null, breakMin, amount: +expectedPay(o).toFixed(2), currency: cfg.currency, savings: !!pl, auto: true, u: now };
+          log.shifts.push(shift); added++; ch = true;
+          if (pl) {
+            log.savings.push({ id: uid(), t: o.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: now, ...goal });
+            toast(`Shift ${longDate.format(o.start)} logged · ${shift.currency} ${money(shift.amount)} to ${goal.goalId ? (log.goals.find((g) => g.id === goal.goalId) || {}).name || "your goal" : "savings"}.`);
+          }
+        } else if (rec.auto) {
+          const amt = +expectedPay(o).toFixed(2);
+          if (Math.abs(amt - rec.amount) > 0.004 || rec.end !== o.end) {
+            rec.amount = amt; rec.end = o.end; rec.u = now; ch = true;
+            log.savings.forEach((t) => { if (t.shiftId === rec.id && !t.live) { t.amount = amt; t.u = now; } });
+          }
+          if (pl && !log.savings.some((t) => t.shiftId === rec.id)) { log.savings.push({ id: uid(), t: o.end, amount: rec.amount, currency: rec.currency, shiftId: rec.id, kind: "shift", u: now, ...goal }); rec.savings = true; ch = true; }
+        } else if (pl && rec.savings !== false && !log.savings.some((t) => t.shiftId === rec.id)) {
+          log.savings.push({ id: uid(), t: o.end, amount: rec.amount, currency: rec.currency, shiftId: rec.id, kind: "shift", u: now, ...goal }); ch = true;
+        }
+        if (pl) { pl.done = true; pl.u = now; ch = true; }
+      }
+    }
+    // Automatic entries whose calendar shift was moved or removed.
+    log.shifts.filter((x) => x.auto && x.start >= windowStart && x.start <= now && !valid.has(x.start)).forEach(dropShift);
+    log.pledges.filter((x) => !x.done && x.date < ymd(today)).forEach((pl) => {
+      const o = occurrences(parseYmd(pl.date)).find((x) => x.key === pl.key);
+      if (!o || o.off) { pl.done = true; pl.u = now; ch = true; }
+    });
+    if (ch) {
+      persist(); saveKey = ""; renderTab();
+      if (added > 1) toast(`${plural(added, "past shift")} from your calendar added to your stats.`);
+    }
+  }
+
+  // Offer to recalculate shifts saved by hand after the pay changes. Automatic entries update by themselves.
+  function offerRecalc() {
+    const manual = log.shifts.filter((x) => !x.auto && !x.live && x.currency === cfg.currency && x.end);
+    if (!manual.length) return;
+    const fresh = manual.map((x) => ({ x, amt: +payFor(x.start, x.end, x.breakMin || 0).toFixed(2) })).filter((r) => Math.abs(r.amt - r.x.amount) > 0.01);
+    if (!fresh.length) return;
+    if (!confirm(`Recalculate ${plural(fresh.length, "saved shift")} with your new pay?\n\nShifts you saved by hand keep their old amount otherwise. Savings deposits from those shifts are updated too.`)) return;
+    const now = Date.now();
+    fresh.forEach(({ x, amt }) => {
+      x.amount = amt; x.u = now;
+      log.savings.forEach((t) => { if (t.shiftId === x.id && !t.live) { t.amount = amt; t.u = now; } });
+    });
+    persist(); renderTab();
+    toast(`${plural(fresh.length, "shift")} recalculated.`);
+  }
+
   function processPledges(now) {
     let changedAny = false;
     log.pledges.filter((x) => !x.done).forEach((pl) => {
@@ -2002,6 +2098,17 @@
   const skipId = (fid, ds) => `${fid}@${ds}`;
   const skipOf = (fid, ds) => log.skips.find((k) => k.id === skipId(fid, ds));
   const REASON = { off: "day off", sick: "sick", skipped: "skipped" };
+  function markOccurrence(key, ds, reason) {
+    if (key.includes("@")) {
+      const fid = key.split("@")[0];
+      log.skips = log.skips.filter((x) => x.id !== key);
+      log.skips.push({ id: key, fixedId: fid, date: ds, reason, u: Date.now() });
+      log.deleted = log.deleted.filter((x) => x !== key);
+    } else {
+      const pl = log.planned.find((x) => x.id === key);
+      if (pl) { pl.status = reason; pl.u = Date.now(); }
+    }
+  }
   const REASON_SHORT = { off: "off", sick: "sick", skipped: "skip" };
 
   // Every shift on a given day, with its times in ms. Skipped fixed shifts are included, marked off.
@@ -2328,7 +2435,7 @@
   $("sup-cancel").addEventListener("click", resetSupForm);
   $("sup-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const name = $("sup-name").value.trim(), amount = parseFloat($("sup-amount").value.replace(/[\s,']/g, "").replace(/%$/, ""));
+    const name = $("sup-name").value.trim(), amount = parseAmount($("sup-amount").value);
     const from = $("sup-from").value, to = $("sup-to").value, type = $("st-pct").checked ? "pct" : "kr";
     if (!name) { $("sup-err").textContent = "Give it a name, like Saturday or Evening."; return; }
     if (!supDays.size) { $("sup-err").textContent = "Pick the days it applies to."; return; }
@@ -2351,7 +2458,7 @@
   ];
   let wz = null, wzStep = 0;
   const wzVal = (id) => ($(id) ? $(id).value.trim() : "");
-  const wzNum = (id) => parseFloat(wzVal(id).replace(/[\s,']/g, ""));
+  const wzNum = (id) => parseAmount(wzVal(id));
   const WZ = [
     {
       q: "What's your work called?", help: "Just a name for you, like the shop or company. You can leave it empty.",
@@ -2360,13 +2467,15 @@
     },
     {
       q: "What do you earn?", help: "Your normal pay before supplements. Hourly pay is the most precise for shift work.",
-      body: () => `<label class="field" for="wz-amt"><span>Pay</span><input type="text" id="wz-amt" inputmode="decimal" autocomplete="off" placeholder="150" value="${wz.amount || ""}"></label>
+      body: () => `<label class="field" for="wz-amt"><span>Pay</span><input type="text" id="wz-amt" inputmode="decimal" autocomplete="off" placeholder="110,10" value="${wz.amount ? String(wz.amount).replace(".", ",") : ""}"></label>
         <div class="field"><span>Per</span><div class="seg" role="radiogroup" aria-label="Per">${["hour", "month", "year"].map((x) => `<input type="radio" name="wz-per" id="wz-p-${x}" value="${x}"${wz.period === x ? " checked" : ""}><label for="wz-p-${x}">${x.toUpperCase()}</label>`).join("")}</div></div>
         <div class="field"><span>Currency</span><div class="seg" role="radiogroup" aria-label="Currency">${["DKK", "EUR", "USD"].map((x) => `<input type="radio" name="wz-cur" id="wz-c-${x}" value="${x}"${wz.currency === x ? " checked" : ""}><label for="wz-c-${x}">${x}</label>`).join("")}</div></div>`,
       take: () => {
         const a = wzNum("wz-amt");
-        if (!(a > 0)) return "Enter your pay as a number, for example 150.";
-        wz.amount = a; wz.period = document.querySelector("input[name=wz-per]:checked").value; wz.currency = document.querySelector("input[name=wz-cur]:checked").value;
+        if (!(a > 0)) return "Enter your pay as a number, for example 110,10.";
+        const per = document.querySelector("input[name=wz-per]:checked").value, cur = document.querySelector("input[name=wz-cur]:checked").value;
+        if (hourlyTooHigh(a, per, cur) && payWarned !== a) { payWarned = a; return `That is ${cur} ${money(a)} per hour. If that is your monthly pay, pick MONTH. Press Next again to keep it.`; }
+        wz.amount = a; wz.period = per; wz.currency = cur;
       },
       required: true,
     },
@@ -2405,7 +2514,7 @@
       body: () => SUP_PRESETS.map((x) => `<label class="wiz-sup" for="wz-s-${x.key}"><span><b>${x.name}</b><small>${x.help}</small></span><input type="text" id="wz-s-${x.key}" inputmode="decimal" autocomplete="off" placeholder="+0 / h" value="${wz.sup[x.key] || ""}"></label>`).join(""),
       take: () => {
         for (const x of SUP_PRESETS) {
-          const v = wzVal("wz-s-" + x.key); const n = parseFloat(v.replace(/[\s,'+]/g, ""));
+          const v = wzVal("wz-s-" + x.key); const n = parseAmount(v);
           if (v && !(n > 0)) return `Enter the ${x.name.toLowerCase()} supplement as a number, or leave it empty.`;
           wz.sup[x.key] = v ? n : 0;
         }
@@ -2478,6 +2587,8 @@
   }
   function finishWizard() {
     const now = Date.now();
+    const payChanged = wz.amount !== cfg.amount || wz.period !== cfg.period;
+    if (payChanged && log.shifts.length) setTimeout(offerRecalc, 2300);
     Object.assign(cfg, { job: wz.job, amount: wz.amount || cfg.amount, period: wz.period, currency: wz.currency, payStart: wz.payStart, payDay: wz.payDay, setupDone: true });
     if (wz.days.length && wz.start && wz.end) log.fixed.push({ id: uid(), days: wz.days, start: wz.start, end: wz.end, breakAt: "", from: ymd(new Date()), until: "", u: now });
     SUP_PRESETS.forEach((x) => { if (wz.sup[x.key] > 0) log.supps.push({ id: uid(), name: x.name, days: x.days, from: x.from, to: x.to, amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now }); });
