@@ -403,7 +403,7 @@
     <div class="tip" data-tip="home" hidden><b>How 99MS works</b><p>This is your overview. Add your shifts in Calendar and 99MS counts your pay by itself: live during a shift, and every finished shift goes into your stats. Tap a card to open that part.</p><button class="link" type="button" data-tip-ok="home">Got it</button></div>
     <button class="card" type="button" data-go="salary">
       <span class="card-k" id="h-sal-label">Earned today</span>
-      <b class="card-big"><small id="h-cur">DKK</small><span id="h-int">0</span><span class="frac" id="h-frac">.0000</span></b>
+      <b class="card-big"><small id="h-cur">kr.</small><span id="h-int">0</span><span class="frac" id="h-frac">.0000</span></b>
       <em id="h-sal-sub"></em>
     </button>
     <section class="sec" id="h-start" hidden aria-labelledby="h-start-title">
@@ -446,7 +446,7 @@
     <main>
       <div class="readout" id="readout" title="Tap to switch view">
         <button class="mode" id="mode" type="button">Earned today</button>
-        <div class="clock" id="clock" aria-live="off"><span class="cur" id="cur">DKK</span><span id="int">0</span><span class="frac" id="frac">.0000</span></div>
+        <div class="clock" id="clock" aria-live="off"><span class="cur" id="cur">kr.</span><span id="int">0</span><span class="frac" id="frac">.0000</span></div>
         <div class="rate" id="rate">—</div>
         <div class="progress" id="progress" hidden><i id="bar"></i></div>
         <div class="times" id="times" hidden><span id="t-start"></span><span id="t-break"></span><span id="t-end"></span></div>
@@ -872,9 +872,10 @@
       return; // the framed copy runs the app
     }
   }
-  const APP_VERSION = "2.0";
+  const APP_VERSION = "2.1";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "Amounts in Danish style: 6.055,50 kr.",
     "Home shows your next shift, your next payday and what to set up",
     "Short guides on every tab, and clearer names in Settings",
     "Today and This year on the clock count your actual shifts",
@@ -934,8 +935,13 @@
 
   const sessionStart = performance.now();
   const sessionWall = Date.now();
-  const grouping = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-  const fmt2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Danish number style everywhere: 6.055,50
+  const grouping = new Intl.NumberFormat("da-DK", { maximumFractionDigits: 0 });
+  const fmt2 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt4 = new Intl.NumberFormat("da-DK", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  const CUR_SIGN = { DKK: "kr.", EUR: "€", USD: "$" };
+  const curLabel = (c = cfg.currency) => CUR_SIGN[c] || c;
+  const kr = (n, c = cfg.currency) => `${fmt2.format(n)} ${curLabel(c)}`;
 
   // Shift workers (calendar, a daily shift or hourly pay) see what their shifts earned; salaried people see pay spread over the day.
   const shiftWorker = () => calendarUsed() || !!cfg.shiftStart || cfg.period === "hour";
@@ -1014,11 +1020,11 @@
   function apply() {
     const mode = currentMode();
     cfg.mode = mode.key;
-    el.cur.textContent = cfg.currency;
+    el.cur.textContent = curLabel();
     const perSec = (mode.key === "shift" ? workPerMs() : clockPerMs()) * 1000;
     el.rate.textContent = mode.key !== "shift" && shiftWorker()
       ? `From your shifts   ·   ${fmt2.format(workPerMs() * HOUR)} / hour while you work`
-      : `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour`;
+      : `${fmt4.format(perSec)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour`;
     lastRateTick = 0;
     const shift = mode.key === "shift";
     el.times.hidden = !shift;
@@ -1076,7 +1082,7 @@
         lastRateTick = now;
         const act = (log.supps || []).filter((rule) => suppBetweenRule(rule, now));
         const perSec = (workPerMs() + suppBetween(now, now + 1)) * 1000;
-        el.rate.textContent = `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour${act.length ? `   ·   ${act.map((x) => x.name).join(" + ")}` : ""}`;
+        el.rate.textContent = `${fmt4.format(perSec)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour${act.length ? `   ·   ${act.map((x) => x.name).join(" + ")}` : ""}`;
       }
       // Paused on the scheduled break only while it is still topping up to 30 minutes.
       const inSched = brk !== null && now >= brk && now < brk + BREAK_LEN && unpaidMs(start, now, brk, list) > unpaidMs(start, now, null, list);
@@ -1115,7 +1121,7 @@
     tickLive(now);
     const whole = Math.floor(v);
     const intStr = grouping.format(whole);
-    const fracStr = Math.min(v - whole, 0.99994).toFixed(4).slice(1);
+    const fracStr = "," + Math.min(v - whole, 0.99994).toFixed(4).slice(2);
     if (el.int.textContent !== intStr) el.int.textContent = intStr;
     el.frac.textContent = fracStr;
     if (tab === "home") {
@@ -1176,7 +1182,7 @@
     const perSel = document.querySelector("input[name=period]:checked").value;
     if (hourlyTooHigh(amount, perSel, cfg.currency) && payWarned !== amount) {
       payWarned = amount;
-      el.err.textContent = `That is ${cfg.currency} ${money(amount)} per hour. If that is your monthly pay, pick MONTH. Press again to keep it.`;
+      el.err.textContent = `That is ${kr(amount)} per hour. If that is your monthly pay, pick MONTH. Press again to keep it.`;
       return;
     }
     if (el.end.value && !el.start.value) { el.err.textContent = "Add a shift start time, or clear the end time."; return; }
@@ -1314,7 +1320,7 @@
       const x = liveRec();
       if (x && now >= liveStop(x, Infinity)) {
         finalize(x, liveStop(x, Infinity));
-        toast(`Shift ended. ${x.currency} ${money(x.amount)} saved.`);
+        toast(`Shift ended. ${kr(x.amount, x.currency)} saved.`);
         renderTab();
       }
     }
@@ -1402,7 +1408,7 @@
   function renderSummary() {
     const s = formShift();
     f.sum.innerHTML = s
-      ? `${cfg.currency} ${money(s.amount)}<span>${hm(s.paidMs)} paid at ${money(workPerMs() * HOUR)} / hour</span>`
+      ? `${kr(s.amount)}<span>${hm(s.paidMs)} paid at ${money(workPerMs() * HOUR)} / hour</span>`
       : "Fill in the date and times.";
   }
   [f.date, f.start, f.end].forEach((x) => x.addEventListener("input", () => { autoBreak(); renderSummary(); }));
@@ -1428,7 +1434,7 @@
     f.err.textContent = "";
     if (saveLive) {
       const so = shiftPay(w.start, now, w.brk, breaksFor(w.start));
-      f.sum.innerHTML = `${cfg.currency} ${money(so)}<span>earned so far · ${money(workPerMs() * HOUR)} / hour</span>`;
+      f.sum.innerHTML = `${kr(so)}<span>earned so far · ${money(workPerMs() * HOUR)} / hour</span>`;
     } else renderSummary();
     $("save-sheet").hidden = false;
   }
@@ -1441,7 +1447,7 @@
       return;
     }
     const x = liveRec();
-    if (x) { finalize(x, liveStop(x)); toast(`Shift ended. ${x.currency} ${money(x.amount)} saved.`); }
+    if (x) { finalize(x, liveStop(x)); toast(`Shift ended. ${kr(x.amount, x.currency)} saved.`); }
   });
   $("log-cancel").addEventListener("click", () => { $("save-sheet").hidden = true; });
   $("save-form").addEventListener("submit", (e) => {
@@ -1470,7 +1476,7 @@
     persist();
     saveKey = "";
     $("save-sheet").hidden = true;
-    toast(shift.savings ? `Saved. ${shift.currency} ${money(shift.amount)} added to savings.` : "Shift saved.");
+    toast(shift.savings ? `Saved. ${kr(shift.amount, shift.currency)} added to savings.` : "Shift saved.");
   });
 
   // Stats
@@ -1546,7 +1552,7 @@
     const best = shifts.reduce((b, x) => (!b || x.amount > b.amount ? x : b), null);
     const byDay = Array(7).fill(0); shifts.forEach((x) => byDay[new Date(x.start).getDay()]++);
     const topDay = shifts.length ? DAYS[byDay.indexOf(Math.max(...byDay))] : "—";
-    const c = (n) => `${cur} ${money(n)}`;
+    const c = (n) => `${kr(n)}`;
     $("st-grid").innerHTML = [
       stat("Total earned", c(total), other ? `${other} shift${other > 1 ? "s" : ""} in other currencies not counted` : ""),
       stat("Shifts", shifts.length, shifts.length ? `since ${dateFmt.format(shifts[shifts.length - 1].start)}` : ""),
@@ -1594,13 +1600,13 @@
       // Rounded top, square base
       if (h > 0) out += `<path class="b${i === 7 ? " on" : ""}" data-i="${i}" d="M${x},${base} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${base} Z"></path>`;
       out += `<text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle">W${isoWeek(w.from)}</text>`;
-      out += `<rect class="hit" data-i="${i}" x="${x - gap / 2}" y="0" width="${bw + gap}" height="${H}"><title>Week ${isoWeek(w.from)}: ${cur} ${money(w.amount)}</title></rect>`;
+      out += `<rect class="hit" data-i="${i}" x="${x - gap / 2}" y="0" width="${bw + gap}" height="${H}"><title>Week ${isoWeek(w.from)}: ${kr(w.amount)}</title></rect>`;
     });
     svg.innerHTML = out;
     const show = (i) => {
       chartSel = i;
       const w = weeks[i];
-      cap.textContent = `Week ${isoWeek(w.from)} · ${cur} ${money(w.amount)} · ${w.n} shift${w.n === 1 ? "" : "s"}`;
+      cap.textContent = `Week ${isoWeek(w.from)} · ${kr(w.amount)} · ${w.n} shift${w.n === 1 ? "" : "s"}`;
       svg.querySelectorAll(".b").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
     };
     svg.querySelectorAll(".hit").forEach((h) => {
@@ -1654,13 +1660,13 @@
     const n = parseAmount($("sv-amount").value);
     if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
     const bal = freeBalance();
-    if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${cfg.currency} ${money(bal)} outside your goals. Take money out of a goal first.`; return; }
+    if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${kr(bal)} outside your goals. Take money out of a goal first.`; return; }
     err.textContent = "";
     log.savings.push({ id: uid(), t: Date.now(), amount: svDir * +n.toFixed(2), currency: cfg.currency, kind: svDir < 0 ? "withdraw" : "deposit", u: Date.now() });
     persist();
     $("sv-amount").value = "";
     renderSavings();
-    toast(svDir < 0 ? `Withdrew ${cfg.currency} ${money(n)}.` : `Deposited ${cfg.currency} ${money(n)}.`);
+    toast(svDir < 0 ? `Withdrew ${kr(n)}.` : `Deposited ${kr(n)}.`);
   });
 
   // Backup
@@ -1754,7 +1760,7 @@
   const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
   function renderHome(now = Date.now()) {
     const cur = cfg.currency;
-    if (home.cur.textContent !== cur) home.cur.textContent = cur;
+    if (home.cur.textContent !== curLabel()) home.cur.textContent = curLabel();
     $("h-date").textContent = dayFmt.format(now);
     const cs = currentShift(now);
     $("h-sal-sub").textContent = cs
@@ -1762,17 +1768,17 @@
       : shiftWorker() ? `${money(workPerMs() * HOUR)} / hour while you work` : `${money(clockPerMs() * HOUR)} / hour, around the clock`;
     if (now - homeSlow > 1000) { homeSlow = now; renderHomeSlow(now); }
     const live = liveRec();
-    $("h-sav").textContent = money(balance());
-    $("h-sav-sub").textContent = live && live.savings ? `${cur} · saving live` : cur;
+    $("h-sav").textContent = kr(balance());
+    $("h-sav-sub").textContent = live && live.savings ? "saving live" : "in your savings";
     const mine = log.items.filter((x) => x.currency === cur);
     const val = sum(mine, "value"), inv = sum(mine, "invested");
-    $("h-pf").textContent = money(val);
-    $("h-pf-sub").textContent = mine.length ? `${cur} · ${signed(val - inv)}` : "Add an investment or project";
+    $("h-pf").textContent = kr(val);
+    $("h-pf-sub").textContent = mine.length ? `${signed(val - inv)} ${curLabel()}` : "Add an investment or project";
     const shifts = statsShifts(now);
     const d = new Date(now), wk = weekStart(now), mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
     const w = shifts.filter((x) => x.start >= wk), m = shifts.filter((x) => x.start >= mo);
-    $("h-wk").textContent = money(sum(w, "amount")); $("h-wk-sub").textContent = `${cur} · ${plural(w.length, "shift")}`;
-    $("h-mo").textContent = money(sum(m, "amount")); $("h-mo-sub").textContent = `${cur} · ${plural(m.length, "shift")}`;
+    $("h-wk").textContent = kr(sum(w, "amount")); $("h-wk-sub").textContent = plural(w.length, "shift");
+    $("h-mo").textContent = kr(sum(m, "amount")); $("h-mo-sub").textContent = plural(m.length, "shift");
     $("h-acct").textContent = acctLine();
   }
 
@@ -1782,7 +1788,7 @@
     const nx = calendarUsed() ? upcomingShifts(45, now).find((o) => o.start > now) : null;
     if (nx) {
       $("h-next").textContent = `${longDate.format(nx.start)}`;
-      $("h-next-sub").textContent = `${nx.ref.start}–${nx.ref.end} · about ${cur} ${money(expectedPay(nx))}`;
+      $("h-next-sub").textContent = `${nx.ref.start}–${nx.ref.end} · about ${kr(expectedPay(nx))}`;
     } else {
       $("h-next").textContent = "—";
       $("h-next-sub").textContent = calendarUsed() ? "Nothing in the next 6 weeks" : "Add your shifts in Calendar";
@@ -1792,7 +1798,7 @@
       const days = Math.round((np.date - new Date(new Date(now).toDateString())) / DAY);
       $("h-pay").textContent = days === 0 ? "Today" : longDate.format(np.date);
       const amt = rangePlan(np.per.from, np.per.to, now).expected;
-      $("h-pay-sub").textContent = `${days ? `in ${plural(days, "day")} · ` : ""}${amt > 0 ? `about ${cur} ${money(amt)}` : `no shifts in ${rangeText(np.per)}`}`;
+      $("h-pay-sub").textContent = `${days ? `in ${plural(days, "day")} · ` : ""}${amt > 0 ? `about ${kr(amt)}` : `no shifts in ${rangeText(np.per)}`}`;
     } else { $("h-pay").textContent = "—"; $("h-pay-sub").textContent = "Set the day your money arrives"; }
     const steps = [];
     if (!cfg.setupDone) steps.push(["Answer the setup questions", "Start", () => openWizard()]);
@@ -1808,9 +1814,9 @@
   const KIND = { shift: "Shift pay", deposit: "Deposit", withdraw: "Withdrawal", move: "Moved", spent: "Spent from goal" };
   function renderSavings() {
     const cur = cfg.currency;
-    $("sv-balance").innerHTML = `<small>${cur}</small>${money(balance())}`;
+    $("sv-balance").innerHTML = `<small>${curLabel()}</small>${money(balance())}`;
     const inGoals = balance() - freeBalance();
-    $("sv-split").textContent = inGoals > 0.004 ? `Free ${cur} ${money(freeBalance())} · in goals ${cur} ${money(inGoals)}` : "";
+    $("sv-split").textContent = inGoals > 0.004 ? `Free ${kr(freeBalance())} · in goals ${kr(inGoals)}` : "";
     tickGoals();
     if ($("pq-expected")) renderExpected();
     const list = log.savings.filter((t) => t.currency === cur).sort((a, b) => b.t - a.t).slice(0, 100);
@@ -1832,10 +1838,10 @@
     const mine = log.items.filter((x) => x.currency === cur);
     const val = sum(mine, "value"), inv = sum(mine, "invested");
     const other = log.items.length - mine.length;
-    $("pf-total").innerHTML = `<small>${cur}</small>${money(val)}`;
+    $("pf-total").innerHTML = `<small>${curLabel()}</small>${money(val)}`;
     $("pf-grid").innerHTML = [
-      stat("Put in", `${cur} ${money(inv)}`, other ? `${plural(other, "item")} in other currencies not counted` : ""),
-      stat("Gain", `${cur} ${signed(val - inv)}`, pct(val - inv, inv)),
+      stat("Put in", `${kr(inv)}`, other ? `${plural(other, "item")} in other currencies not counted` : ""),
+      stat("Gain", `${signed(val - inv)} ${curLabel()}`, pct(val - inv, inv)),
     ].join("");
     const rows = (kind, empty) => {
       const list = log.items.filter((x) => x.kind === kind).sort((a, b) => b.value - a.value);
@@ -1904,7 +1910,7 @@
     document.querySelector(`input[name=currency][value=${cfg.currency}]`).checked = true;
     const amt = Number.isInteger(cfg.amount) ? grouping.format(cfg.amount) : money(cfg.amount);
     const np = nextPayday();
-    $("set-sal").textContent = `${cfg.job ? cfg.job + ": " : ""}${cfg.currency} ${cfg.period === "hour" ? money(cfg.amount) : amt} per ${cfg.period}. `
+    $("set-sal").textContent = `${cfg.job ? cfg.job + ": " : ""}${cfg.period === "hour" ? kr(cfg.amount) : `${amt} ${curLabel()}`} per ${cfg.period}. `
       + `Pay period starts on day ${cfg.payStart || 1}${np ? `, money arrives on day ${cfg.payDay} (next: ${longDate.format(np.date)})` : ", no payday set"}. `
       + (calendarUsed() ? "Your shifts come from the calendar." : cfg.shiftStart ? `Daily shift ${cfg.shiftStart} to ${cfg.shiftEnd || "open end"}.` : "No shifts yet: add them in the Calendar.");
     renderAbout();
@@ -1973,11 +1979,11 @@
     const pay = payoutFor(per);
     const days = pay ? Math.ceil((pay - new Date(new Date(now).toDateString())) / DAY) : 0;
     $("per-title").textContent = `Pay period · ${rangeText(per)}`;
-    $("per-big").innerHTML = `<small>${cur}</small>${money(earned)}`;
+    $("per-big").innerHTML = `<small>${curLabel()}</small>${money(earned)}`;
     const prev = periodFor(addDays(per.from, -1)), prevPlan = rangePlan(prev.from, prev.to, now), prevPay = payoutFor(prev);
-    $("per-lines").innerHTML = `earned so far${plan.upcomingN ? ` · ${cur} ${money(plan.upcoming)} still planned in ${plural(plan.upcomingN, "shift")}` : ""}`
-      + `<span>Forecast for the period ${cur} ${money(earned + plan.upcoming)}${pay ? ` · paid out ${longDate.format(pay)}, in ${plural(days, "day")}` : " · set your payday in Settings"}</span>`
-      + `<span>Last period (${rangeText(prev)}) ${cur} ${money(prevPlan.earned)}${prevPay ? `, paid ${prevPay <= new Date(now) ? "" : "out "}${longDate.format(prevPay)}` : ""}</span>`;
+    $("per-lines").innerHTML = `earned so far${plan.upcomingN ? ` · ${kr(plan.upcoming)} still planned in ${plural(plan.upcomingN, "shift")}` : ""}`
+      + `<span>Forecast for the period ${kr(earned + plan.upcoming)}${pay ? ` · paid out ${longDate.format(pay)}, in ${plural(days, "day")}` : " · set your payday in Settings"}</span>`
+      + `<span>Last period (${rangeText(prev)}) ${kr(prevPlan.earned)}${prevPay ? `, paid ${prevPay <= new Date(now) ? "" : "out "}${longDate.format(prevPay)}` : ""}</span>`;
   }
 
   // ---------- Goals ----------
@@ -2034,10 +2040,10 @@
       const have = g.done ? g.spent || 0 : goalBalance(g.id);
       const pct = Math.min(100, (have / g.target) * 100);
       el.querySelector(".pct").textContent = g.done ? "done" : `${Math.floor(pct)}%`;
-      el.querySelector(".amt").innerHTML = `${money(have)} <small>/ ${cur} ${money(g.target)}</small>`;
+      el.querySelector(".amt").innerHTML = `${money(have)} <small>/ ${kr(g.target)}</small>`;
       el.querySelector(".track i").style.width = pct.toFixed(2) + "%";
       const need = g.target - have;
-      const m = g.done ? `Bought ${longDate.format(g.done)}` : need <= 0.004 ? "Goal reached. Tap Bought it when you spend it." : `${cur} ${money(need)} to go${goalEtaCache(g.id, need)}`;
+      const m = g.done ? `Bought ${longDate.format(g.done)}` : need <= 0.004 ? "Goal reached. Tap Bought it when you spend it." : `${kr(need)} to go${goalEtaCache(g.id, need)}`;
       if (el.querySelector(".m").textContent !== m) el.querySelector(".m").textContent = m;
     });
   }
@@ -2057,12 +2063,12 @@
     if (b.dataset.act === "bought") {
       if (have > 0) log.savings.push({ id: uid(), t: Date.now(), amount: -+have.toFixed(2), currency: g.currency, goalId: g.id, kind: "spent", u: Date.now() });
       g.done = Date.now(); g.spent = +have.toFixed(2); g.u = Date.now();
-      toast(`Enjoy the ${g.name}! ${g.currency} ${money(have)} spent from the goal.`);
+      toast(`Enjoy the ${g.name}! ${kr(have, g.currency)} spent from the goal.`);
     } else {
       // Money in the goal goes back to free savings.
       log.savings.forEach((t) => { if (t.goalId === g.id) { delete t.goalId; t.u = Date.now(); } });
       log.goals = log.goals.filter((x) => x.id !== g.id); log.deleted.push(g.id);
-      toast(have > 0 ? `Goal deleted. ${g.currency} ${money(have)} went back to savings.` : "Goal deleted.");
+      toast(have > 0 ? `Goal deleted. ${kr(have, g.currency)} went back to savings.` : "Goal deleted.");
     }
     persist(); renderTab();
   }
@@ -2084,15 +2090,15 @@
     const n = parseAmount($("gl-amount").value);
     if (!g) { err.textContent = "Pick a goal."; return; }
     if (!(n > 0)) { err.textContent = "Enter an amount above 0."; return; }
-    if (glDir > 0 && n > freeBalance() + 0.001) { err.textContent = `You have ${cfg.currency} ${money(freeBalance())} in savings outside your goals. Deposit first, or put in less.`; return; }
-    if (glDir < 0 && n > goalBalance(id) + 0.001) { err.textContent = `${g.name} only has ${cfg.currency} ${money(goalBalance(id))}.`; return; }
+    if (glDir > 0 && n > freeBalance() + 0.001) { err.textContent = `You have ${kr(freeBalance())} in savings outside your goals. Deposit first, or put in less.`; return; }
+    if (glDir < 0 && n > goalBalance(id) + 0.001) { err.textContent = `${g.name} only has ${kr(goalBalance(id))}.`; return; }
     err.textContent = "";
     const t = Date.now(), amt = +n.toFixed(2);
     log.savings.push({ id: uid(), t, amount: -glDir * amt, currency: g.currency, kind: "move", u: t });
     log.savings.push({ id: uid(), t, amount: glDir * amt, currency: g.currency, goalId: id, kind: "move", u: t });
     $("gl-amount").value = "";
     persist(); renderTab();
-    toast(glDir > 0 ? `Put ${g.currency} ${money(amt)} towards ${g.name}.` : `Took ${g.currency} ${money(amt)} out of ${g.name}.`);
+    toast(glDir > 0 ? `Put ${kr(amt, g.currency)} towards ${g.name}.` : `Took ${kr(amt, g.currency)} out of ${g.name}.`);
   });
   $("log-savings").addEventListener("change", () => { $("log-goal-wrap").hidden = !$("log-savings").checked || !activeGoals().length; });
 
@@ -2127,7 +2133,7 @@
   function renderExpected() {
     const cur = cfg.currency, e = expectedSavings(), bal = balance();
     $("pq-expected").innerHTML = e.n
-      ? `Expected savings ${cur} ${money(bal + e.all)}<span>${cur} ${money(e.all)} still coming from ${plural(e.n, "shift")} you marked · ${cur} ${money(bal + e.byPeriod)} by the end of this pay period (${shortDate.format(e.per.to)})</span>`
+      ? `Expected savings ${kr(bal + e.all)}<span>${kr(e.all)} still coming from ${plural(e.n, "shift")} you marked · ${kr(bal + e.byPeriod)} by the end of this pay period (${shortDate.format(e.per.to)})</span>`
       : `<span>Mark upcoming shifts below and their pay goes into savings or a goal when the shift ends. Your expected savings show up here.</span>`;
   }
   function destOptions(sel) {
@@ -2144,7 +2150,7 @@
       const pl = pledgeFor(o.key), sel = pl ? pl.dest : "none";
       return `<label class="pq-row${pl ? " on" : ""}" for="pq-${esc(o.key)}">
         <span class="t">${longDate.format(parseYmd(o.date))} · ${o.ref.start}–${o.ref.end}</span>
-        <span class="m">about ${cur} ${money(expectedPay(o))}${o.start <= Date.now() ? " · running now" : ""}</span>
+        <span class="m">about ${kr(expectedPay(o))}${o.start <= Date.now() ? " · running now" : ""}</span>
         <select id="pq-${esc(o.key)}" data-key="${esc(o.key)}" data-date="${o.date}">${destOptions(sel)}</select>
       </label>`;
     }).join("") || `<p class="empty">No upcoming shifts in the next ${pqDays} days.</p>`;
@@ -2197,7 +2203,7 @@
           log.shifts.push(shift); added++; ch = true;
           if (pl) {
             log.savings.push({ id: uid(), t: o.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: now, ...goal });
-            toast(`Shift ${longDate.format(o.start)} logged · ${shift.currency} ${money(shift.amount)} to ${goal.goalId ? (log.goals.find((g) => g.id === goal.goalId) || {}).name || "your goal" : "savings"}.`);
+            toast(`Shift ${longDate.format(o.start)} logged · ${kr(shift.amount, shift.currency)} to ${goal.goalId ? (log.goals.find((g) => g.id === goal.goalId) || {}).name || "your goal" : "savings"}.`);
           }
         } else if (rec.auto) {
           const amt = +expectedPay(o).toFixed(2);
@@ -2253,9 +2259,9 @@
       if (!rule) return;
       pcRule = rule;
       const fmtDa = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const guess = Math.round(rule.amount) / 100, cur = cfg.currency, unit = rule.type === "pct" ? "%" : ` ${cur} per hour`;
+      const guess = Math.round(rule.amount) / 100, cur = cfg.currency, unit = rule.type === "pct" ? "%" : ` ${curLabel()} per hour`;
       $("pc-q").textContent = "Check your supplement";
-      $("pc-text").textContent = `Your ${rule.name} supplement is saved as +${fmtDa(rule.amount)}${unit}, on top of your pay of ${cur} ${fmtDa(workPerMs() * HOUR)} per hour. That makes every ${rule.name.toLowerCase()} shift far too high. An older version of 99MS read a comma wrong.`;
+      $("pc-text").textContent = `Your ${rule.name} supplement is saved as +${fmtDa(rule.amount)}${unit}, on top of your pay of ${kr(workPerMs() * HOUR)} per hour. That makes every ${rule.name.toLowerCase()} shift far too high. An older version of 99MS read a comma wrong.`;
       $("pc-fix").textContent = `Fix it: +${fmtDa(guess)}${unit}`;
       $("pc-fix").dataset.v = guess;
       $("pc-other").textContent = "Edit supplements";
@@ -2267,10 +2273,10 @@
     $("pc-other").textContent = "Enter it again";
     const guess = Math.round(cfg.amount) / 100, cur = cfg.currency;
     const fmtDa = (n) => n.toLocaleString("da-DK", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    $("pc-text").textContent = `Your pay is saved as ${cur} ${fmtDa(cfg.amount)} per hour, which makes every shift and total far too high. An older version of 99MS read a comma wrong, so ${fmtDa(guess)} became ${fmtDa(cfg.amount)}.`;
-    $("pc-fix").textContent = `Fix it: ${cur} ${fmtDa(guess)} per hour`;
+    $("pc-text").textContent = `Your pay is saved as ${kr(cfg.amount)} per hour, which makes every shift and total far too high. An older version of 99MS read a comma wrong, so ${fmtDa(guess)} became ${fmtDa(cfg.amount)}.`;
+    $("pc-fix").textContent = `Fix it: ${kr(guess)} per hour`;
     $("pc-fix").dataset.v = guess;
-    $("pc-ok").textContent = `${cur} ${fmtDa(cfg.amount)} per hour is right`;
+    $("pc-ok").textContent = `${kr(cfg.amount)} per hour is right`;
     $("paycheck").hidden = false;
   }
   $("pc-fix").addEventListener("click", () => {
@@ -2289,7 +2295,7 @@
     const n = offerRecalc(true);
     lastPledgeCheck = 0; processCalendar(Date.now());
     apply(); renderTab();
-    showDone("Pay fixed", `${cfg.currency} ${money(cfg.amount)} per hour${n ? ` · ${plural(n, "saved shift")} recalculated` : ""}`);
+    showDone("Pay fixed", `${kr(cfg.amount)} per hour${n ? ` · ${plural(n, "saved shift")} recalculated` : ""}`);
     setTimeout(checkPay, 2200);
   });
   $("pc-ok").addEventListener("click", () => {
@@ -2321,7 +2327,7 @@
         const shift = { id: uid(), start: o.start, end: o.end, sched: null, breakMin, amount: +expectedPay(o).toFixed(2), currency: cfg.currency, savings: true, auto: true, u: now };
         log.shifts.push(shift);
         log.savings.push({ id: uid(), t: o.end, amount: shift.amount, currency: shift.currency, shiftId: shift.id, kind: "shift", u: now, ...goal });
-        toast(`Shift ${longDate.format(o.start)} logged · ${shift.currency} ${money(shift.amount)} to ${goal.goalId ? (log.goals.find((g) => g.id === goal.goalId) || {}).name || "your goal" : "savings"}.`);
+        toast(`Shift ${longDate.format(o.start)} logged · ${kr(shift.amount, shift.currency)} to ${goal.goalId ? (log.goals.find((g) => g.id === goal.goalId) || {}).name || "your goal" : "savings"}.`);
       }
       pl.done = true; pl.u = now; changedAny = true;
     });
@@ -2418,9 +2424,9 @@
     const plan = monthPlan(y, m);
     const cur = cfg.currency;
     const per = periodFor(parseYmd(calSel)), perPlan = rangePlan(per.from, per.to), perPay = payoutFor(per);
-    $("cal-sum").innerHTML = `${cur} ${money(plan.expected)} · ${plural(plan.shifts, "shift")} · ${hm(plan.ms)}`
-      + `<span>${plan.upcomingN ? `${cur} ${money(plan.upcoming)} still to earn in ${plural(plan.upcomingN, "planned shift")}` : "Expected pay for the month, using saved pay where a shift is saved"}</span>`
-      + `<span>Pay period ${rangeText(per)}: ${cur} ${money(perPlan.expected)}${perPay ? `, paid out ${longDate.format(perPay)}` : ""}</span>`;
+    $("cal-sum").innerHTML = `${kr(plan.expected)} · ${plural(plan.shifts, "shift")} · ${hm(plan.ms)}`
+      + `<span>${plan.upcomingN ? `${kr(plan.upcoming)} still to earn in ${plural(plan.upcomingN, "planned shift")}` : "Expected pay for the month, using saved pay where a shift is saved"}</span>`
+      + `<span>Pay period ${rangeText(per)}: ${kr(perPlan.expected)}${perPay ? `, paid out ${longDate.format(perPay)}` : ""}</span>`;
     const paydays = new Set(); if (cfg.payDay) for (let k = -1; k <= 1; k++) { const pp = periodFor(new Date(y, m + k, 15)); const pd = payoutFor(pp); if (pd) paydays.add(ymd(pd)); }
 
     const todayS = ymd(new Date());
@@ -2455,7 +2461,7 @@
       const kindLabel = o.kind === "fixed" ? "Fixed shift" : "Single shift";
       const pl = log.pledges.find((x) => x.key === o.key && !x.done);
       const dest = pl ? (pl.dest ? (log.goals.find((g) => g.id === pl.dest) || {}).name || "a goal" : "savings") : "";
-      const meta = o.off ? `${kindLabel} · ${REASON[o.reason]}` : `${kindLabel} · ${sv ? `saved ${cfg.currency} ${money(amountOf(sv))}` : `about ${cfg.currency} ${money(expectedPay(o))}`}${dest ? ` · to ${esc(dest)}` : ""}`;
+      const meta = o.off ? `${kindLabel} · ${REASON[o.reason]}` : `${kindLabel} · ${sv ? `saved ${kr(amountOf(sv))}` : `about ${kr(expectedPay(o))}`}${dest ? ` · to ${esc(dest)}` : ""}`;
       const k = o.kind, id = o.ref.id;
       const acts = o.off
         ? `<button type="button" data-act="unskip" data-kind="${k}" data-id="${id}">Undo ${REASON[o.reason]}</button>`
@@ -2464,7 +2470,7 @@
       return `<div class="cal-item wide${o.off ? " off" : ""}"><div class="t">${o.ref.start}–${o.ref.end}</div><div class="m">${meta}</div><div class="a">${acts}</div></div>`;
     });
     saved.filter((x) => !occ.some((o) => o.start === x.start)).forEach((x) => {
-      rows.push(`<div class="cal-item"><div class="t">${hhmm(new Date(x.start))}–${x.live ? "now" : hhmm(new Date(x.end))}</div><div class="m">Saved shift · ${x.currency} ${money(amountOf(x))}</div><div class="a"></div></div>`);
+      rows.push(`<div class="cal-item"><div class="t">${hhmm(new Date(x.start))}–${x.live ? "now" : hhmm(new Date(x.end))}</div><div class="m">Saved shift · ${kr(amountOf(x), x.currency)}</div><div class="a"></div></div>`);
     });
     $("day-list").innerHTML = rows.join("") || `<p class="empty">No shifts this day. Add one below, or set up fixed shifts further down.</p>`;
     $("day-list").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => dayAction(b)));
@@ -2636,7 +2642,7 @@
   }
 
   const supDaysText = (days) => days.length === 7 ? "Every day" : (days.join() === "1,2,3,4,5" ? "Mon–Fri" : DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", "));
-  const supText = (rule) => `${rule.type === "pct" ? `+${rule.amount}%` : `+${cfg.currency} ${money(rule.amount)} / hour`} · ${supDaysText(rule.days)} · ${rule.from || rule.to ? `${rule.from || "00:00"}–${rule.to || "24:00"}` : "all day"}`;
+  const supText = (rule) => `${rule.type === "pct" ? `+${rule.amount}%` : `+${kr(rule.amount)} / hour`} · ${supDaysText(rule.days)} · ${rule.from || rule.to ? `${rule.from || "00:00"}–${rule.to || "24:00"}` : "all day"}`;
   let supDays = new Set(), supEditing = null;
   function renderSupDays() {
     $("sup-days").innerHTML = DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${supDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
@@ -2652,11 +2658,11 @@
     renderSupDays();
   }
   function renderSupps() {
-    $("st-kr-label").textContent = `${cfg.currency} / H`;
+    $("st-kr-label").textContent = `${curLabel()} / H`;
     $("sup-list").innerHTML = (log.supps || []).map((rule) => `
       <div class="cal-item"><div class="t">${esc(rule.name)}</div><div class="m">${supText(rule)}</div>
         <div class="a"><button type="button" data-act="edit" data-id="${rule.id}">Edit</button><button type="button" data-act="del" data-id="${rule.id}">Delete</button></div></div>`).join("")
-      || `<p class="empty">No supplements yet. Example: Saturday, Sa, all day, +30 ${cfg.currency} per hour.</p>`;
+      || `<p class="empty">No supplements yet. Example: Saturday, Sa, all day, +30 ${curLabel()} per hour.</p>`;
     $("sup-list").querySelectorAll("button[data-act]").forEach((b) => b.addEventListener("click", () => {
       const rule = log.supps.find((x) => x.id === b.dataset.id); if (!rule) return;
       if (b.dataset.act === "edit") {
@@ -2716,7 +2722,7 @@
         const a = wzNum("wz-amt");
         if (!(a > 0)) return "Enter your pay as a number, for example 110,10.";
         const per = document.querySelector("input[name=wz-per]:checked").value, cur = document.querySelector("input[name=wz-cur]:checked").value;
-        if (hourlyTooHigh(a, per, cur) && payWarned !== a) { payWarned = a; return `That is ${cur} ${money(a)} per hour. If that is your monthly pay, pick MONTH. Press Next again to keep it.`; }
+        if (hourlyTooHigh(a, per, cur) && payWarned !== a) { payWarned = a; return `That is ${kr(a)} per hour. If that is your monthly pay, pick MONTH. Press Next again to keep it.`; }
         wz.amount = a; wz.period = per; wz.currency = cur;
       },
       required: true,
