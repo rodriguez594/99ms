@@ -66,7 +66,6 @@
   .tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .tabbar button[aria-current="page"] { color: var(--fg); }
   .tabbar button:focus-visible { outline: 1px solid var(--dim); outline-offset: -4px; border-radius: 10px; }
-  body.idle .tabbar { opacity: 0; pointer-events: none; }
   .card {
     all: unset; box-sizing: border-box; display: grid; gap: 0.45rem; align-content: start; padding: 1.1rem 1.2rem;
     background: var(--panel); border-radius: 18px; cursor: pointer; min-width: 0; text-align: left;
@@ -361,6 +360,8 @@
     font: 1.6rem/1.2 var(--font-clock); padding: 0.2rem 0 0.4rem; -webkit-appearance: none; appearance: none; user-select: text;
   }
   input[type="date"]:focus, input[type="number"]:focus { outline: none; border-bottom-color: var(--fg); }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
   .btns { display: grid; grid-template-columns: 1fr 2fr; gap: 0.6rem; }
   .icon-btn:disabled { opacity: 0.45; cursor: default; }
@@ -371,6 +372,24 @@
   input.num { font-size: 1.6rem; }
   .toast { position: fixed; left: 50%; top: calc(20px + var(--sat)); transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 0.6rem 1rem; border-radius: 999px; font-size: 0.78rem; letter-spacing: 0.06em; z-index: 5; }
   @media (prefers-reduced-motion: reduce) { .chrome, .tabbar { transition: none; } }
+  /* Guides and getting started */
+  .tip { border: 1px solid var(--faint); border-radius: 14px; padding: 0.9rem 1rem; display: grid; gap: 0.5rem; }
+  .tip b { font-size: 0.72rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg); font-weight: 500; }
+  .tip p { margin: 0; color: var(--dim); font-size: 0.8rem; line-height: 1.55; }
+  .tip .link { justify-self: start; }
+  .steps { display: grid; gap: 0.5rem; }
+  .step { all: unset; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.85rem 1rem; border-radius: 12px; background: var(--panel); cursor: pointer; font-size: 0.85rem; }
+  .step span:last-child { color: var(--dim); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+  .step:focus-visible { outline: 1px solid var(--dim); }
+  details.more { border-top: 1px solid var(--faint); padding-top: 1rem; }
+  details.more summary { cursor: pointer; font-size: 0.7rem; letter-spacing: 0.24em; text-transform: uppercase; color: var(--dim); list-style: none; }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::after { content: " +"; }
+  details.more[open] summary::after { content: " −"; }
+  details.more[open] > .sec { margin-top: 1.2rem; }
+  .about { font: 0.8rem/1.6 var(--font-clock); color: var(--dim); }
+  .about b { color: var(--fg); font-weight: 400; }
+  .news { margin: 0; padding-left: 1.1rem; color: var(--dim); font-size: 0.78rem; line-height: 1.6; }
 </style>
 
 <button class="view-toggle" id="view-toggle" type="button" hidden aria-label="Switch to phone view" title="Phone view">
@@ -381,16 +400,23 @@
 <div class="view" id="v-home" hidden>
   <div class="page tight">
     <div class="page-head"><div class="brand">99MS</div><span class="note" id="h-date"></span></div>
+    <div class="tip" data-tip="home" hidden><b>How 99MS works</b><p>This is your overview. Add your shifts in Calendar and 99MS counts your pay by itself: live during a shift, and every finished shift goes into your stats. Tap a card to open that part.</p><button class="link" type="button" data-tip-ok="home">Got it</button></div>
     <button class="card" type="button" data-go="salary">
       <span class="card-k" id="h-sal-label">Earned today</span>
       <b class="card-big"><small id="h-cur">DKK</small><span id="h-int">0</span><span class="frac" id="h-frac">.0000</span></b>
       <em id="h-sal-sub"></em>
     </button>
+    <section class="sec" id="h-start" hidden aria-labelledby="h-start-title">
+      <h3 class="sec-title" id="h-start-title">Get started</h3>
+      <div class="steps" id="h-steps"></div>
+    </section>
     <div class="grid2 home-grid">
+      <button class="card" type="button" data-go="calendar"><span class="card-k">Next shift</span><b id="h-next">—</b><em id="h-next-sub"></em></button>
+      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">Next payday</span><b id="h-pay">—</b><em id="h-pay-sub"></em></button>
       <button class="card" type="button" data-go="savings"><span class="card-k">Savings</span><b id="h-sav">0.00</b><em id="h-sav-sub"></em></button>
-      <button class="card" type="button" data-go="portfolio"><span class="card-k">Portfolio</span><b id="h-pf">0.00</b><em id="h-pf-sub"></em></button>
-      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This week</span><b id="h-wk">0.00</b><em id="h-wk-sub"></em></button>
       <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This month</span><b id="h-mo">0.00</b><em id="h-mo-sub"></em></button>
+      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This week</span><b id="h-wk">0.00</b><em id="h-wk-sub"></em></button>
+      <button class="card" type="button" data-go="portfolio"><span class="card-k">Portfolio</span><b id="h-pf">0.00</b><em id="h-pf-sub"></em></button>
     </div>
     <p class="note" id="h-acct"></p>
   </div>
@@ -399,6 +425,7 @@
 <div class="view" id="v-portfolio" hidden>
   <div class="page">
     <div class="page-head"><h2>Investments &amp; projects</h2><button class="ghost" type="button" id="pf-add">Add</button></div>
+    <div class="tip" data-tip="portfolio" hidden><b>Investments and projects</b><p>Keep track of what you have put into investments or projects, and what they are worth now. Tap Add to start, and tap an item to update its value.</p><button class="link" type="button" data-tip-ok="portfolio">Got it</button></div>
     <section class="sec" aria-label="Total">
       <div class="big" id="pf-total"><small>DKK</small>0.00</div>
       <div class="grid2" id="pf-grid"></div>
@@ -423,18 +450,20 @@
         <div class="rate" id="rate">—</div>
         <div class="progress" id="progress" hidden><i id="bar"></i></div>
         <div class="times" id="times" hidden><span id="t-start"></span><span id="t-break"></span><span id="t-end"></span></div>
+        <p class="note" id="clock-hint" hidden>Tap the number to switch view · scroll down for stats</p>
       </div>
     </main>
     <div class="chrome" id="chrome">
       <button class="icon-btn" id="break-btn" type="button" hidden>Break now</button>
       <button class="icon-btn" id="save-shift" type="button" hidden>Save shift</button>
-      <button class="icon-btn" id="edit" type="button">Edit</button>
+      <button class="icon-btn" id="edit" type="button">Pay</button>
       <button class="icon-btn" id="to-stats" type="button">Stats</button>
       <button class="icon-btn" id="fs" type="button">Fullscreen</button>
     </div>
   </section>
 
   <div class="page" id="sal-stats">
+    <div class="tip" data-tip="salary" hidden><b>The salary clock</b><p>The big number counts what you earn, live. During a shift it follows your calendar. Tap the number to switch between this shift, today and this year. Scroll down for your pay period, stats and every shift.</p><button class="link" type="button" data-tip-ok="salary">Got it</button></div>
     <section class="sec" aria-labelledby="per-title">
       <h3 class="sec-title" id="per-title">Pay period</h3>
       <div class="big" id="per-big"><small>DKK</small>0.00</div>
@@ -462,6 +491,7 @@
 <div class="view" id="v-savings" hidden>
   <div class="page">
     <div class="page-head"><h2>Savings</h2></div>
+    <div class="tip" data-tip="savings" hidden><b>Saving from your pay</b><p>Your savings balance. Under From your calendar, choose which upcoming shifts pay into savings or a goal: the money is added when the shift ends. Goals are for saving up for something specific.</p><button class="link" type="button" data-tip-ok="savings">Got it</button></div>
     <section class="sec" aria-label="Balance">
       <div class="big" id="sv-balance"><small>DKK</small>0.00</div>
       <form class="inline" id="sv-form" novalidate>
@@ -514,11 +544,12 @@
 <div class="view" id="v-settings" hidden>
   <div class="page">
     <div class="page-head"><h2>Settings</h2></div>
+    <div class="tip" data-tip="settings" hidden><b>Settings</b><p>Change your pay, pay period and payday, add supplements (tillæg), log in to sync, and make a backup. Version and last update are at the bottom.</p><button class="link" type="button" data-tip-ok="settings">Got it</button></div>
 
     <section class="sec" aria-labelledby="se-sal">
-      <h3 class="sec-title" id="se-sal">Salary &amp; shift</h3>
+      <h3 class="sec-title" id="se-sal">Pay &amp; payday</h3>
       <p class="note" id="set-sal"></p>
-      <div class="row-actions"><button class="ghost" type="button" id="set-edit">Edit salary and shift</button></div>
+      <div class="row-actions"><button class="ghost" type="button" id="set-edit">Change pay and payday</button><button class="ghost" type="button" id="set-cal">Your shifts</button></div>
     </section>
 
     <section class="sec" aria-labelledby="se-sup">
@@ -562,10 +593,10 @@
       <div class="row-actions"><button class="ghost" type="button" id="acct-open" hidden>Log in</button></div>
     </section>
 
-    <section class="sec" aria-labelledby="se-reset">
-      <h3 class="sec-title" id="se-reset">Start over</h3>
-      <p class="note">Erases your shifts, savings, goals, calendar and settings on every device you are logged in on, then asks a few questions to set 99MS up again. Export a backup first if you might want anything back.</p>
-      <div class="row-actions"><button class="ghost danger" type="button" id="reset-btn">Reset and set up again</button><button class="ghost" type="button" id="wiz-open">Run setup questions</button></div>
+    <section class="sec" aria-labelledby="se-help">
+      <h3 class="sec-title" id="se-help">Help</h3>
+      <p class="note">The setup questions walk you through pay, payday, fixed shifts, supplements and a savings goal. Running them again only adds what is new.</p>
+      <div class="row-actions"><button class="ghost" type="button" id="wiz-open">Run setup questions</button><button class="ghost" type="button" id="tips-again">Show tips again</button></div>
     </section>
 
     <section class="sec" aria-labelledby="bk-title">
@@ -577,6 +608,18 @@
         <input type="file" id="bk-file" accept="application/json,.json" hidden>
       </div>
       <p class="err" id="bk-err"></p>
+    </section>
+
+    <section class="sec" aria-labelledby="se-reset">
+      <h3 class="sec-title" id="se-reset">Start over</h3>
+      <p class="note">Erases your shifts, savings, goals, calendar and settings on every device you are logged in on, then asks the setup questions again. Export a backup first if you might want anything back.</p>
+      <div class="row-actions"><button class="ghost danger" type="button" id="reset-btn">Reset and set up again</button></div>
+    </section>
+
+    <section class="sec" aria-labelledby="se-about">
+      <h3 class="sec-title" id="se-about">About</h3>
+      <div class="about" id="about"></div>
+      <ul class="news" id="news"></ul>
     </section>
   </div>
 </div>
@@ -592,10 +635,10 @@
 
 <div class="sheet" id="sheet" hidden>
   <form id="form" novalidate>
-    <div class="page-head"><h2>Salary &amp; shift</h2></div>
+    <div class="page-head"><h2>Pay &amp; payday</h2></div>
     <label class="field" for="amount">
-      <span>Your salary</span>
-      <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="600 000" value="600000">
+      <span>Your pay, before supplements</span>
+      <input type="text" id="amount" inputmode="decimal" autocomplete="off" placeholder="110,10">
     </label>
     <div class="field">
       <span>Per</span>
@@ -606,25 +649,31 @@
       </div>
     </div>
     <div class="shift-row">
-      <label class="time-wrap" for="shift-start">
-        <span>Shift start <button class="link" type="button" id="now">Now</button></span>
-        <input type="time" id="shift-start">
-      </label>
-      <label class="time-wrap" for="shift-end">
-        <span>Ends <button class="link" type="button" id="clear-end">Clear</button></span>
-        <input type="time" id="shift-end">
-      </label>
+      <label class="time-wrap" for="pay-start"><span>Pay period starts on day</span><input type="number" id="pay-start" inputmode="numeric" min="1" max="28" placeholder="1"></label>
+      <label class="time-wrap" for="pay-day"><span>Money arrives on day <button class="link" type="button" id="pay-none">None</button></span><input type="number" id="pay-day" inputmode="numeric" min="1" max="31" placeholder="1"></label>
     </div>
-    <label class="time-wrap" for="break-at">
-      <span>Break starts <button class="link" type="button" id="auto-break">Auto</button></span>
-      <input type="time" id="break-at">
-    </label>
-    <div class="shift-row">
-      <label class="time-wrap" for="pay-start"><span>Pay period from day</span><input type="number" id="pay-start" inputmode="numeric" min="1" max="28" placeholder="1"></label>
-      <label class="time-wrap" for="pay-day"><span>Payday <button class="link" type="button" id="pay-none">None</button></span><input type="number" id="pay-day" inputmode="numeric" min="1" max="31" placeholder="—"></label>
-    </div>
-    <p class="hint">Pay period: for example from day 19 means the 19th to the 18th of the next month. Payday is the day of the month the period is paid out, after it ends.</p>
-    <p class="hint">With a shift set, the clock counts your pay for working hours only (a 37-hour week). The end time is optional. Shifts over 4.5 hours include an unpaid 30-minute break, and the clock pauses during it. Leave the break time empty and it is placed for you: mid-shift, and never later than 4 hours in. Leave the shift start empty to count around the clock instead. For shifts on different days, use Calendar: once it has shifts, the clock follows it.</p>
+    <p class="hint" id="pay-preview"></p>
+    <details class="more" id="legacy-shift">
+      <summary>Shift without the calendar</summary>
+      <div class="sec">
+        <p class="hint">Only for a simple daily shift. If you use the Calendar, leave this empty: the clock follows the calendar.</p>
+        <div class="shift-row">
+          <label class="time-wrap" for="shift-start">
+            <span>Shift start <button class="link" type="button" id="now">Now</button></span>
+            <input type="time" id="shift-start">
+          </label>
+          <label class="time-wrap" for="shift-end">
+            <span>Ends <button class="link" type="button" id="clear-end">Clear</button></span>
+            <input type="time" id="shift-end">
+          </label>
+        </div>
+        <label class="time-wrap" for="break-at">
+          <span>Break starts <button class="link" type="button" id="auto-break">Auto</button></span>
+          <input type="time" id="break-at">
+        </label>
+      </div>
+    </details>
+    <p class="hint">Shifts over 4.5 hours include an unpaid 30-minute break. Hourly pay assumes a 37-hour week when shown per month or year.</p>
     <p class="err" id="err"></p>
     <div class="btns">
       <button class="ghost" type="button" id="setup-cancel">Cancel</button>
@@ -725,7 +774,8 @@
 
 <div class="view" id="v-calendar" hidden>
   <div class="page">
-    <div class="page-head"><h2>Calendar</h2></div>
+    <div class="page-head"><h2>Calendar</h2><button class="ghost" type="button" id="cal-today">Today</button></div>
+    <div class="tip" data-tip="calendar" hidden><b>Your shifts</b><p>Fixed shifts repeat every week; set them up at the bottom. Tap a day to add a one-off shift, or to mark a shift as sick, skipped or a day off. Finished shifts are added to your stats automatically.</p><button class="link" type="button" data-tip-ok="calendar">Got it</button></div>
 
     <section class="sec" aria-label="Month">
       <div class="cal-nav">
@@ -741,6 +791,7 @@
       <h3 class="sec-title" id="day-title"></h3>
       <div class="cal-list" id="day-list"></div>
       <form class="cal-form" id="day-form" novalidate>
+        <p class="note" id="df-title">Add a one-off shift on this day</p>
         <div class="shift-row">
           <label class="time-wrap" for="df-start"><span>Starts</span><input type="time" id="df-start"></label>
           <label class="time-wrap" for="df-end"><span>Ends</span><input type="time" id="df-end"></label>
@@ -753,6 +804,7 @@
 
     <section class="sec" aria-labelledby="fx-title">
       <h3 class="sec-title" id="fx-title">Fixed shifts · every week</h3>
+      <p class="note">The shifts you always work (faste vagter). Pick the weekdays and times once, and they fill your calendar every week.</p>
       <div class="cal-list" id="fx-list"></div>
       <form class="cal-form" id="fx-form" novalidate>
         <div class="field"><span>Days</span><div class="days-pick" id="fx-days"></div></div>
@@ -820,6 +872,15 @@
       return; // the framed copy runs the app
     }
   }
+  const APP_VERSION = "2.0";
+  const APP_RELEASED = "2026-10-20";
+  const WHATS_NEW = [
+    "Home shows your next shift, your next payday and what to set up",
+    "Short guides on every tab, and clearer names in Settings",
+    "Today and This year on the clock count your actual shifts",
+    "Backups now include your calendar, supplements and goals",
+    "Fixes for saving finished calendar shifts and the setup questions",
+  ];
   const DAY = 86400000;
   const MS_YEAR = 365.2425 * DAY;
   const WORK_HOURS_YEAR = 37 * 52.1775;
@@ -876,7 +937,9 @@
   const grouping = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
   const fmt2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const modes = () => ALL_MODES.filter((m) => m.key !== "shift" || currentShift(Date.now()));
+  // Shift workers (calendar, a daily shift or hourly pay) see what their shifts earned; salaried people see pay spread over the day.
+  const shiftWorker = () => calendarUsed() || !!cfg.shiftStart || cfg.period === "hour";
+  const modes = () => ALL_MODES.filter((m) => (m.key !== "shift" || currentShift(Date.now())) && (m.key !== "session" || !shiftWorker()));
   const currentMode = () => modes().find((m) => m.key === cfg.mode) || modes()[0];
 
   function annual(c) {
@@ -947,13 +1010,16 @@
   }
   const paidMs = (start, t, sched, list) => Math.max(0, t - start) - unpaidMs(start, t, sched, list);
 
-  let lastLen = -1;
+  let lastLen = -1, lastRateTick = 0;
   function apply() {
     const mode = currentMode();
     cfg.mode = mode.key;
     el.cur.textContent = cfg.currency;
     const perSec = (mode.key === "shift" ? workPerMs() : clockPerMs()) * 1000;
-    el.rate.textContent = `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour`;
+    el.rate.textContent = mode.key !== "shift" && shiftWorker()
+      ? `From your shifts   ·   ${fmt2.format(workPerMs() * HOUR)} / hour while you work`
+      : `${perSec.toFixed(4)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour`;
+    lastRateTick = 0;
     const shift = mode.key === "shift";
     el.times.hidden = !shift;
     el.progress.hidden = !(shift && cfg.shiftEnd);
@@ -994,7 +1060,6 @@
     if (cs && cfg.mode !== "shift") { cfg.mode = "shift"; apply(); }
   }
 
-  let lastRateTick = 0;
   function frame() {
     followShift(Date.now());
     const mode = currentMode();
@@ -1018,7 +1083,7 @@
       const bText = brk === null ? "" : "break " + new Date(brk).toTimeString().slice(0, 5);
       if (el.tBreak.textContent !== bText) el.tBreak.textContent = bText;
       if (now < start) setLabel(`Shift starts in ${hm(start - now)}`);
-      else if (done) setLabel("Shift complete · saved");
+      else if (done) setLabel(done.auto ? "Shift complete · in your stats" : "Shift complete · saved");
       else if (end !== null && now >= end) setLabel("Shift complete");
       else if (open) setLabel(`On break · ${hm(Math.max(60000, now - open.s))}`);
       else if (inSched) setLabel(`On break · ${hm(brk + BREAK_LEN - now)} left`);
@@ -1036,8 +1101,13 @@
       if (el.progress.hidden === (end !== null)) el.progress.hidden = end === null;
       if (end !== null) el.bar.style.width = (Math.min(1, Math.max(0, (now - start) / (end - start))) * 100).toFixed(3) + "%";
     } else {
-      const elapsed = mode.key === "session" ? performance.now() - sessionStart : now - startOf(mode.key);
-      v = Math.max(0, elapsed) * clockPerMs();
+      if (shiftWorker() && mode.key !== "session") {
+        const from = startOf(mode.key);
+        v = statsShifts(now).filter((x) => x.start >= from).reduce((a, x) => a + x.amount, 0);
+      } else {
+        const elapsed = mode.key === "session" ? performance.now() - sessionStart : now - startOf(mode.key);
+        v = Math.max(0, elapsed) * clockPerMs();
+      }
       setLabel(mode.label);
       syncSaveBtn(false);
       syncBreakBtn(false, false);
@@ -1064,6 +1134,7 @@
     const i = list.findIndex((m) => m.key === cfg.mode);
     cfg.mode = list[(i + 1) % list.length].key;
     store.set(cfg); apply();
+    seeTip("clock"); $("clock-hint").hidden = true;
   }
   // A tap that only wakes the faded controls should not also switch the view.
   let wokeControls = false;
@@ -1074,22 +1145,29 @@
   const pad = (n) => String(n).padStart(2, "0");
   $("now").addEventListener("click", (e) => { e.preventDefault(); const d = new Date(); el.start.value = `${pad(d.getHours())}:${pad(d.getMinutes())}`; });
   $("clear-end").addEventListener("click", (e) => { e.preventDefault(); el.end.value = ""; });
-  $("pay-none").addEventListener("click", (e) => { e.preventDefault(); $("pay-day").value = ""; });
+  $("pay-none").addEventListener("click", (e) => { e.preventDefault(); $("pay-day").value = ""; updPayPreview(); });
   $("auto-break").addEventListener("click", (e) => { e.preventDefault(); el.breakAt.value = ""; });
 
+  let sheetFrom = "settings";
+  const updPayPreview = () => { $("pay-preview").textContent = payPreview(Math.round(+$("pay-start").value) || 1, Math.round(+$("pay-day").value) || 0); };
+  ["pay-start", "pay-day"].forEach((id) => $(id).addEventListener("input", updPayPreview));
   function openSheet() {
-    el.amount.value = String(cfg.amount);
+    sheetFrom = tab;
+    el.amount.value = !cfg.amount ? "" : Number.isInteger(cfg.amount) ? String(cfg.amount) : cfg.amount.toFixed(2).replace(".", ",");
     document.querySelector(`input[name=period][value=${cfg.period}]`).checked = true;
     el.start.value = cfg.shiftStart;
     el.end.value = cfg.shiftEnd;
     el.breakAt.value = cfg.breakAt;
     $("pay-start").value = cfg.payStart > 1 ? cfg.payStart : "";
     $("pay-day").value = cfg.payDay || "";
+    $("legacy-shift").open = !!cfg.shiftStart && !calendarUsed();
+    updPayPreview();
     el.err.textContent = "";
     el.sheet.hidden = false;
   }
   $("edit").addEventListener("click", (e) => { e.stopPropagation(); openSheet(); });
   $("set-edit").addEventListener("click", openSheet);
+  $("set-cal").addEventListener("click", () => go("calendar"));
   $("setup-cancel").addEventListener("click", () => { el.sheet.hidden = true; });
   $("form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -1125,8 +1203,9 @@
     store.set(cfg); apply();
     el.sheet.hidden = true;
     document.activeElement && document.activeElement.blur();
-    go("salary");
-    $("v-salary").scrollTop = 0;
+    curCache.sec = -1;
+    renderTab();
+    toast("Pay and payday saved.");
     wake();
   });
 
@@ -1338,8 +1417,8 @@
     $("log-fields").hidden = saveLive;
     $("log-live-note").hidden = !saveLive;
     f.date.value = ymd(new Date(w.start));
-    f.start.value = cfg.shiftStart;
-    f.end.value = cfg.shiftEnd;
+    f.start.value = hhmm(new Date(w.start));
+    f.end.value = w.end !== null ? hhmm(new Date(w.end)) : hhmm(new Date(now));
     f.brk.value = ended ? Math.round(unpaidMs(w.start, w.end, w.brk, breaksFor(w.start)) / 60000) : 0;
     f.toSav.checked = true;
     fillGoalSelect($("log-goal"), true);
@@ -1419,7 +1498,7 @@
   const freeBalance = () => curTx().filter((t) => !t.goalId).reduce((a, t) => a + txAmount(t), 0);
   const goalBalance = (id) => log.savings.filter((t) => t.goalId === id).reduce((a, t) => a + txAmount(t), 0);
 
-  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const plural = (n, w) => `${n} ${n === 1 ? w : /[^aeiou]y$/.test(w) ? w.slice(0, -1) + "ies" : w + "s"}`;
   function stat(label, value, sub) {
     return `<div class="stat"><span>${label}</span><b>${value}</b>${sub ? `<em>${sub}</em>` : ""}</div>`;
   }
@@ -1538,14 +1617,14 @@
     const box = $("hist");
     histLiveIds = shifts.filter((x) => x.live || x.unsaved).map((x) => x.id).join();
     if (!shifts.length) {
-      box.innerHTML = `<p class="empty">No shifts saved yet. Set a shift start in Settings, then tap Save shift on the clock. A shift that is running shows up here live.</p>`;
+      box.innerHTML = `<p class="empty">No shifts yet. Add your shifts in the Calendar tab: every shift that has ended shows up here by itself. A shift that is running shows up live.</p>`;
       return;
     }
     box.innerHTML = shifts.map((x) => `
       <div class="hist-row" data-row="${x.id}">
         <div class="d">${dateFmt.format(x.start)}</div>
         <div class="t">${rowTimes(x)}</div>
-        <div class="a">${money(x.amount)}${x.unsaved ? '<i class="live-tag">now · not saved</i>' : x.live ? `<i class="live-tag">${x.savings ? "saving live" : "live now"}</i>` : x.savings ? "<i>to savings</i>" : ""}</div>
+        <div class="a">${money(x.amount)}${x.unsaved ? '<i class="live-tag">running now</i>' : x.live ? `<i class="live-tag">${x.savings ? "saving live" : "live now"}</i>` : `<i>${[x.auto ? "from calendar" : "", x.savings ? "to savings" : ""].filter(Boolean).join(" · ")}</i>`}</div>
         ${x.unsaved ? '<button class="x save-now" type="button">Save</button>' : `<button class="x" type="button" data-id="${x.id}">Delete</button>`}
       </div>`).join("");
     box.querySelectorAll(".save-now").forEach((b) => b.addEventListener("click", openSave));
@@ -1562,7 +1641,7 @@
       log.shifts = log.shifts.filter((x) => x.id !== id);
       log.savings = log.savings.filter((x) => x.shiftId !== id);
       persist(); saveKey = ""; renderStats();
-      toast("Shift deleted. Its savings deposit was removed too.");
+      toast(gone && gone.auto ? "Removed. The shift is marked as skipped in your calendar." : "Shift deleted. Its savings deposit was removed too.");
     }));
   }
 
@@ -1601,16 +1680,38 @@
     try {
       const raw = JSON.parse(await file.text());
       if (!Array.isArray(raw.shifts) || !Array.isArray(raw.savings)) throw 0;
-      const v = cleanLog(raw);
-      const have = new Set([...log.shifts, ...log.savings, ...log.items].map((x) => x.id));
-      const ns = v.shifts.filter((x) => !have.has(x.id)), nv = v.savings.filter((x) => !have.has(x.id));
-      const ni = v.items.filter((x) => !have.has(x.id));
-      log.shifts.push(...ns); log.savings.push(...nv); log.items.push(...ni);
-      persist(); saveKey = ""; renderTab();
+      // Everything in the backup is added; nothing already here is removed.
+      const KEYS = ["shifts", "savings", "items", "fixed", "planned", "skips", "goals", "supps", "pledges"];
+      const okRec = (x) => x && typeof x === "object" && typeof x.id === "string" && x.id.length <= 80;
+      const inc = { deleted: [], epoch: log.epoch };
+      KEYS.forEach((k) => { inc[k] = (Array.isArray(raw[k]) ? raw[k] : []).filter(okRec).map((x) => { const y = { ...x }; delete y.live; return y; }); });
+      const have = new Set(KEYS.flatMap((k) => log[k].map((x) => x.id)));
+      const added = KEYS.reduce((a, k) => a + inc[k].filter((x) => !have.has(x.id)).length, 0);
+      log = mergeData({ cfg, log }, { cfg: null, log: inc }).log;
+      const st = raw.settings, c = st && cleanCfg(st);
+      if (c && confirm("Also use the pay settings from the backup?")) {
+        Object.assign(cfg, { amount: c.amount, period: c.period, currency: c.currency });
+        ["payStart", "payDay"].forEach((k) => { if (Number.isInteger(st[k])) cfg[k] = st[k]; });
+        store.set(cfg);
+      }
+      persist(); saveKey = ""; curCache.sec = -1; apply(); renderTab();
       $("bk-err").textContent = "";
-      toast(`Imported ${ns.length} shifts, ${nv.length} savings entries and ${ni.length} portfolio items.`);
+      toast(added ? `Imported ${plural(added, "entry")} from the backup.` : "Everything in that backup is already here.");
     } catch { $("bk-err").textContent = "That file is not a 99MS backup. Pick a file made with Export backup."; }
   });
+
+  // ---------- Guides: one short tip per tab, until you tap Got it ----------
+  const TIPS_KEY = "99ms-tips";
+  const seenTips = () => { try { return JSON.parse(localStorage.getItem(TIPS_KEY) || "[]"); } catch { return []; } };
+  function seeTip(k) { const v = seenTips(); if (!v.includes(k)) { v.push(k); try { localStorage.setItem(TIPS_KEY, JSON.stringify(v)); } catch {} } }
+  function renderTips() {
+    const seen = seenTips();
+    document.querySelectorAll(".tip[data-tip]").forEach((t) => { t.hidden = seen.includes(t.dataset.tip); });
+    $("clock-hint").hidden = seen.includes("clock");
+  }
+  document.querySelectorAll("[data-tip-ok]").forEach((b) => b.addEventListener("click", () => { seeTip(b.dataset.tipOk); renderTips(); }));
+  $("tips-again").addEventListener("click", () => { try { localStorage.removeItem(TIPS_KEY); } catch {} renderTips(); toast("Tips are back on every tab."); });
+  renderTips();
 
   // ---------- Sections: Home, Portfolio, Salary, Savings, Settings ----------
   const tabBtns = [...document.querySelectorAll(".tabbar [data-tab]")];
@@ -1641,7 +1742,7 @@
     else renderSettings();
   }
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") ["save-sheet", "item-sheet", "acct-sheet"].forEach((id) => { $(id).hidden = true; });
+    if (e.key === "Escape") ["sheet", "save-sheet", "item-sheet", "acct-sheet"].forEach((id) => { $(id).hidden = true; });
   });
 
   const signed = (n) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
@@ -1658,7 +1759,8 @@
     const cs = currentShift(now);
     $("h-sal-sub").textContent = cs
       ? `Shift ${hhmm(new Date(cs.start))}–${cs.end ? hhmm(new Date(cs.end)) : "open"} · ${money(workPerMs() * HOUR)} / hour`
-      : `${money(clockPerMs() * HOUR)} / hour, around the clock`;
+      : shiftWorker() ? `${money(workPerMs() * HOUR)} / hour while you work` : `${money(clockPerMs() * HOUR)} / hour, around the clock`;
+    if (now - homeSlow > 1000) { homeSlow = now; renderHomeSlow(now); }
     const live = liveRec();
     $("h-sav").textContent = money(balance());
     $("h-sav-sub").textContent = live && live.savings ? `${cur} · saving live` : cur;
@@ -1672,6 +1774,34 @@
     $("h-wk").textContent = money(sum(w, "amount")); $("h-wk-sub").textContent = `${cur} · ${plural(w.length, "shift")}`;
     $("h-mo").textContent = money(sum(m, "amount")); $("h-mo-sub").textContent = `${cur} · ${plural(m.length, "shift")}`;
     $("h-acct").textContent = acctLine();
+  }
+
+  let homeSlow = 0;
+  function renderHomeSlow(now) {
+    const cur = cfg.currency;
+    const nx = calendarUsed() ? upcomingShifts(45, now).find((o) => o.start > now) : null;
+    if (nx) {
+      $("h-next").textContent = `${longDate.format(nx.start)}`;
+      $("h-next-sub").textContent = `${nx.ref.start}–${nx.ref.end} · about ${cur} ${money(expectedPay(nx))}`;
+    } else {
+      $("h-next").textContent = "—";
+      $("h-next-sub").textContent = calendarUsed() ? "Nothing in the next 6 weeks" : "Add your shifts in Calendar";
+    }
+    const np = nextPayday(now);
+    if (np) {
+      const days = Math.round((np.date - new Date(new Date(now).toDateString())) / DAY);
+      $("h-pay").textContent = days === 0 ? "Today" : longDate.format(np.date);
+      const amt = rangePlan(np.per.from, np.per.to, now).expected;
+      $("h-pay-sub").textContent = `${days ? `in ${plural(days, "day")} · ` : ""}${amt > 0 ? `about ${cur} ${money(amt)}` : `no shifts in ${rangeText(np.per)}`}`;
+    } else { $("h-pay").textContent = "—"; $("h-pay-sub").textContent = "Set the day your money arrives"; }
+    const steps = [];
+    if (!cfg.setupDone) steps.push(["Answer the setup questions", "Start", () => openWizard()]);
+    if (!calendarUsed()) steps.push(["Add the shifts you work", "Calendar", () => go("calendar")]);
+    if (!cfg.payDay) steps.push(["Set the day your pay arrives", "Pay", () => openSheet()]);
+    if (sb && !user) steps.push(["Log in so your data is safe", "Log in", () => { go("settings"); $("acct-open").click(); }]);
+    $("h-start").hidden = !steps.length;
+    $("h-steps").innerHTML = steps.map((x, i) => `<button class="step" type="button" data-i="${i}"><span>${x[0]}</span><span>${x[1]} ›</span></button>`).join("");
+    $("h-steps").querySelectorAll(".step").forEach((b) => b.addEventListener("click", () => steps[+b.dataset.i][2]()));
   }
 
   // Savings: balance, deposit / withdraw, and every movement.
@@ -1773,8 +1903,11 @@
   function renderSettings() {
     document.querySelector(`input[name=currency][value=${cfg.currency}]`).checked = true;
     const amt = Number.isInteger(cfg.amount) ? grouping.format(cfg.amount) : money(cfg.amount);
-    $("set-sal").textContent = `${cfg.job ? cfg.job + ": " : ""}${cfg.currency} ${amt} per ${cfg.period}. ` +
-      (calendarUsed() ? "Your shifts come from the calendar." : cfg.shiftStart ? `Shift ${cfg.shiftStart} to ${cfg.shiftEnd || "open end"}.` : "No shift set, so the clock counts around the clock.");
+    const np = nextPayday();
+    $("set-sal").textContent = `${cfg.job ? cfg.job + ": " : ""}${cfg.currency} ${cfg.period === "hour" ? money(cfg.amount) : amt} per ${cfg.period}. `
+      + `Pay period starts on day ${cfg.payStart || 1}${np ? `, money arrives on day ${cfg.payDay} (next: ${longDate.format(np.date)})` : ", no payday set"}. `
+      + (calendarUsed() ? "Your shifts come from the calendar." : cfg.shiftStart ? `Daily shift ${cfg.shiftStart} to ${cfg.shiftEnd || "open end"}.` : "No shifts yet: add them in the Calendar.");
+    renderAbout();
     renderSupps();
     renderAcct();
   }
@@ -1787,18 +1920,46 @@
 
 
 
+  // About: version and when this version was put online.
+  let lastUpdated = null;
+  function renderAbout() {
+    const when = lastUpdated || new Date(APP_RELEASED + "T12:00:00");
+    const f = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", ...(lastUpdated ? { hour: "2-digit", minute: "2-digit" } : {}) });
+    $("about").innerHTML = `<b>99MS</b> · version <b>${APP_VERSION}</b><br>Last updated ${f.format(when)}`;
+    $("news").innerHTML = WHATS_NEW.map((x) => `<li>${esc(x)}</li>`).join("");
+  }
+  // GitHub Pages sends the time the page was last published.
+  if (location.protocol.startsWith("http")) fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then((res) => {
+    const lm = res.headers.get("last-modified"); if (lm && !isNaN(Date.parse(lm))) { lastUpdated = new Date(lm); if (tab === "settings") renderAbout(); }
+  }).catch(() => {});
+
   // ---------- Pay periods (lønperioder) ----------
-  function periodFor(date) {
-    const s = cfg.payStart || 1;
+  function periodFor(date, s = cfg.payStart || 1) {
     const from = date.getDate() >= s ? new Date(date.getFullYear(), date.getMonth(), s) : new Date(date.getFullYear(), date.getMonth() - 1, s);
     return { from, to: new Date(from.getFullYear(), from.getMonth() + 1, s - 1) };
   }
-  function payoutFor(per) {
-    if (!cfg.payDay) return null;
-    const at = (y, m) => new Date(y, m, Math.min(cfg.payDay, new Date(y, m + 1, 0).getDate()));
+  // The money for a period arrives on the first "payday" after the period ends.
+  function payoutFor(per, pd = cfg.payDay) {
+    if (!pd) return null;
+    const at = (y, m) => new Date(y, m, Math.min(pd, new Date(y, m + 1, 0).getDate()));
     let d = at(per.to.getFullYear(), per.to.getMonth());
     if (d <= per.to) d = at(per.to.getFullYear(), per.to.getMonth() + 1);
     return d;
+  }
+  // "This pay period: 19 Oct – 18 Nov, and that money arrives Mon 1 Dec", shown while you type the settings.
+  function payPreview(ps, pd) {
+    if (!(ps >= 1 && ps <= 28)) return "The pay period can start on day 1 to 28.";
+    const per = periodFor(new Date(), ps), pay = payoutFor(per, pd);
+    return `This pay period: ${rangeText(per)}${pay ? `, and that money arrives ${longDate.format(pay)}` : ". Add the day the money arrives to see your next payday"}.`;
+  }
+  // The next date money arrives, and for which period.
+  function nextPayday(now = Date.now()) {
+    if (!cfg.payDay) return null;
+    const today = new Date(now); today.setHours(0, 0, 0, 0);
+    const cur = periodFor(today), prev = periodFor(addDays(cur.from, -1));
+    for (const per of [prev, cur]) { const d = payoutFor(per); if (d && d >= today) return { per, date: d }; }
+    const next = periodFor(addDays(cur.to, 1));
+    return { per: next, date: payoutFor(next) };
   }
   const shortDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
   const longDate = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -2286,6 +2447,7 @@
   function renderDay() {
     const day = parseYmd(calSel);
     $("day-title").textContent = dayFmt.format(day);
+    if (!dfEditing) $("df-title").textContent = `Add a one-off shift on ${dayFmt.format(day)}`;
     const occ = occurrences(day);
     const saved = log.shifts.filter((x) => ymd(new Date(x.start)) === calSel);
     const rows = occ.map((o) => {
@@ -2331,7 +2493,7 @@
     if (act === "edit") {
       const pl = log.planned.find((x) => x.id === id); if (!pl) return;
       $("df-start").value = pl.start; $("df-end").value = pl.end; $("df-break").value = pl.breakAt || "";
-      dfEditing = id; $("df-submit").textContent = "Save changes"; $("df-cancel").hidden = false; $("df-start").focus();
+      dfEditing = id; $("df-submit").textContent = "Save changes"; $("df-cancel").hidden = false; $("df-title").textContent = `Change the shift ${pl.start}–${pl.end}`; $("df-start").focus();
     }
     if (act === "del") {
       if (!b.classList.contains("arm")) { b.classList.add("arm"); b.textContent = "Sure?"; setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000); return; }
@@ -2422,6 +2584,7 @@
     resetFixedForm(); changed(); toast(msg);
   });
 
+  $("cal-today").addEventListener("click", () => { const d = new Date(); calMonth = new Date(d.getFullYear(), d.getMonth(), 1); calSel = ymd(d); resetDayForm(); renderCal(); });
   $("cal-prev").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); renderCal(); });
   $("cal-next").addEventListener("click", () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); renderCal(); });
   resetFixedForm(); resetDayForm();
@@ -2507,7 +2670,7 @@
       if (!b.classList.contains("arm")) { b.classList.add("arm"); b.textContent = "Sure?"; setTimeout(() => { b.classList.remove("arm"); b.textContent = "Delete"; }, 3000); return; }
       log.supps = log.supps.filter((x) => x.id !== rule.id); log.deleted.push(rule.id);
       if (supEditing === rule.id) resetSupForm();
-      persist(); renderSupps(); toast("Supplement deleted. Shifts already saved keep their pay.");
+      persist(); renderSupps(); curCache.sec = -1; toast("Supplement deleted. Shifts from your calendar update by themselves.");
     }));
   }
   $("sup-allday").addEventListener("click", (e) => { e.preventDefault(); $("sup-from").value = ""; $("sup-to").value = ""; });
@@ -2546,7 +2709,7 @@
     },
     {
       q: "What do you earn?", help: "Your normal pay before supplements. Hourly pay is the most precise for shift work.",
-      body: () => `<label class="field" for="wz-amt"><span>Pay</span><input type="text" id="wz-amt" inputmode="decimal" autocomplete="off" placeholder="110,10" value="${wz.amount ? String(wz.amount).replace(".", ",") : ""}"></label>
+      body: () => `<label class="field" for="wz-amt"><span>Pay</span><input type="text" id="wz-amt" inputmode="decimal" autocomplete="off" placeholder="110,10" value="${!wz.amount ? "" : Number.isInteger(wz.amount) ? wz.amount : wz.amount.toFixed(2).replace(".", ",")}"></label>
         <div class="field"><span>Per</span><div class="seg" role="radiogroup" aria-label="Per">${["hour", "month", "year"].map((x) => `<input type="radio" name="wz-per" id="wz-p-${x}" value="${x}"${wz.period === x ? " checked" : ""}><label for="wz-p-${x}">${x.toUpperCase()}</label>`).join("")}</div></div>
         <div class="field"><span>Currency</span><div class="seg" role="radiogroup" aria-label="Currency">${["DKK", "EUR", "USD"].map((x) => `<input type="radio" name="wz-cur" id="wz-c-${x}" value="${x}"${wz.currency === x ? " checked" : ""}><label for="wz-c-${x}">${x}</label>`).join("")}</div></div>`,
       take: () => {
@@ -2559,11 +2722,16 @@
       required: true,
     },
     {
-      q: "When is your pay period?", help: "Example: from the 19th to the 18th of the next month, paid out on the 1st. Leave it as 1 if it follows the calendar month.",
+      q: "When is your pay period?", help: "The pay period is the stretch of days one payslip covers. Example: it starts on the 19th (so it runs to the 18th), and the money arrives on the 1st. Keep 1 if it simply follows the calendar month.",
       body: () => `<div class="shift-row">
           <label class="field" for="wz-ps"><span>Starts on day</span><input type="number" id="wz-ps" inputmode="numeric" min="1" max="28" value="${wz.payStart}"></label>
-          <label class="field" for="wz-pd"><span>Payday</span><input type="number" id="wz-pd" inputmode="numeric" min="1" max="31" placeholder="—" value="${wz.payDay || ""}"></label>
-        </div>`,
+          <label class="field" for="wz-pd"><span>Money arrives on day</span><input type="number" id="wz-pd" inputmode="numeric" min="1" max="31" placeholder="1" value="${wz.payDay || ""}"></label>
+        </div>
+        <p class="hint" id="wz-pay-preview"></p>`,
+      after: () => {
+        const upd = () => { $("wz-pay-preview").textContent = payPreview(Math.round(wzNum("wz-ps")) || 1, Math.round(wzNum("wz-pd")) || 0); };
+        ["wz-ps", "wz-pd"].forEach((id) => $(id).addEventListener("input", upd)); upd();
+      },
       take: () => {
         const ps = Math.round(wzNum("wz-ps")) || 1, pd = Math.round(wzNum("wz-pd")) || 0;
         if (ps < 1 || ps > 28) return "The pay period can start on day 1 to 28.";
@@ -2669,10 +2837,18 @@
     const payChanged = wz.amount !== cfg.amount || wz.period !== cfg.period;
     if (payChanged && log.shifts.length) setTimeout(offerRecalc, 2300);
     Object.assign(cfg, { job: wz.job, amount: wz.amount || cfg.amount, period: wz.period, currency: wz.currency, payStart: wz.payStart, payDay: wz.payDay, setupDone: true });
-    if (wz.days.length && wz.start && wz.end) log.fixed.push({ id: uid(), days: wz.days, start: wz.start, end: wz.end, breakAt: "", from: ymd(new Date()), until: "", u: now });
-    SUP_PRESETS.forEach((x) => { if (wz.sup[x.key] > 0) log.supps.push({ id: uid(), name: x.name, days: x.days, from: x.from, to: x.to, amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now }); });
-    wz.extra.forEach((x) => log.planned.push({ id: uid(), date: x.date, start: x.start, end: x.end, breakAt: "", u: now }));
-    if (wz.goalName && wz.goalTarget > 0) log.goals.push({ id: uid(), name: wz.goalName, target: +wz.goalTarget.toFixed(2), currency: wz.currency, created: now, u: now });
+    const sameDays = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+    if (wz.days.length && wz.start && wz.end && !log.fixed.some((fx) => sameDays(fx.days, wz.days) && fx.start === wz.start && fx.end === wz.end))
+      log.fixed.push({ id: uid(), days: wz.days, start: wz.start, end: wz.end, breakAt: "", from: ymd(new Date()), until: "", u: now });
+    SUP_PRESETS.forEach((x) => {
+      if (!(wz.sup[x.key] > 0)) return;
+      const old = log.supps.find((r) => r.name.toLowerCase() === x.name.toLowerCase());
+      if (old) Object.assign(old, { amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now });
+      else log.supps.push({ id: uid(), name: x.name, days: x.days, from: x.from, to: x.to, amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now });
+    });
+    wz.extra.forEach((x) => { if (!log.planned.some((p) => p.date === x.date && p.start === x.start && p.end === x.end)) log.planned.push({ id: uid(), date: x.date, start: x.start, end: x.end, breakAt: "", u: now }); });
+    if (wz.goalName && wz.goalTarget > 0 && !log.goals.some((g) => !g.done && g.name.toLowerCase() === wz.goalName.toLowerCase()))
+      log.goals.push({ id: uid(), name: wz.goalName, target: +wz.goalTarget.toFixed(2), currency: wz.currency, created: now, u: now });
     store.set(cfg); persist(); curCache.sec = -1; saveKey = "";
     $("wiz").hidden = true;
     apply(); go("home"); renderTab();
