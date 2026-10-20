@@ -63,6 +63,7 @@
     background: none; border: 0; color: var(--dim); display: grid; justify-items: center; align-content: center; gap: 5px;
     font: 500 0.56rem/1 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; padding: 0; min-width: 0;
   }
+  .tabbar span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tabbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .tabbar button[aria-current="page"] { color: var(--fg); }
   .tabbar button:focus-visible { outline: 1px solid var(--dim); outline-offset: -4px; border-radius: 10px; }
@@ -184,6 +185,7 @@
   .goal .a button:hover, .goal .a button:focus-visible { color: var(--fg); outline: none; }
   .goal .a button.arm { color: #e8a3a3; }
   .goal.done { opacity: 0.55; }
+  html[lang=da] .cal-day.payday .n::after { content: "LØN"; }
   .cal-day.payday .n::after { content: "PAY"; display: block; font-size: 0.5rem; letter-spacing: 0.1em; color: var(--dim); margin-top: 2px; }
   .cal-day.ps { box-shadow: inset 2px 0 0 var(--dim); }
   /* Calendar */
@@ -587,6 +589,14 @@
       <p class="note">Stats, savings and portfolio totals count entries in this currency.</p>
     </section>
 
+    <section class="sec" aria-labelledby="se-lang">
+      <h3 class="sec-title" id="se-lang">Sprog / Language</h3>
+      <div class="seg" role="radiogroup" aria-label="Sprog / Language">
+        <input type="radio" name="lang" id="l-da" value="da"><label for="l-da">Dansk</label>
+        <input type="radio" name="lang" id="l-en" value="en"><label for="l-en">English</label>
+      </div>
+    </section>
+
     <section class="sec" aria-labelledby="se-acct">
       <h3 class="sec-title" id="se-acct">Account</h3>
       <p class="note" id="acct-status">Connecting…</p>
@@ -872,9 +882,238 @@
       return; // the framed copy runs the app
     }
   }
-  const APP_VERSION = "2.1";
+  // ---------- Language: Danish by default, English in Settings ----------
+  // Text on screen is translated as it appears: exact phrases, phrases with numbers or dates (patterns),
+  // and longer texts piece by piece (" · " parts and sentences). Dates and plurals are made in the right language.
+  const LANG_KEY = "99ms-lang";
+  const LANG = (() => { try { return localStorage.getItem(LANG_KEY) === "en" ? "en" : "da"; } catch { return "da"; } })();
+  const DA = LANG === "da";
+  const LOC = DA ? "da-DK" : "en-GB";
+  document.documentElement.lang = LANG;
+  const DICT = {
+    // tabs, headings, buttons
+    "Home": "Hjem", "Portfolio": "Portefølje", "Salary": "Løn", "Calendar": "Kalender", "Savings": "Opsparing", "Settings": "Indstillinger",
+    "Sections": "Sektioner", "Switch to phone view": "Skift til telefonvisning", "Phone view": "Telefonvisning", "Switch to desktop view": "Skift til computervisning", "Desktop view": "Computervisning",
+    "Got it": "Forstået", "open": "åben", "break": "pause", "Add": "Tilføj", "Save": "Gem", "Cancel": "Annuller", "Delete": "Slet", "Edit": "Rediger", "Back": "Tilbage", "Next": "Næste", "Finish": "Færdig",
+    "Today": "I dag", "Now": "Nu", "Clear": "Ryd", "Auto": "Auto", "None": "Ingen", "Total": "I alt", "Balance": "Saldo", "Amount": "Beløb", "Name": "Navn", "Days": "Dage",
+    "From": "Fra", "To": "Til", "Until": "Indtil", "Date": "Dato", "Per": "Pr.", "Type": "Type", "Note": "Note", "Optional": "Valgfri", "Email": "E-mail", "Month": "Måned",
+    "Previous month": "Forrige måned", "Next month": "Næste måned", "Sure?": "Sikker?", "Help": "Hjælp", "About": "Om", "Account": "Konto", "Currency": "Valuta", "Backup": "Backup",
+    "YEAR": "ÅR", "MONTH": "MÅNED", "HOUR": "TIME", "INVESTMENT": "INVESTERING", "PROJECT": "PROJEKT", "% OF PAY": "% AF LØN",
+    // home
+    "How 99MS works": "Sådan virker 99MS",
+    "This is your overview. Add your shifts in Calendar and 99MS counts your pay by itself: live during a shift, and every finished shift goes into your stats. Tap a card to open that part.": "Her er dit overblik. Læg dine vagter i Kalender, så tæller 99MS din løn af sig selv: live under en vagt, og hver færdig vagt kommer med i din statistik. Tryk på et kort for at åbne den del.",
+    "Earned today": "Tjent i dag", "Earned this shift": "Tjent denne vagt", "Earned this year": "Tjent i år", "Since you sat down": "Siden du åbnede",
+    "Get started": "Kom i gang", "Next shift": "Næste vagt", "Next payday": "Næste lønningsdag", "This month": "Denne måned", "This week": "Denne uge",
+    "Answer the setup questions": "Svar på opsætningsspørgsmålene", "Start": "Start", "Add the shifts you work": "Tilføj de vagter, du arbejder", "Set the day your pay arrives": "Angiv den dag, din løn kommer",
+    "Pay": "Løn", "Log in so your data is safe": "Log ind, så dine data er sikre", "Log in": "Log ind", "Log out": "Log ud",
+    "Nothing in the next 6 weeks": "Intet de næste 6 uger", "Add your shifts in Calendar": "Tilføj dine vagter i Kalender", "Set the day your money arrives": "Angiv den dag, pengene kommer",
+    "saving live": "sparer live", "in your savings": "i din opsparing", "Add an investment or project": "Tilføj en investering eller et projekt",
+    // portfolio
+    "Investments & projects": "Investeringer & projekter", "Investments and projects": "Investeringer og projekter", "Investments": "Investeringer", "Projects": "Projekter",
+    "Keep track of what you have put into investments or projects, and what they are worth now. Tap Add to start, and tap an item to update its value.": "Hold styr på, hvad du har sat i investeringer eller projekter, og hvad de er værd nu. Tryk på Tilføj for at starte, og tryk på en post for at opdatere værdien.",
+    "Put in": "Indskudt", "Gain": "Gevinst", "Worth now": "Værd nu", "Index fund": "Indeksfond",
+    "Nothing yet. Tap Add to track an investment, like a fund, stocks or crypto.": "Intet endnu. Tryk på Tilføj for at følge en investering, fx en fond, aktier eller krypto.",
+    "Nothing yet. Tap Add to track a project: what you have put in and what it is worth now.": "Intet endnu. Tryk på Tilføj for at følge et projekt: hvad du har sat i det, og hvad det er værd nu.",
+    "Give it a name.": "Giv den et navn.", "Enter the amounts as numbers, for example 25000.": "Skriv beløbene som tal, fx 25000.", "Tap again to delete": "Tryk igen for at slette", "Saved.": "Gemt.", "Deleted.": "Slettet.",
+    // salary clock
+    "Tap to switch view": "Tryk for at skifte visning", "Tap the number to switch view · scroll down for stats": "Tryk på tallet for at skifte visning · rul ned for statistik",
+    "Break now": "Pause nu", "End break": "Slut pause", "Save shift": "Gem vagt", "End shift": "Afslut vagt", "Shift saved": "Vagt gemt", "Tap to end": "Tryk for at afslutte",
+    "Stats": "Statistik", "Fullscreen": "Fuld skærm", "Exit": "Afslut",
+    "The salary clock": "Lønuret",
+    "The big number counts what you earn, live. During a shift it follows your calendar. Tap the number to switch between this shift, today and this year. Scroll down for your pay period, stats and every shift.": "Det store tal tæller, hvad du tjener, live. Under en vagt følger det din kalender. Tryk på tallet for at skifte mellem denne vagt, i dag og i år. Rul ned for lønperiode, statistik og alle vagter.",
+    "Shift complete": "Vagt færdig", "saved": "gemt", "in your stats": "i din statistik", "Saving live": "Sparer live", "Logging live": "Registrerer live", "On break": "Pause",
+    "From your shifts": "Fra dine vagter", "Pay period": "Lønperiode", "Earnings": "Indtjening", "Last 8 weeks": "Seneste 8 uger", "Earnings per week, last 8 weeks": "Indtjening pr. uge, seneste 8 uger",
+    "Shifts": "Vagter", "Total earned": "Tjent i alt", "Still planned": "Stadig planlagt", "Month forecast": "Prognose for måneden", "earned + planned": "tjent + planlagt", "This year": "I år", "this year": "i år",
+    "Hours paid": "Betalte timer", "Per shift": "Pr. vagt", "average": "gennemsnit", "Best shift": "Bedste vagt", "Most worked day": "Mest arbejdede dag", "Breaks taken": "Pauser holdt", "unpaid": "ubetalt",
+    "Sick days": "Sygedage", "Skipped shifts": "Overspringede vagter",
+    "No shifts yet. Add your shifts in the Calendar tab: every shift that has ended shows up here by itself. A shift that is running shows up live.": "Ingen vagter endnu. Læg dine vagter i Kalender: hver vagt, der er slut, dukker op her af sig selv. En vagt, der er i gang, vises live.",
+    "running now": "i gang nu", "live now": "live nu", "from calendar": "fra kalenderen", "to savings": "til opsparing", "earned so far": "tjent indtil nu",
+    "Removed. The shift is marked as skipped in your calendar.": "Fjernet. Vagten er markeret som sprunget over i din kalender.",
+    "Shift deleted. Its savings deposit was removed too.": "Vagt slettet. Dens indbetaling til opsparing blev også fjernet.",
+    "set your payday in Settings": "angiv lønningsdag i Indstillinger",
+    // save shift sheet
+    "This shift is still going. Its pay goes into savings live, every millisecond, until the shift ends. Tap End shift on the clock when you clock out.": "Vagten er stadig i gang. Lønnen går live ind på opsparingen, hvert millisekund, indtil vagten slutter. Tryk på Afslut vagt på uret, når du stempler ud.",
+    "Started": "Startede", "Ended": "Sluttede", "Unpaid break, minutes": "Ubetalt pause, minutter", "Add this money to savings": "Læg pengene i opsparingen", "Put it towards": "Sæt dem til",
+    "Savings (no goal)": "Opsparing (intet mål)", "Fill in the date and times.": "Udfyld dato og tidspunkter.", "This shift is already saved.": "Vagten er allerede gemt.",
+    "Saved. Your pay now flows into savings live.": "Gemt. Din løn går nu live ind på opsparingen.", "Saved. The shift is logged live until it ends.": "Gemt. Vagten registreres live, indtil den slutter.",
+    "Fill in the date, start and end time.": "Udfyld dato, start og slut.", "The break is as long as the shift. Shorten the break.": "Pausen er lige så lang som vagten. Gør pausen kortere.",
+    "A shift starting at that time is already saved.": "En vagt, der starter på det tidspunkt, er allerede gemt.", "Shift saved.": "Vagt gemt.",
+    "On break. The clock is paused.": "Pause. Uret er sat på pause.", "Could not save. This browser is blocking storage.": "Kunne ikke gemme. Browseren blokerer lagring.",
+    // savings
+    "Saving from your pay": "Opsparing fra din løn",
+    "Your savings balance. Under From your calendar, choose which upcoming shifts pay into savings or a goal: the money is added when the shift ends. Goals are for saving up for something specific.": "Din opsparing. Under Fra din kalender vælger du, hvilke kommende vagter der betaler til opsparingen eller et mål: pengene lægges ind, når vagten slutter. Mål bruges til at spare op til noget bestemt.",
+    "Withdraw": "Hæv", "Deposit": "Indsæt", "From your calendar": "Fra din kalender", "Save every shift below": "Spar alle vagter herunder", "Show more": "Vis flere", "Show less": "Vis færre",
+    "Goals": "Mål", "Goal": "Mål", "Take out": "Tag ud", "New goal": "Nyt mål", "New camera": "Nyt kamera", "Target": "Mål-beløb", "Create goal": "Opret mål", "Activity": "Aktivitet",
+    "Not saved": "Spares ikke", "Shift pay": "Vagtløn", "Withdrawal": "Hævning", "Moved": "Flyttet", "Spent from goal": "Brugt fra mål", "Bought it": "Købt", "done": "nået",
+    "Enter an amount above 0.": "Skriv et beløb over 0.", "Every shift below is already marked.": "Alle vagter herunder er allerede valgt.",
+    "Mark upcoming shifts below and their pay goes into savings or a goal when the shift ends. Your expected savings show up here.": "Vælg kommende vagter herunder, så går lønnen til opsparingen eller et mål, når vagten slutter. Din forventede opsparing vises her.",
+    "Add your shifts in the Calendar tab, then choose here which ones pay into savings.": "Læg dine vagter i Kalender, og vælg så her, hvilke der betaler til opsparingen.",
+    "Nothing yet. Saved shifts can pay into savings, and you can deposit or withdraw above.": "Intet endnu. Gemte vagter kan betale til opsparingen, og du kan indsætte eller hæve ovenfor.",
+    "No goals yet. Create one below, like a new camera, then put money in it or send a shift's pay straight to it.": "Ingen mål endnu. Opret et herunder, fx et nyt kamera, og sæt penge i det eller send en vagts løn direkte til det.",
+    "Goal reached. Tap Bought it when you spend it.": "Målet er nået. Tryk på Købt, når du bruger pengene.", "Goal deleted.": "Mål slettet.",
+    "Give the goal a name, like New camera.": "Giv målet et navn, fx Nyt kamera.", "Enter how much you need, for example 8000.": "Skriv, hvor meget du skal bruge, fx 8000.", "Pick a goal.": "Vælg et mål.",
+    // settings
+    "Change your pay, pay period and payday, add supplements (tillæg), log in to sync, and make a backup. Version and last update are at the bottom.": "Skift løn, lønperiode og lønningsdag, tilføj tillæg, log ind for at synkronisere, og tag en backup. Version og seneste opdatering står nederst.",
+    "Pay & payday": "Løn & lønningsdag", "Change pay and payday": "Skift løn og lønningsdag", "Your shifts": "Dine vagter", "Supplements · tillæg": "Tillæg",
+    "Extra pay on certain days or hours, like Saturdays, Sundays or evenings. It is added on top of your normal pay in the clock, saved shifts, the calendar and the pay period.": "Ekstra løn på bestemte dage eller timer, fx lørdage, søndage eller aftener. Det lægges oven i din normale løn i uret, gemte vagter, kalenderen og lønperioden.",
+    "Saturday": "Lørdag", "Sunday": "Søndag", "Evening": "Aften", "Night": "Nat", "All day": "Hele dagen", "all day": "hele dagen", "Every day": "Hver dag", "Extra": "Ekstra",
+    "Supplement type": "Tillægstype", "Add supplement": "Tilføj tillæg", "Save changes": "Gem ændringer",
+    "Stats, savings and portfolio totals count entries in this currency.": "Statistik, opsparing og portefølje tæller poster i denne valuta.", "Connecting…": "Forbinder…",
+    "The setup questions walk you through pay, payday, fixed shifts, supplements and a savings goal. Running them again only adds what is new.": "Opsætningsspørgsmålene fører dig gennem løn, lønningsdag, faste vagter, tillæg og et sparemål. Kører du dem igen, tilføjes kun det nye.",
+    "Run setup questions": "Kør opsætningsspørgsmål", "Show tips again": "Vis tips igen", "Tips are back on every tab.": "Tips er tilbage på alle faner.",
+    "Export a backup now and then, and import it on a new phone or after clearing your browser. When you are logged in, your data also syncs to your account.": "Eksportér en backup en gang imellem, og importér den på en ny telefon eller efter at have ryddet browseren. Når du er logget ind, synkroniseres dine data også til din konto.",
+    "Export backup": "Eksportér backup", "Import backup": "Importér backup", "Start over": "Start forfra",
+    "Erases your shifts, savings, goals, calendar and settings on every device you are logged in on, then asks the setup questions again. Export a backup first if you might want anything back.": "Sletter dine vagter, opsparing, mål, kalender og indstillinger på alle enheder, du er logget ind på, og stiller opsætningsspørgsmålene igen. Eksportér en backup først, hvis du måske vil have noget tilbage.",
+    "Reset and set up again": "Nulstil og opsæt igen", "Tap again to erase everything": "Tryk igen for at slette alt", "Everything was erased. Let's set you up again.": "Alt er slettet. Lad os sætte dig op igen.",
+    "Language": "Sprog", "Pay and payday saved.": "Løn og lønningsdag gemt.", "This browser blocked the download.": "Browseren blokerede download.",
+    "Everything in that backup is already here.": "Alt i den backup er her allerede.", "That file is not a 99MS backup. Pick a file made with Export backup.": "Den fil er ikke en 99MS-backup. Vælg en fil lavet med Eksportér backup.",
+    "Your shifts come from the calendar.": "Dine vagter kommer fra kalenderen.", "No shifts yet: add them in the Calendar.": "Ingen vagter endnu: tilføj dem i Kalender.",
+    "Sync could not load. Check your connection and reopen the app.": "Synkronisering kunne ikke indlæses. Tjek din forbindelse, og åbn appen igen.",
+    "Not logged in. Log in to sync across devices.": "Ikke logget ind. Log ind for at synkronisere mellem enheder.", "Offline. Will sync when you are back online.": "Offline. Synkroniserer, når du er online igen.",
+    "Sync failed. Retrying soon.": "Synkronisering mislykkedes. Prøver igen om lidt.",
+    // pay sheet
+    "Your pay, before supplements": "Din løn, før tillæg", "Salary period": "Lønperiode", "Pay period starts on day": "Lønperioden starter den", "Money arrives on day": "Pengene kommer den",
+    "Shift without the calendar": "Vagt uden kalenderen", "Only for a simple daily shift. If you use the Calendar, leave this empty: the clock follows the calendar.": "Kun til en enkel daglig vagt. Bruger du Kalender, så lad det være tomt: uret følger kalenderen.",
+    "Shift start": "Vagtstart", "Ends": "Slutter", "Starts": "Starter", "Break starts": "Pause starter",
+    "Shifts over 4.5 hours include an unpaid 30-minute break. Hourly pay assumes a 37-hour week when shown per month or year.": "Vagter over 4,5 timer har en ubetalt pause på 30 minutter. Timeløn regnes med 37 timers uge, når den vises pr. måned eller år.",
+    "The pay period can start on day 1 to 28.": "Lønperioden kan starte den 1. til den 28.", "Add a shift start time, or clear the end time.": "Tilføj et starttidspunkt, eller ryd sluttidspunktet.",
+    "The shift ends at the same time it starts. Change one of them.": "Vagten slutter samtidig med, at den starter. Ret et af tidspunkterne.", "Add a shift start time, or set the break to Auto.": "Tilføj et starttidspunkt, eller sæt pausen til Auto.",
+    "The break has to fit inside the shift. Pick an earlier break time, or set it to Auto.": "Pausen skal ligge inden for vagten. Vælg en tidligere pause, eller sæt den til Auto.",
+    "Enter your pay as a number, for example 110,10 per hour or 25000 per month.": "Skriv din løn som et tal, fx 110,10 i timen eller 25000 om måneden.",
+    // account + done screens
+    "Log in to keep your shifts, savings and portfolio synced on every device. No password needed: we email you a link, and your account is created the first time.": "Log ind for at holde dine vagter, opsparing og portefølje synkroniseret på alle enheder. Ingen adgangskode: vi sender dig et link på e-mail, og din konto oprettes første gang.",
+    "you@example.com": "dig@eksempel.dk", "Email me a login link": "Send mig et login-link", "Send a new link": "Send et nyt link", "Sending…": "Sender…", "Enter your email address.": "Skriv din e-mailadresse.",
+    "Too many emails in a short time. Wait a minute and try again.": "For mange e-mails på kort tid. Vent et minut, og prøv igen.", "Could not send the email. Try again.": "Kunne ikke sende e-mailen. Prøv igen.",
+    "Logged in": "Logget ind", "Your data now syncs across devices": "Dine data synkroniseres nu mellem enheder", "Logged out. Your data stays on this device.": "Logget ud. Dine data bliver på denne enhed.",
+    "That login link has expired or was already used. Send a new one from Settings.": "Det login-link er udløbet eller allerede brugt. Send et nyt fra Indstillinger.",
+    "Check your pay": "Tjek din løn", "Check your supplement": "Tjek dit tillæg", "Enter it again": "Skriv den igen", "Edit supplements": "Rediger tillæg", "Pay fixed": "Løn rettet", "Supplement fixed": "Tillæg rettet",
+    "You're set up": "Du er klar", "99MS is ready": "99MS er klar", "Not now": "Ikke nu", "Skip this step": "Spring over",
+    // calendar
+    "Fixed shifts repeat every week; set them up at the bottom. Tap a day to add a one-off shift, or to mark a shift as sick, skipped or a day off. Finished shifts are added to your stats automatically.": "Faste vagter gentages hver uge; sæt dem op nederst. Tryk på en dag for at tilføje en enkeltvagt eller markere en vagt som syg, sprunget over eller fridag. Færdige vagter kommer automatisk med i din statistik.",
+    "Your shifts": "Dine vagter", "Add a one-off shift on this day": "Tilføj en enkeltvagt denne dag", "Add shift this day": "Tilføj vagt denne dag", "Fixed shifts · every week": "Faste vagter · hver uge",
+    "The shifts you always work (faste vagter). Pick the weekdays and times once, and they fill your calendar every week.": "De vagter, du altid har (faste vagter). Vælg ugedage og tidspunkter én gang, så fylder de din kalender hver uge.",
+    "Add fixed shift": "Tilføj fast vagt", "Fixed shift": "Fast vagt", "Single shift": "Enkeltvagt", "Saved shift": "Gemt vagt", "day off": "fridag", "sick": "syg", "skipped": "sprunget over",
+    "Sick": "Syg", "Skipped": "Sprunget over", "Day off": "Fridag",
+    "No shifts this day. Add one below, or set up fixed shifts further down.": "Ingen vagter denne dag. Tilføj en herunder, eller sæt faste vagter op længere nede.",
+    "No fixed shifts yet. Pick the weekdays you always work and the times.": "Ingen faste vagter endnu. Vælg de ugedage og tidspunkter, du altid arbejder.",
+    "Marked as sick. The shift no longer counts as expected pay.": "Markeret som syg. Vagten tæller ikke længere med i forventet løn.", "Marked as skipped.": "Markeret som sprunget over.",
+    "Day off. The fixed shift is skipped this day.": "Fridag. Den faste vagt springes over denne dag.", "Shift updated.": "Vagt opdateret.", "Shift added.": "Vagt tilføjet.",
+    "Pick a start and an end time.": "Vælg et start- og sluttidspunkt.", "The shift ends at the same time it starts.": "Vagten slutter samtidig med, at den starter.", "The break has to fit inside the shift.": "Pausen skal ligge inden for vagten.",
+    "Pick at least one weekday.": "Vælg mindst én ugedag.", "Pick the date the fixed shift starts.": "Vælg den dato, den faste vagt starter.", "The end date is before the start date.": "Slutdatoen er før startdatoen.",
+    "Fixed shift updated.": "Fast vagt opdateret.", "Fixed shift deleted. Saved shifts are kept.": "Fast vagt slettet. Gemte vagter beholdes.",
+    "Expected pay for the month, using saved pay where a shift is saved": "Forventet løn for måneden, med gemt løn hvor en vagt er gemt",
+    // supplements
+    "Give it a name, like Saturday or Evening.": "Giv det et navn, fx Lørdag eller Aften.", "Pick the days it applies to.": "Vælg de dage, det gælder.", "From and to are the same time. Use All day instead.": "Fra og til er det samme tidspunkt. Brug Hele dagen i stedet.",
+    "Enter the percentage, for example 50.": "Skriv procentsatsen, fx 50.", "Enter the extra pay per hour, for example 30.": "Skriv den ekstra løn i timen, fx 30.", "Supplement updated.": "Tillæg opdateret.",
+    "Supplement deleted. Shifts from your calendar update by themselves.": "Tillæg slettet. Vagter fra din kalender opdateres af sig selv.",
+    "Mon–Fri 18–23": "Man–fre 18–23", "Every day 23–06": "Hver dag 23–06", "Mon–Fri": "Man–fre",
+    // setup questions
+    "What's your work called?": "Hvad hedder dit arbejde?", "Just a name for you, like the shop or company. You can leave it empty.": "Bare et navn til dig selv, fx butikken eller firmaet. Du kan lade det være tomt.", "Workplace": "Arbejdsplads",
+    "What do you earn?": "Hvad tjener du?", "Your normal pay before supplements. Hourly pay is the most precise for shift work.": "Din normale løn før tillæg. Timeløn er mest præcis til vagtarbejde.",
+    "Enter your pay as a number, for example 110,10.": "Skriv din løn som et tal, fx 110,10.",
+    "When is your pay period?": "Hvornår er din lønperiode?",
+    "The pay period is the stretch of days one payslip covers. Example: it starts on the 19th (so it runs to the 18th), and the money arrives on the 1st. Keep 1 if it simply follows the calendar month.": "Lønperioden er de dage, én lønseddel dækker. Eksempel: den starter den 19. (og går til den 18.), og pengene kommer den 1. Behold 1, hvis den bare følger kalendermåneden.",
+    "Starts on day": "Starter den", "Payday is a day of the month, 1 to 31.": "Lønningsdagen er en dag i måneden, 1 til 31.",
+    "Which days do you always work?": "Hvilke dage arbejder du altid?", "Your fixed shifts (faste vagter). They repeat every week in the calendar. Skip if your shifts change every week.": "Dine faste vagter. De gentages hver uge i kalenderen. Spring over, hvis dine vagter skifter hver uge.",
+    "Pick the days, or skip this step.": "Vælg dagene, eller spring over.", "Do you get supplements?": "Får du tillæg?",
+    "Any extra shifts coming up?": "Har du ekstra vagter på vej?", "Shifts this month that are not part of your fixed days. Add as many as you like, or skip.": "Vagter denne måned, der ikke er en del af dine faste dage. Tilføj så mange du vil, eller spring over.",
+    "Add this shift": "Tilføj denne vagt", "Remove": "Fjern", "Pick a date.": "Vælg en dato.",
+    "Saving up for something?": "Sparer du op til noget?", "A goal, like a new camera. You can send your pay straight to it. Skip if not.": "Et mål, fx et nyt kamera. Du kan sende din løn direkte til det. Spring over, hvis ikke.",
+    "Give the goal a name, or clear the target.": "Giv målet et navn, eller ryd beløbet.",
+    // about
+    "Amounts in Danish style: 6.055,50 kr.": "Beløb på dansk: 6.055,50 kr.", "Home shows your next shift, your next payday and what to set up": "Hjem viser din næste vagt, næste lønningsdag og hvad du mangler at sætte op",
+    "Short guides on every tab, and clearer names in Settings": "Korte guides på alle faner og tydeligere navne i Indstillinger", "Today and This year on the clock count your actual shifts": "I dag og I år på uret tæller dine faktiske vagter",
+    "Backups now include your calendar, supplements and goals": "Backup indeholder nu din kalender, dine tillæg og mål", "Fixes for saving finished calendar shifts and the setup questions": "Rettelser til at gemme færdige kalendervagter og opsætningsspørgsmålene",
+    "The app in Danish, with English in Settings": "Appen på dansk, med engelsk i Indstillinger",
+    "· version": "· version",
+  };
+  const PATTERNS = [
+    [/^Pay period starts on day (\d+), money arrives on day (\d+) \(next: (.+)\)\.$/, "Lønperioden starter den $1., pengene kommer den $2. (næste: $3)."], [/^Pay period starts on day (\d+), no payday set\.$/, "Lønperioden starter den $1., ingen lønningsdag angivet."],
+    [/^Shift starts in (.+)$/, "Vagten starter om $1"], [/^(.+) left$/, "$1 tilbage"], [/^(.+) left this month$/, "$1 tilbage denne måned"],
+    [/^(.+) \/ sec$/, "$1 / sek."], [/^(.+) \/ hour while you work$/, "$1 / time, når du arbejder"], [/^(.+) \/ hour, around the clock$/, "$1 / time, døgnet rundt"], [/^(.+) \/ hour$/, "$1 / time"], [/^(.+) \/ H$/, "$1 / T"],
+    [/^That is (.+) per hour\. If that is your monthly pay, pick MONTH\. Press (Next )?again to keep it\.$/, (m, a, n) => `Det er ${a} i timen. Er det din månedsløn, så vælg MÅNED. Tryk ${n ? "Næste " : ""}igen for at beholde det.`],
+    [/^Shift ended\. (.+) saved\.$/, "Vagt slut. $1 gemt."], [/^Back to work\. Break was (.+)\.$/, "Tilbage på arbejde. Pausen varede $1."],
+    [/^(.+) paid at (.+) \/ hour$/, "$1 betalt med $2 / time"], [/^Saved\. (.+) added to savings\.$/, "Gemt. $1 lagt i opsparingen."],
+    [/^(\d+) shifts? in other currencies not counted$/, "$1 vagt(er) i andre valutaer tælles ikke med"], [/^(\d+) (item|items|post|poster) in other currencies not counted$/, "$1 poster i andre valutaer tælles ikke med"],
+    [/^(.+) per shift$/, "$1 pr. vagt"], [/^since (.+)$/, "siden $1"], [/^(.+) unpaid$/, "$1 ubetalt"], [/^Week (\d+)$/, "Uge $1"], [/^Week (\d+): (.+)$/, "Uge $1: $2"], [/^W(\d+)$/, "U$1"],
+    [/^(\d+)m break$/, "$1 min pause"], [/^(.+)–now$/, "$1–nu"], [/^You only have (.+) outside your goals\. Take money out of a goal first\.$/, "Du har kun $1 uden for dine mål. Tag penge ud af et mål først."],
+    [/^Imported (.+) from the backup\.$/, "Importerede $1 fra backuppen."], [/^Shift (\d\d:\d\d)–(.+)$/, "Vagt $1–$2"], [/^in (.+)$/, "om $1"], [/^about (.+)$/, "ca. $1"], [/^no shifts in (.+)$/, "ingen vagter i $1"],
+    [/^put in (.+)$/, "indskudt $1"], [/^Currency set to (.+)\.$/, "Valuta sat til $1."], [/^Last updated (.+)$/, "Sidst opdateret $1"],
+    [/^This pay period: (.+), and that money arrives (.+)\.$/, "Denne lønperiode: $1, og de penge kommer $2."], [/^This pay period: (.+)\. Add the day the money arrives to see your next payday\.$/, "Denne lønperiode: $1. Angiv dagen, pengene kommer, for at se din næste lønningsdag."],
+    [/^Pay period (.+): (.+), paid out (.+)$/, "Lønperiode $1: $2, udbetales $3"], [/^Pay period (.+): (.+)$/, "Lønperiode $1: $2"],
+    [/^(.+) still planned in (.+)$/, "$1 planlagt i $2"], [/^Forecast for the period (.+)$/, "Prognose for perioden $1"], [/^paid out (.+), in (.+)$/, "udbetales $1, om $2"],
+    [/^Last period \((.+)\) (.+), paid out (.+)$/, "Sidste periode ($1) $2, udbetales $3"], [/^Last period \((.+)\) (.+), paid (.+)$/, "Sidste periode ($1) $2, udbetalt $3"], [/^Last period \((.+)\) (.+)$/, "Sidste periode ($1) $2"],
+    [/^(.+) still to earn in (.+)$/, "$1 tilbage at tjene i $2"],
+    [/^(.+) away$/, "$1 væk"], [/^around (.+) if all your pay goes here$/, "omkring $1, hvis al din løn går hertil"], [/^about (.+) at your average shift pay$/, "ca. $1 med din gennemsnitlige vagtløn"],
+    [/^(.+) to go$/, "$1 mangler"], [/^Bought (.+)$/, "Købt $1"], [/^Enjoy the (.+)! (.+) spent from the goal\.$/, "God fornøjelse med $1! $2 brugt fra målet."],
+    [/^Goal deleted\. (.+) went back to savings\.$/, "Mål slettet. $1 gik tilbage til opsparingen."], [/^Goal created: (.+)\.$/, "Mål oprettet: $1."],
+    [/^You have (.+) in savings outside your goals\. Deposit first, or put in less\.$/, "Du har $1 i opsparing uden for dine mål. Indsæt først, eller sæt mindre ind."],
+    [/^(.+) only has (.+)\.$/, "$1 har kun $2."], [/^Put (.+) towards (.+)\.$/, "Satte $1 til $2."], [/^Took (.+) out of (.+)\.$/, "Tog $1 ud af $2."], [/^Withdrew (.+)\.$/, "Hævede $1."], [/^Deposited (.+)\.$/, "Indsatte $1."],
+    [/^Expected savings (.+)$/, "Forventet opsparing $1"], [/^(.+) still coming from (.+) you marked$/, "$1 er stadig på vej fra $2, du har valgt"], [/^(.+) by the end of this pay period \((.+)\)$/, "$1 ved slutningen af denne lønperiode ($2)"],
+    [/^To (.+)$/, "Til $1"], [/^No upcoming shifts in the next (\d+) days\.$/, "Ingen kommende vagter de næste $1 dage."], [/^(.+) now pay into savings when they end\.$/, "$1 betaler nu til opsparingen, når de slutter."],
+    [/^Shift (.+) logged$/, "Vagt $1 registreret"], [/^(.+) to savings\.$/, "$1 til opsparingen."], [/^(.+) to your goal\.$/, "$1 til dit mål."], [/^(.+) from your calendar added to your stats\.$/, "$1 fra din kalender lagt i din statistik."],
+    [/^Your (.+) supplement is saved as \+(.+), on top of your pay of (.+) per hour\. That makes every (.+) shift far too high\. An older version of 99MS read a comma wrong\.$/, "Dit tillæg $1 er gemt som +$2 oven i din løn på $3 i timen. Det gør hver $4-vagt alt for høj. En ældre version af 99MS læste et komma forkert."],
+    [/^Your pay is saved as (.+) per hour, which makes every shift and total far too high\. An older version of 99MS read a comma wrong, so (.+) became (.+)\.$/, "Din løn er gemt som $1 i timen, så hver vagt og alle totaler bliver alt for høje. En ældre version af 99MS læste et komma forkert, så $2 blev til $3."],
+    [/^Fix it: (.+) per hour$/, "Ret det: $1 i timen"], [/^Fix it: (.+)$/, "Ret det: $1"], [/^(.+) per hour is right$/, "$1 i timen er rigtigt"], [/^(.+) is right$/, "$1 er rigtigt"],
+    [/^(.+) per hour$/, "$1 i timen"], [/^(.+) recalculated$/, "$1 genberegnet"], [/^(.+) recalculated\.$/, "$1 genberegnet."],
+    [/^Undo (.+)$/, "Fortryd $1"], [/^saved (.+)$/, "gemt $1"], [/^to (.+)$/, "til $1"], [/^Add a one-off shift on (.+)$/, "Tilføj en enkeltvagt $1"], [/^Change the shift (.+)$/, "Ret vagten $1"],
+    [/^from (.+) to (.+)$/, "fra $1 til $2"], [/^from (.+)$/, "fra $1"], [/^break (.+)$/, "pause $1"], [/^Fixed shift added: (.+)\.$/, "Fast vagt tilføjet: $1."], [/^Supplement added: (.+)\.$/, "Tillæg tilføjet: $1."],
+    [/^No supplements yet\. Example: Saturday, Sa, all day, \+30 (.+) per hour\.$/, "Ingen tillæg endnu. Eksempel: Lørdag, Lø, hele dagen, +30 $1 i timen."],
+    [/^Tillæg: extra (.+) per hour on top of your pay\. Fill in the ones you get and leave the rest empty\. You can change times and add more in Settings\.$/, "Tillæg: ekstra $1 i timen oven i din løn. Udfyld dem, du får, og lad resten være tomme. Du kan ændre tider og tilføje flere i Indstillinger."],
+    [/^Enter the (.+) supplement as a number, or leave it empty\.$/, "Skriv tillægget for $1 som et tal, eller lad det være tomt."], [/^99MS is ready for (.+)$/, "99MS er klar til $1"],
+    [/^Synced as (.+)$/, "Synkroniseret som $1"], [/^Logged in as (.+)$/, "Logget ind som $1"],
+    [/^Sent to (.+)\. Open the email on this device and tap the link\. This page logs you in by itself when you do\.$/, "Sendt til $1. Åbn e-mailen på denne enhed, og tryk på linket. Siden logger dig ind af sig selv, når du gør."],
+    [/^(.+) per (hour|month|year)\.$/, (m, a, p) => `${a} ${p === "hour" ? "i timen" : p === "month" ? "om måneden" : "om året"}.`],
+    [/^Daily shift (.+) to (.+)\.$/, "Daglig vagt $1 til $2."], [/^(.+), (\d+) (vagt|vagter)$/, "$1, $2 $3"],
+    [/^Recalculate (.+) with your new pay\?\n\nShifts you saved by hand keep their old amount otherwise\. Savings deposits from those shifts are updated too\.$/, "Genberegn $1 med din nye løn?\n\nEllers beholder vagter, du har gemt selv, deres gamle beløb. Indbetalinger til opsparing fra de vagter opdateres også."],
+    [/^Also use the pay settings from the backup\?$/, "Brug også lønindstillingerne fra backuppen?"],
+    [/^Bring your data over from the old 99MS address\?\n\nThis adds (.+)\. Nothing already here is removed\.$/, "Vil du flytte dine data fra den gamle 99MS-adresse?\n\nDet tilføjer $1. Intet, der allerede er her, fjernes."],
+    [/^Your data is here now\. Log in under Settings to sync it\.$/, "Dine data er her nu. Log ind under Indstillinger for at synkronisere dem."],
+  ];
+  const hasWords = /[A-Za-z]{2}/;
+  const trCache = new Map();
+  function tr(str) {
+    if (!DA || !str || !hasWords.test(str)) return str;
+    if (trCache.has(str)) return trCache.get(str);
+    if (trCache.size > 2000) trCache.clear();
+    const out = trRaw(str);
+    trCache.set(str, out);
+    return out;
+  }
+  function trRaw(str) {
+    const lead = str.match(/^\s*/)[0], trail = str.match(/\s*$/)[0], core = str.trim();
+    if (!core) return str;
+    const done = (v) => lead + v + trail;
+    if (DICT[core] !== undefined) return done(DICT[core]);
+    for (const [re, to] of PATTERNS) if (re.test(core)) return done(core.replace(re, to));
+    if (core.includes(" · ")) { const parts = core.split(" · "); if (parts.length > 1) return done(parts.map((x) => trRaw(x)).join(" · ")); }
+    const sentences = core.split(/(?<=[.!?]) (?=[A-ZÆØÅ]|99MS)/);
+    if (sentences.length > 1) return done(sentences.map((x) => trRaw(x)).join(" "));
+    return str;
+  }
+  const T = tr;
+  // Translate text on screen as it appears.
+  function trNode(n) {
+    if (n.nodeType === 3) { if (n.parentElement && n.parentElement.closest("[translate=no]")) return; const v = tr(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; return; }
+    if (n.nodeType !== 1 || n.tagName === "SCRIPT" || n.tagName === "STYLE" || n.getAttribute("translate") === "no") return;
+    for (const a of ["placeholder", "aria-label", "title"]) { const v = n.getAttribute(a); if (v) { const t = tr(v); if (t !== v) n.setAttribute(a, t); } }
+    n.childNodes.forEach(trNode);
+  }
+  if (DA) {
+    trNode(document.body);
+    document.querySelector(".tabbar [data-tab=settings] span").textContent = "Indstil.";
+    new MutationObserver((list) => {
+      for (const m of list) {
+        if (m.type === "characterData") trNode(m.target);
+        else if (m.type === "attributes") { const v = m.target.getAttribute(m.attributeName); if (v) { const t = tr(v); if (t !== v) m.target.setAttribute(m.attributeName, t); } }
+        else m.addedNodes.forEach(trNode);
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
+  }
+  const APP_VERSION = "2.2";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "The app in Danish, with English in Settings",
     "Amounts in Danish style: 6.055,50 kr.",
     "Home shows your next shift, your next payday and what to set up",
     "Short guides on every tab, and clearer names in Settings",
@@ -889,10 +1128,10 @@
   const BREAK_AFTER = 4.5 * HOUR;   // shifts longer than this get a break
   const BREAK_LEN = 30 * 60000;     // unpaid
   const ALL_MODES = [
-    { key: "shift",   label: "Earned this shift" },
-    { key: "today",   label: "Earned today" },
-    { key: "session", label: "Since you sat down" },
-    { key: "year",    label: "Earned this year" },
+    { key: "shift",   label: T("Earned this shift") },
+    { key: "today",   label: T("Earned today") },
+    { key: "session", label: T("Since you sat down") },
+    { key: "year",    label: T("Earned this year") },
   ];
   const $ = (id) => document.getElementById(id);
   const el = {
@@ -1030,7 +1269,7 @@
     el.times.hidden = !shift;
     el.progress.hidden = !(shift && cfg.shiftEnd);
     el.tStart.textContent = cfg.shiftStart;
-    el.tEnd.textContent = cfg.shiftEnd || "open";
+    el.tEnd.textContent = cfg.shiftEnd || T("open");
     el.tBreak.textContent = "";
     lastLen = -1;
   }
@@ -1051,11 +1290,11 @@
 
   function hm(ms) {
     const m = Math.ceil(ms / 60000);
-    return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+    return DA ? `${Math.floor(m / 60)} t ${String(m % 60).padStart(2, "0")} m` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
   }
 
   let label = "";
-  function setLabel(t) { if (t !== label) { label = t; el.mode.textContent = t; } }
+  function setLabel(t) { t = T(t); if (t !== label) { label = t; el.mode.textContent = t; } }
 
   // When a shift starts or comes up (calendar or Settings), show it on the clock once; tapping can still switch away.
   let lastShiftKey;
@@ -1082,11 +1321,11 @@
         lastRateTick = now;
         const act = (log.supps || []).filter((rule) => suppBetweenRule(rule, now));
         const perSec = (workPerMs() + suppBetween(now, now + 1)) * 1000;
-        el.rate.textContent = `${fmt4.format(perSec)} / sec   ·   ${fmt2.format(perSec * 3600)} / hour${act.length ? `   ·   ${act.map((x) => x.name).join(" + ")}` : ""}`;
+        el.rate.textContent = `${fmt4.format(perSec)} / ${DA ? "sek" : "sec"}   ·   ${fmt2.format(perSec * 3600)} / ${DA ? "time" : "hour"}${act.length ? `   ·   ${act.map((x) => x.name).join(" + ")}` : ""}`;
       }
       // Paused on the scheduled break only while it is still topping up to 30 minutes.
       const inSched = brk !== null && now >= brk && now < brk + BREAK_LEN && unpaidMs(start, now, brk, list) > unpaidMs(start, now, null, list);
-      const bText = brk === null ? "" : "break " + new Date(brk).toTimeString().slice(0, 5);
+      const bText = brk === null ? "" : T("break") + " " + new Date(brk).toTimeString().slice(0, 5);
       if (el.tBreak.textContent !== bText) el.tBreak.textContent = bText;
       if (now < start) setLabel(`Shift starts in ${hm(start - now)}`);
       else if (done) setLabel(done.auto ? "Shift complete · in your stats" : "Shift complete · saved");
@@ -1101,7 +1340,7 @@
       const ongoing = !done && now >= start && (end === null || now < end);
       syncSaveBtn(now >= start, start, ongoing);
       syncBreakBtn(ongoing, !!open);
-      const tS = hhmm(new Date(start)), tE = end !== null ? hhmm(new Date(end)) : "open";
+      const tS = hhmm(new Date(start)), tE = end !== null ? hhmm(new Date(end)) : T("open");
       if (el.tStart.textContent !== tS) el.tStart.textContent = tS;
       if (el.tEnd.textContent !== tE) el.tEnd.textContent = tE;
       if (el.progress.hidden === (end !== null)) el.progress.hidden = end === null;
@@ -1262,7 +1501,7 @@
 
 
   // ---------- Shift log, savings and stats ----------
-  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const DAYS = DA ? ["søndag", "mandag", "tirsdag", "onsdag", "torsdag", "fredag", "lørdag"] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const logStore = {
     get() {
       try {
@@ -1491,7 +1730,7 @@
     const w1 = new Date(d.getFullYear(), 0, 4);
     return 1 + Math.round(((d - w1) / DAY - 3 + ((w1.getDay() + 6) % 7)) / 7);
   }
-  const dateFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const dateFmt = new Intl.DateTimeFormat(LOC, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
   // Savings: every transaction, live ones at their current value. goalId puts money in a goal.
   function txAmount(t) {
@@ -1504,7 +1743,13 @@
   const freeBalance = () => curTx().filter((t) => !t.goalId).reduce((a, t) => a + txAmount(t), 0);
   const goalBalance = (id) => log.savings.filter((t) => t.goalId === id).reduce((a, t) => a + txAmount(t), 0);
 
-  const plural = (n, w) => `${n} ${n === 1 ? w : /[^aeiou]y$/.test(w) ? w.slice(0, -1) + "ies" : w + "s"}`;
+  const PLURAL_DA = {
+    "shift": ["vagt", "vagter"], "day": ["dag", "dage"], "entry": ["post", "poster"], "item": ["post", "poster"],
+    "past shift": ["tidligere vagt", "tidligere vagter"], "planned shift": ["planlagt vagt", "planlagte vagter"],
+    "saved shift": ["gemt vagt", "gemte vagter"], "more shift": ["vagt mere", "vagter mere"], "goal": ["mål", "mål"],
+    "hour": ["time", "timer"], "week": ["uge", "uger"], "deposit": ["indbetaling", "indbetalinger"], "supplement": ["tillæg", "tillæg"],
+  };
+  const plural = (n, w) => DA && PLURAL_DA[w] ? `${n} ${PLURAL_DA[w][n === 1 ? 0 : 1]}` : `${n} ${n === 1 ? w : /[^aeiou]y$/.test(w) ? w.slice(0, -1) + "ies" : w + "s"}`;
   function stat(label, value, sub) {
     return `<div class="stat"><span>${label}</span><b>${value}</b>${sub ? `<em>${sub}</em>` : ""}</div>`;
   }
@@ -1695,7 +1940,7 @@
       const added = KEYS.reduce((a, k) => a + inc[k].filter((x) => !have.has(x.id)).length, 0);
       log = mergeData({ cfg, log }, { cfg: null, log: inc }).log;
       const st = raw.settings, c = st && cleanCfg(st);
-      if (c && confirm("Also use the pay settings from the backup?")) {
+      if (c && confirm(T("Also use the pay settings from the backup?"))) {
         Object.assign(cfg, { amount: c.amount, period: c.period, currency: c.currency });
         ["payStart", "payDay"].forEach((k) => { if (Number.isInteger(st[k])) cfg[k] = st[k]; });
         store.set(cfg);
@@ -1757,7 +2002,7 @@
   const num = (v) => parseAmount(v);
 
   // Home: the clock, savings, portfolio and this week at a glance.
-  const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long" });
+  const dayFmt = new Intl.DateTimeFormat(LOC, { weekday: "long", day: "numeric", month: "long" });
   function renderHome(now = Date.now()) {
     const cur = cfg.currency;
     if (home.cur.textContent !== curLabel()) home.cur.textContent = curLabel();
@@ -1917,6 +2162,11 @@
     renderSupps();
     renderAcct();
   }
+  document.querySelector(`input[name=lang][value=${LANG}]`).checked = true;
+  document.querySelectorAll("input[name=lang]").forEach((r) => r.addEventListener("change", () => {
+    try { localStorage.setItem(LANG_KEY, r.value); } catch {}
+    location.reload();
+  }));
   document.querySelectorAll("input[name=currency]").forEach((r) => r.addEventListener("change", () => {
     cfg.currency = r.value; store.set(cfg); apply(); saveKey = "";
     renderSettings();
@@ -1930,7 +2180,7 @@
   let lastUpdated = null;
   function renderAbout() {
     const when = lastUpdated || new Date(APP_RELEASED + "T12:00:00");
-    const f = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", ...(lastUpdated ? { hour: "2-digit", minute: "2-digit" } : {}) });
+    const f = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "long", year: "numeric", ...(lastUpdated ? { hour: "2-digit", minute: "2-digit" } : {}) });
     $("about").innerHTML = `<b>99MS</b> · version <b>${APP_VERSION}</b><br>Last updated ${f.format(when)}`;
     $("news").innerHTML = WHATS_NEW.map((x) => `<li>${esc(x)}</li>`).join("");
   }
@@ -1967,8 +2217,8 @@
     const next = periodFor(addDays(cur.to, 1));
     return { per: next, date: payoutFor(next) };
   }
-  const shortDate = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
-  const longDate = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const shortDate = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "short" });
+  const longDate = new Intl.DateTimeFormat(LOC, { weekday: "short", day: "numeric", month: "short" });
   const rangeText = (per) => `${shortDate.format(per.from)} – ${shortDate.format(per.to)}`;
   function renderPayPeriod() {
     const now = Date.now(), cur = cfg.currency;
@@ -2039,11 +2289,11 @@
       const g = log.goals.find((x) => x.id === el.dataset.g); if (!g) return;
       const have = g.done ? g.spent || 0 : goalBalance(g.id);
       const pct = Math.min(100, (have / g.target) * 100);
-      el.querySelector(".pct").textContent = g.done ? "done" : `${Math.floor(pct)}%`;
+      el.querySelector(".pct").textContent = g.done ? T("done") : `${Math.floor(pct)}%`;
       el.querySelector(".amt").innerHTML = `${money(have)} <small>/ ${kr(g.target)}</small>`;
       el.querySelector(".track i").style.width = pct.toFixed(2) + "%";
       const need = g.target - have;
-      const m = g.done ? `Bought ${longDate.format(g.done)}` : need <= 0.004 ? "Goal reached. Tap Bought it when you spend it." : `${kr(need)} to go${goalEtaCache(g.id, need)}`;
+      const m = T(g.done ? `Bought ${longDate.format(g.done)}` : need <= 0.004 ? "Goal reached. Tap Bought it when you spend it." : `${kr(need)} to go${goalEtaCache(g.id, need)}`);
       if (el.querySelector(".m").textContent !== m) el.querySelector(".m").textContent = m;
     });
   }
@@ -2236,7 +2486,7 @@
     if (!manual.length) return 0;
     const fresh = manual.map((x) => ({ x, amt: +payFor(x.start, x.end, x.breakMin || 0).toFixed(2) })).filter((r) => Math.abs(r.amt - r.x.amount) > 0.01);
     if (!fresh.length) return 0;
-    if (!noAsk && !confirm(`Recalculate ${plural(fresh.length, "saved shift")} with your new pay?\n\nShifts you saved by hand keep their old amount otherwise. Savings deposits from those shifts are updated too.`)) return 0;
+    if (!noAsk && !confirm(T(`Recalculate ${plural(fresh.length, "saved shift")} with your new pay?\n\nShifts you saved by hand keep their old amount otherwise. Savings deposits from those shifts are updated too.`))) return 0;
     const now = Date.now();
     fresh.forEach(({ x, amt }) => {
       x.amount = amt; x.u = now;
@@ -2335,15 +2585,15 @@
   }
 
   // ---------- Calendar: fixed weekly shifts, single shifts, days off ----------
-  const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];      // display order
+  const DOW = DA ? ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];      // display order
   const DOW_JS = [1, 2, 3, 4, 5, 6, 0];                                // matching Date.getDay()
-  const monthFmt = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
+  const monthFmt = new Intl.DateTimeFormat(LOC, { month: "long", year: "numeric" });
   function calendarUsed() { return log.fixed.length > 0 || log.planned.length > 0; }
   const parseYmd = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
   const skipId = (fid, ds) => `${fid}@${ds}`;
   const skipOf = (fid, ds) => log.skips.find((k) => k.id === skipId(fid, ds));
-  const REASON = { off: "day off", sick: "sick", skipped: "skipped" };
+  const REASON = DA ? { off: "fridag", sick: "syg", skipped: "sprunget over" } : { off: "day off", sick: "sick", skipped: "skipped" };
   function markOccurrence(key, ds, reason) {
     if (key.includes("@")) {
       const fid = key.split("@")[0];
@@ -2355,7 +2605,7 @@
       if (pl) { pl.status = reason; pl.u = Date.now(); }
     }
   }
-  const REASON_SHORT = { off: "off", sick: "sick", skipped: "skip" };
+  const REASON_SHORT = DA ? { off: "fri", sick: "syg", skipped: "skip" } : { off: "off", sick: "sick", skipped: "skip" };
 
   // Every shift on a given day, with its times in ms. Skipped fixed shifts are included, marked off.
   function occurrences(day) {
@@ -2432,7 +2682,7 @@
     const todayS = ymd(new Date());
     const first = new Date(y, m, 1);
     const lead = (first.getDay() + 6) % 7;
-    let html = DOW.map((d) => `<div class="cal-dow">${d.slice(0, 2).toUpperCase()}</div>`).join("");
+    let html = DOW.map((d) => `<div class="cal-dow" translate="no">${d.slice(0, 2).toUpperCase()}</div>`).join("");
     for (let i = 0; i < 42; i++) {
       const d = addDays(first, i - lead);
       if (i >= 35 && d.getMonth() !== m) break;
@@ -2440,7 +2690,7 @@
       const occ = occurrences(d);
       const on = occ.filter((o) => !o.off);
       const saved = log.shifts.some((x) => ymd(new Date(x.start)) === ds);
-      const label = on.length ? `${hh(on[0].ref.start)}–${hh(on[0].ref.end)}${on.length > 1 ? " +" : ""}` : occ.length ? REASON_SHORT[occ[0].reason] || "off" : "";
+      const label = on.length ? `${hh(on[0].ref.start)}–${hh(on[0].ref.end)}${on.length > 1 ? " +" : ""}` : occ.length ? REASON_SHORT[occ[0].reason] || REASON_SHORT.off : "";
       html += `<button type="button" class="cal-day${paydays.has(ds) ? " payday" : ""}${cfg.payStart > 1 && d.getDate() === cfg.payStart ? " ps" : ""}${d.getMonth() !== m ? " out" : ""}${ds === todayS ? " today" : ""}${ds === calSel ? " sel" : ""}" data-d="${ds}" aria-label="${dayFmt.format(d)}${on.length ? `, ${plural(on.length, "shift")}` : ""}">`
         + `<span class="n">${d.getDate()}</span>${label ? `<span class="s${on.length ? "" : " off"}">${label}</span>` : ""}${saved ? '<span class="dot" title="Saved"></span>' : ""}</button>`;
     }
@@ -2537,7 +2787,7 @@
   // Fixed shifts
   let fxDays = new Set(), fxEditing = null;
   function renderFixedDays() {
-    $("fx-days").innerHTML = DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${fxDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
+    $("fx-days").innerHTML = DOW.map((d, i) => `<button type="button" translate="no" data-day="${DOW_JS[i]}" aria-pressed="${fxDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
     $("fx-days").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       const n = +b.dataset.day; fxDays.has(n) ? fxDays.delete(n) : fxDays.add(n); b.setAttribute("aria-pressed", fxDays.has(n));
     }));
@@ -2551,7 +2801,7 @@
   }
   const daysText = (days) => DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", ");
   function renderFixed() {
-    const short = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+    const short = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "short" });
     $("fx-list").innerHTML = log.fixed.map((fx) => `
       <div class="cal-item"><div class="t">${fx.start}–${fx.end}</div>
         <div class="m">${daysText(fx.days)} · from ${short.format(parseYmd(fx.from))}${fx.until ? ` to ${short.format(parseYmd(fx.until))}` : ""}${fx.breakAt ? ` · break ${fx.breakAt}` : ""}</div>
@@ -2641,11 +2891,11 @@
     return paid * workPerMs() + suppBetween(start, end) * (paid / dur);
   }
 
-  const supDaysText = (days) => days.length === 7 ? "Every day" : (days.join() === "1,2,3,4,5" ? "Mon–Fri" : DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", "));
+  const supDaysText = (days) => days.length === 7 ? T("Every day") : (days.join() === "1,2,3,4,5" ? DOW[0] + "–" + DOW[4] : DOW_JS.filter((n) => days.includes(n)).map((n) => DOW[DOW_JS.indexOf(n)]).join(", "));
   const supText = (rule) => `${rule.type === "pct" ? `+${rule.amount}%` : `+${kr(rule.amount)} / hour`} · ${supDaysText(rule.days)} · ${rule.from || rule.to ? `${rule.from || "00:00"}–${rule.to || "24:00"}` : "all day"}`;
   let supDays = new Set(), supEditing = null;
   function renderSupDays() {
-    $("sup-days").innerHTML = DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${supDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
+    $("sup-days").innerHTML = DOW.map((d, i) => `<button type="button" translate="no" data-day="${DOW_JS[i]}" aria-pressed="${supDays.has(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("");
     $("sup-days").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       const n = +b.dataset.day; supDays.has(n) ? supDays.delete(n) : supDays.add(n); b.setAttribute("aria-pressed", supDays.has(n));
     }));
@@ -2699,10 +2949,10 @@
 
   // ---------- Setup questions (new account, first run, or Reset) ----------
   const SUP_PRESETS = [
-    { key: "evening", name: "Evening", days: [1, 2, 3, 4, 5], from: "18:00", to: "23:00", help: "Mon–Fri 18–23" },
-    { key: "night", name: "Night", days: [0, 1, 2, 3, 4, 5, 6], from: "23:00", to: "06:00", help: "Every day 23–06" },
-    { key: "sat", name: "Saturday", days: [6], from: "", to: "", help: "All day" },
-    { key: "sun", name: "Sunday", days: [0], from: "", to: "", help: "All day" },
+    { key: "evening", name: T("Evening"), en: "Evening", days: [1, 2, 3, 4, 5], from: "18:00", to: "23:00", help: DA ? "Man–fre 18–23" : "Mon–Fri 18–23" },
+    { key: "night", name: T("Night"), en: "Night", days: [0, 1, 2, 3, 4, 5, 6], from: "23:00", to: "06:00", help: DA ? "Hver dag 23–06" : "Every day 23–06" },
+    { key: "sat", name: T("Saturday"), en: "Saturday", days: [6], from: "", to: "", help: T("All day") },
+    { key: "sun", name: T("Sunday"), en: "Sunday", days: [0], from: "", to: "", help: T("All day") },
   ];
   let wz = null, wzStep = 0;
   const wzVal = (id) => ($(id) ? $(id).value.trim() : "");
@@ -2747,7 +2997,7 @@
     },
     {
       q: "Which days do you always work?", help: "Your fixed shifts (faste vagter). They repeat every week in the calendar. Skip if your shifts change every week.",
-      body: () => `<div class="field"><span>Days</span><div class="days-pick" id="wz-days">${DOW.map((d, i) => `<button type="button" data-day="${DOW_JS[i]}" aria-pressed="${wz.days.includes(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("")}</div></div>
+      body: () => `<div class="field"><span>Days</span><div class="days-pick" id="wz-days">${DOW.map((d, i) => `<button type="button" translate="no" data-day="${DOW_JS[i]}" aria-pressed="${wz.days.includes(DOW_JS[i])}">${d.slice(0, 2)}</button>`).join("")}</div></div>
         <div class="shift-row">
           <label class="time-wrap" for="wz-fs"><span>Starts</span><input type="time" id="wz-fs" value="${wz.start}"></label>
           <label class="time-wrap" for="wz-fe"><span>Ends</span><input type="time" id="wz-fe" value="${wz.end}"></label>
@@ -2848,7 +3098,7 @@
       log.fixed.push({ id: uid(), days: wz.days, start: wz.start, end: wz.end, breakAt: "", from: ymd(new Date()), until: "", u: now });
     SUP_PRESETS.forEach((x) => {
       if (!(wz.sup[x.key] > 0)) return;
-      const old = log.supps.find((r) => r.name.toLowerCase() === x.name.toLowerCase());
+      const old = log.supps.find((r) => [x.name, x.en].some((n) => r.name.toLowerCase() === n.toLowerCase()));
       if (old) Object.assign(old, { amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now });
       else log.supps.push({ id: uid(), name: x.name, days: x.days, from: x.from, to: x.to, amount: +wz.sup[x.key].toFixed(2), type: "kr", u: now });
     });
@@ -3110,7 +3360,7 @@
     const takeCfg = c && (!saved || c.updatedAt > (cfg.updatedAt || 0));
     if (!n && !takeCfg) return false; // already moved
     const what = [n && `${n} saved entr${n === 1 ? "y" : "ies"} (shifts, savings and portfolio)`, takeCfg && "your salary and shift settings"].filter(Boolean).join(" and ");
-    if (!confirm(`Bring your data over from the old 99MS address?\n\nThis adds ${what}. Nothing already here is removed.`)) return false;
+    if (!confirm(T(`Bring your data over from the old 99MS address?\n\nThis adds ${what}. Nothing already here is removed.`))) return false;
     if (takeCfg) c.updatedAt = Math.max(c.updatedAt, (cfg.updatedAt || 0) + 1); // so the merge picks it
     const merged = mergeData({ cfg, log }, { cfg: takeCfg ? c : null, log: inc });
     cfg = merged.cfg; log = merged.log;
