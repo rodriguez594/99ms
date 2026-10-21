@@ -64,7 +64,7 @@ def chart(sym, rng, interval):
 
 def main(repo):
     out = {"t": int(time.time() * 1000), "fx": {"DKK": 1}, "stocks": {}, "crypto": {}}
-    for code, sym in (("USD", "DKK=X"), ("EUR", "EURDKK=X")):
+    for code, sym in (("USD", "DKK=X"), ("EUR", "EURDKK=X"), ("SEK", "SEKDKK=X"), ("NOK", "NOKDKK=X"), ("CHF", "CHFDKK=X"), ("GBP", "GBPDKK=X")):
         meta, _ = chart(sym, "1d", "1d")
         out["fx"][code] = r(meta["regularMarketPrice"])
 

@@ -392,6 +392,79 @@
   .about { font: 0.8rem/1.6 var(--font-clock); color: var(--dim); }
   .about b { color: var(--fg); font-weight: 400; }
   .news { margin: 0; padding-left: 1.1rem; color: var(--dim); font-size: 0.78rem; line-height: 1.6; }
+  /* Money: a bank-style overview, expenses and loans */
+  :root { --up: #7fd1a0; --down: #e8a3a3; }
+  .m-area { margin-bottom: 0.2rem; }
+  .m-pane { display: grid; gap: 1.6rem; }
+  .pills { display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
+  .pills::-webkit-scrollbar { display: none; }
+  .pills button {
+    flex: none; border: 1px solid var(--faint); background: none; color: var(--dim); border-radius: 999px; padding: 0.5rem 0.9rem;
+    font: 500 0.72rem var(--font-ui); letter-spacing: 0.08em; cursor: pointer;
+  }
+  .pills button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .dash-head { display: grid; gap: 0.5rem; }
+  .dash-total { font: 400 clamp(2.2rem, 11vw, 3.4rem)/1.05 var(--font-clock); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; overflow-wrap: anywhere; }
+  .chg { font: 0.9rem var(--font-clock); font-variant-numeric: tabular-nums; color: var(--dim); min-height: 1.2em; }
+  .chg.up, .up { color: var(--up); }
+  .chg.down, .down { color: var(--down); }
+  .chart-btn { all: unset; display: block; cursor: zoom-in; height: 140px; margin-top: 0.4rem; border-radius: 12px; }
+  .chart-btn:focus-visible { outline: 1px solid var(--dim); }
+  .chart-btn svg, .chart-big svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .chart-big { height: min(52vh, 420px); position: relative; touch-action: none; }
+  .chart-big .tipbox { position: absolute; top: 0; transform: translateX(-50%); background: var(--panel); border-radius: 8px; padding: 0.35rem 0.55rem; font: 0.75rem var(--font-clock); white-space: nowrap; pointer-events: none; }
+  .chart-page { width: min(100%, 40rem); display: grid; gap: 1rem; }
+  .ranges { display: flex; justify-content: space-between; gap: 0.2rem; }
+  .ranges button { all: unset; flex: 1; text-align: center; padding: 0.45rem 0; border-radius: 999px; font: 0.72rem var(--font-clock); letter-spacing: 0.08em; color: var(--dim); cursor: pointer; }
+  .ranges button[aria-pressed="true"] { background: var(--panel); color: var(--fg); }
+  .ranges button:focus-visible { outline: 1px solid var(--dim); }
+  .m-cards .card b { font-size: 1.15rem; }
+  .asset { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr) auto; gap: 0.15rem 0.8rem; align-items: center; padding: 0.8rem 0; border-top: 1px solid var(--faint); cursor: pointer; }
+  .asset:focus-visible { outline: 1px solid var(--dim); }
+  .asset .ic { grid-row: 1 / span 2; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--panel); display: grid; place-items: center; font: 500 0.6rem var(--font-ui); letter-spacing: 0.04em; color: var(--fg); overflow: hidden; }
+  .asset .d { font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .asset .t { grid-column: 2; font: 0.72rem var(--font-clock); color: var(--dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .asset .a { grid-row: 1; grid-column: 3; font: 0.95rem var(--font-clock); text-align: right; font-variant-numeric: tabular-nums; }
+  .asset .p { grid-row: 2; grid-column: 3; font: 0.72rem var(--font-clock); text-align: right; color: var(--dim); }
+  .asset.neg .a { color: var(--down); }
+  .pick { display: grid; max-height: 15rem; overflow-y: auto; }
+  .pick button { all: unset; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 0.8rem; padding: 0.6rem 0.2rem; border-top: 1px solid var(--faint); cursor: pointer; }
+  .pick button[aria-pressed="true"] { background: var(--panel); border-radius: 8px; }
+  .pick b { font-weight: 500; font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick small { grid-column: 1; color: var(--dim); font: 0.68rem var(--font-clock); }
+  .pick span { grid-row: 1 / span 2; grid-column: 2; font: 0.8rem var(--font-clock); text-align: right; align-self: center; }
+  .ex-head { display: flex; justify-content: space-between; align-items: center; }
+  .ex-head b { font: 400 1rem/1 var(--font-clock); letter-spacing: 0.14em; text-transform: uppercase; }
+  .ex-head .ghost { padding: 0.45rem 0.9rem; font-size: 1rem; letter-spacing: 0; }
+  .cats { display: grid; gap: 0.55rem; }
+  .cat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem 1rem; font-size: 0.8rem; }
+  .cat b { font: 400 0.8rem var(--font-clock); font-variant-numeric: tabular-nums; }
+  .cat i { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--faint); overflow: hidden; }
+  .cat i::after { content: ""; display: block; height: 100%; width: var(--w); background: var(--fg); border-radius: 2px; }
+  .loans { display: grid; gap: 0.75rem; }
+  .loan { border: 1px solid var(--faint); border-radius: 14px; padding: 1rem; display: grid; gap: 0.6rem; }
+  .loan.done { opacity: 0.55; }
+  .loan-head { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+  .loan-head b { font-weight: 500; font-size: 1rem; overflow-wrap: anywhere; }
+  .loan-head span { font: 0.72rem var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+  .loan .amt { font: 1.25rem var(--font-clock); font-variant-numeric: tabular-nums; }
+  .loan .amt small { color: var(--dim); font-size: 0.7em; }
+  .loan .track { height: 4px; border-radius: 2px; background: var(--faint); overflow: hidden; }
+  .loan .track i { display: block; height: 100%; background: var(--fg); border-radius: 2px; }
+  .loan .m { font-size: 0.75rem; color: var(--dim); line-height: 1.5; }
+  .loan .a { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .loan .a button { background: none; border: 0; padding: 0.3rem 0; color: var(--dim); font: 0.68rem var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+  .loan .a button:hover, .loan .a button:focus-visible { color: var(--fg); outline: none; }
+  .add-list { display: grid; gap: 0.5rem; }
+  .scan-drop { display: grid; place-items: center; min-height: 9rem; border: 1px dashed var(--faint); border-radius: 14px; color: var(--dim); cursor: pointer; overflow: hidden; font-size: 0.85rem; }
+  .scan-drop img { display: block; max-width: 100%; max-height: 40vh; }
+  textarea { width: 100%; box-sizing: border-box; background: transparent; color: var(--fg); border: 0; border-bottom: 1px solid var(--faint); border-radius: 0; font: 1rem/1.4 var(--font-ui); padding: 0.3rem 0 0.5rem; resize: vertical; user-select: text; }
+  textarea:focus { outline: none; border-bottom-color: var(--fg); }
+  .seg-sm label { font-size: 0.66rem; letter-spacing: 0.06em; padding: 0.55rem 0; }
+  .busy { opacity: 0.6; pointer-events: none; }
+  .chart-big .vline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--dim); pointer-events: none; }
+  .chart-big .dot { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--fg); transform: translate(-50%, -50%); pointer-events: none; }
+  .chart-big .tipbox { top: -2.2rem; }
 </style>
 
 <button class="view-toggle" id="view-toggle" type="button" hidden aria-label="Switch to phone view" title="Phone view">
@@ -418,7 +491,7 @@
       <button class="card" type="button" data-go="savings"><span class="card-k">Savings</span><b id="h-sav">0.00</b><em id="h-sav-sub"></em></button>
       <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This month</span><b id="h-mo">0.00</b><em id="h-mo-sub"></em></button>
       <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This week</span><b id="h-wk">0.00</b><em id="h-wk-sub"></em></button>
-      <button class="card" type="button" data-go="portfolio"><span class="card-k">Portfolio</span><b id="h-pf">0.00</b><em id="h-pf-sub"></em></button>
+      <button class="card" type="button" data-go="portfolio"><span class="card-k">Money</span><b id="h-pf">0.00</b><em id="h-pf-sub"></em></button>
     </div>
     <p class="note" id="h-acct"></p>
   </div>
@@ -426,22 +499,70 @@
 
 <div class="view" id="v-portfolio" hidden>
   <div class="page">
-    <div class="page-head"><h2>Investments &amp; projects</h2><button class="ghost" type="button" id="pf-add">Add</button></div>
-    <div class="tip" data-tip="portfolio" hidden><b>Investments and projects</b><p>Keep track of what you have put into investments or projects, and what they are worth now. Tap Add to start, and tap an item to update its value.</p><button class="link" type="button" data-tip-ok="portfolio">Got it</button></div>
-    <section class="sec" aria-label="Total">
-      <div class="big" id="pf-total"><small>DKK</small>0.00</div>
-      <div class="grid2" id="pf-grid"></div>
-    </section>
-    <section class="sec" aria-labelledby="pi-title">
-      <h3 class="sec-title" id="pi-title">Investments</h3>
-      <div class="hist" id="pf-inv"></div>
-    </section>
-    <section class="sec" aria-labelledby="pp-title">
-      <h3 class="sec-title" id="pp-title">Projects</h3>
-      <div class="hist" id="pf-proj"></div>
-    </section>
+    <div class="page-head"><h2>Money</h2><button class="ghost" type="button" id="m-add">Add</button></div>
+    <div class="seg m-area" role="radiogroup" aria-label="Section">
+      <input type="radio" name="m-area" id="ma-ov" value="overview" checked><label for="ma-ov">Overview</label>
+      <input type="radio" name="m-area" id="ma-ex" value="expenses"><label for="ma-ex">Expenses</label>
+      <input type="radio" name="m-area" id="ma-ln" value="loans"><label for="ma-ln">Loans</label>
+    </div>
+
+    <div class="m-pane" id="mp-overview">
+      <div class="tip" data-tip="money" hidden><b>Your money in one place</b><p>Set your account balance once and 99MS keeps it up to date: pay comes in on payday, expenses, subscriptions and loan payments go out. Add your stocks and crypto with how many you own and the prices update by themselves. Tap the chart to make it bigger.</p><button class="link" type="button" data-tip-ok="money">Got it</button></div>
+      <div class="pills" id="dh-views" role="tablist" aria-label="Show"></div>
+      <section class="dash-head">
+        <span class="card-k" id="dh-label">Total</span>
+        <div class="dash-total" id="dh-total">0,00 kr.</div>
+        <div class="chg" id="dh-chg"></div>
+        <button class="chart-btn" type="button" id="dh-chart" aria-label="Show the chart bigger"></button>
+        <div class="ranges" id="dh-ranges"></div>
+      </section>
+      <div class="grid2 m-cards">
+        <button class="card" type="button" id="dh-exp-card"><span class="card-k">Expected balance</span><b id="dh-exp">—</b><em id="dh-exp-sub"></em></button>
+        <button class="card" type="button" id="dh-spent-card"><span class="card-k">Spent this month</span><b id="dh-spent">—</b><em id="dh-spent-sub"></em></button>
+      </div>
+      <section class="sec" aria-labelledby="dh-list-title">
+        <h3 class="sec-title" id="dh-list-title">What you have</h3>
+        <div class="hist" id="dh-list"></div>
+        <div class="row-actions"><button class="ghost" type="button" id="dh-add-stock">Add stock</button><button class="ghost" type="button" id="dh-add-crypto">Add crypto</button><button class="ghost" type="button" id="pf-add">Other investment</button></div>
+      </section>
+      <p class="note" id="dh-upd"></p>
+    </div>
+
+    <div class="m-pane" id="mp-expenses" hidden>
+      <div class="tip" data-tip="expenses" hidden><b>Expenses</b><p>Add what you buy, or tap Scan and upload a photo or screenshot of a receipt or your bank app: the AI reads it and adds the expense. Subscriptions are taken from your account on their day each month by themselves.</p><button class="link" type="button" data-tip-ok="expenses">Got it</button></div>
+      <section class="sec">
+        <div class="ex-head">
+          <button class="ghost" type="button" id="ex-prev" aria-label="Previous month">‹</button>
+          <b id="ex-month"></b>
+          <button class="ghost" type="button" id="ex-next" aria-label="Next month">›</button>
+        </div>
+        <div class="dash-total" id="ex-total">0,00 kr.</div>
+        <div class="chg" id="ex-cmp"></div>
+        <div class="cats" id="ex-cats"></div>
+        <div class="row-actions"><button class="go" type="button" id="ex-scan">Scan receipt</button><button class="ghost" type="button" id="ex-add">Add expense</button></div>
+      </section>
+      <section class="sec" aria-labelledby="sub-title">
+        <div class="page-head"><h3 class="sec-title" id="sub-title">Subscriptions</h3><button class="ghost" type="button" id="sub-add">Add</button></div>
+        <p class="note" id="sub-sum"></p>
+        <div class="hist" id="sub-list"></div>
+      </section>
+      <section class="sec" aria-labelledby="ex-list-title">
+        <h3 class="sec-title" id="ex-list-title">Every expense</h3>
+        <div class="hist" id="ex-list"></div>
+      </section>
+    </div>
+
+    <div class="m-pane" id="mp-loans" hidden>
+      <div class="tip" data-tip="loans" hidden><b>Loans</b><p>Write down money you owe or that someone owes you, and make a plan to pay it back: a monthly amount, selling something, or one payment on a date. Tap I paid when money goes back, and 99MS keeps count.</p><button class="link" type="button" data-tip-ok="loans">Got it</button></div>
+      <section class="sec">
+        <div class="grid2" id="ln-sum"></div>
+        <div class="row-actions"><button class="go" type="button" id="ln-add">Add loan</button></div>
+      </section>
+      <div class="loans" id="ln-list"></div>
+    </div>
   </div>
 </div>
+
 
 <div class="view salary" id="v-salary" hidden>
   <section class="clock-screen">
@@ -603,6 +724,16 @@
       <div class="row-actions"><button class="ghost" type="button" id="acct-open" hidden>Log in</button></div>
     </section>
 
+    <section class="sec" aria-labelledby="se-ai">
+      <h3 class="sec-title" id="se-ai">AI scanning</h3>
+      <p class="note">Scanning receipts uses Claude from Anthropic with your own API key. Make one at console.anthropic.com under API keys. The key is saved only on this device and is only sent to Anthropic. A scan costs about 20 øre.</p>
+      <form id="ai-form" novalidate style="width:100%;gap:0.8rem">
+        <label class="field" for="ai-key"><span>API key</span><input type="password" id="ai-key" autocomplete="off" placeholder="sk-ant-…"></label>
+        <p class="note" id="ai-status"></p>
+        <div class="row-actions"><button class="ghost" type="submit">Save key</button><button class="ghost danger" type="button" id="ai-del" hidden>Remove</button></div>
+      </form>
+    </section>
+
     <section class="sec" aria-labelledby="se-help">
       <h3 class="sec-title" id="se-help">Help</h3>
       <p class="note">The setup questions walk you through pay, payday, fixed shifts, supplements and a savings goal. Running them again only adds what is new.</p>
@@ -636,7 +767,7 @@
 
 <nav class="tabbar" id="tabbar" aria-label="Sections">
   <button type="button" data-tab="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"/></svg><span>Home</span></button>
-  <button type="button" data-tab="portfolio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Portfolio</span></button>
+  <button type="button" data-tab="portfolio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg><span>Money</span></button>
   <button type="button" data-tab="salary"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Salary</span></button>
   <button type="button" data-tab="calendar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg><span>Calendar</span></button>
   <button type="button" data-tab="savings"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6.5" rx="7" ry="2.5"/><path d="M5 6.5v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5M5 11.5v5c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-5"/></svg><span>Savings</span></button>
@@ -734,6 +865,183 @@
       <button class="go" type="submit">Save</button>
     </div>
     <button class="ghost danger" type="button" id="item-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="add-sheet" hidden>
+  <div class="page" style="width:min(100%,22rem)">
+    <div class="page-head"><h2>Add</h2></div>
+    <div class="add-list">
+      <button class="step" type="button" data-add="scan"><span>Scan a receipt or screenshot</span><span>›</span></button>
+      <button class="step" type="button" data-add="expense"><span>Expense</span><span>›</span></button>
+      <button class="step" type="button" data-add="sub"><span>Subscription</span><span>›</span></button>
+      <button class="step" type="button" data-add="loan"><span>Loan</span><span>›</span></button>
+      <button class="step" type="button" data-add="stock"><span>Stock or fund</span><span>›</span></button>
+      <button class="step" type="button" data-add="crypto"><span>Crypto</span><span>›</span></button>
+      <button class="step" type="button" data-add="item"><span>Other investment or project</span><span>›</span></button>
+      <button class="step" type="button" data-add="bank"><span>Account balance</span><span>›</span></button>
+    </div>
+    <button class="ghost" type="button" id="add-cancel">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet" id="chart-sheet" hidden>
+  <div class="page chart-page">
+    <div class="page-head"><h2 id="cs-title">Total</h2><button class="ghost" type="button" id="cs-close">Close</button></div>
+    <div class="dash-total" id="cs-total"></div>
+    <div class="chg" id="cs-chg"></div>
+    <div class="chart-big" id="cs-chart"></div>
+    <div class="ranges" id="cs-ranges"></div>
+    <div class="grid2" id="cs-stats"></div>
+    <div class="row-actions" id="cs-actions"></div>
+  </div>
+</div>
+
+<div class="sheet" id="hold-sheet" hidden>
+  <form class="page" id="hold-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="hold-title">Add stock</h2></div>
+    <label class="field" for="hold-q" id="hold-q-wrap"><span>Search</span><input type="text" class="txt" id="hold-q" autocomplete="off" placeholder="Novo, Apple, Bitcoin …"></label>
+    <div class="pick" id="hold-pick"></div>
+    <p class="note" id="hold-chosen"></p>
+    <div class="shift-row">
+      <label class="field" for="hold-qty"><span>How many you own</span><input type="text" class="num" id="hold-qty" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field" for="hold-cost"><span>Paid in total</span><input type="text" class="num" id="hold-cost" inputmode="decimal" autocomplete="off" placeholder="Optional"></label>
+    </div>
+    <p class="note" id="hold-val"></p>
+    <p class="err" id="hold-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="hold-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="hold-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="bank-sheet" hidden>
+  <form class="page" id="bank-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2>Account balance</h2></div>
+    <p class="note">What is in your bank account right now? From here 99MS keeps it up to date: your pay comes in on payday, and expenses, subscriptions and loan payments go out. Correct it here whenever it drifts.</p>
+    <label class="field" for="bank-amt"><span>Balance now</span><input type="text" class="num" id="bank-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+    <p class="err" id="bank-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="bank-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet" id="ex-sheet" hidden>
+  <form class="page" id="ex-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="ex-title">Add expense</h2></div>
+    <label class="field" for="ex-amt"><span>Amount</span><input type="text" class="num" id="ex-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+    <label class="field" for="ex-name"><span>What</span><input type="text" class="txt" id="ex-name" autocomplete="off" placeholder="Netto"></label>
+    <div class="shift-row">
+      <label class="field" for="ex-cat"><span>Category</span><select id="ex-cat"></select></label>
+      <label class="field" for="ex-date"><span>Date</span><input type="date" id="ex-date"></label>
+    </div>
+    <label class="field" for="ex-note"><span>Note</span><input type="text" class="txt" id="ex-note" autocomplete="off" placeholder="Optional"></label>
+    <p class="err" id="ex-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="ex-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="ex-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="scan-sheet" hidden>
+  <form class="page" id="scan-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2>Scan</h2></div>
+    <p class="note">Upload a photo of a receipt, an order confirmation or a screenshot from your bank app. The AI reads it and adds the expense. You can check and change it afterwards.</p>
+    <label class="scan-drop" for="scan-file" id="scan-drop"><span id="scan-drop-t">Choose a picture</span><img id="scan-img" alt="" hidden></label>
+    <input type="file" id="scan-file" accept="image/*" hidden>
+    <label class="field" for="scan-ctx"><span>Context</span><textarea id="scan-ctx" rows="2" placeholder="Optional, like: split with Mads, only my half"></textarea></label>
+    <p class="err" id="scan-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="scan-cancel">Cancel</button>
+      <button class="go" type="submit" id="scan-go">Read it</button>
+    </div>
+  </form>
+</div>
+
+<div class="sheet" id="sub-sheet" hidden>
+  <form class="page" id="sub-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="sub-ttl">Add subscription</h2></div>
+    <label class="field" for="sub-name"><span>Name</span><input type="text" class="txt" id="sub-name" autocomplete="off" placeholder="Netflix"></label>
+    <div class="shift-row">
+      <label class="field" for="sub-amt"><span>Per month</span><input type="text" class="num" id="sub-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field" for="sub-day"><span>Taken on day</span><input type="number" class="num" id="sub-day" inputmode="numeric" min="1" max="31" placeholder="1"></label>
+    </div>
+    <div class="shift-row">
+      <label class="field" for="sub-cat"><span>Category</span><select id="sub-cat"></select></label>
+      <label class="field" for="sub-until"><span>Ends</span><input type="date" id="sub-until"></label>
+    </div>
+    <p class="note" id="sub-next"></p>
+    <p class="err" id="sub-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="sub-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="sub-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="loan-sheet" hidden>
+  <form class="page" id="loan-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="loan-ttl">Add loan</h2></div>
+    <div class="seg" role="radiogroup" aria-label="Who owes">
+      <input type="radio" name="loan-dir" id="ld-owe" value="owe" checked><label for="ld-owe">I owe</label>
+      <input type="radio" name="loan-dir" id="ld-owed" value="owed"><label for="ld-owed">Owes me</label>
+    </div>
+    <label class="field" for="loan-who"><span>Who</span><input type="text" class="txt" id="loan-who" autocomplete="off" placeholder="My uncle"></label>
+    <div class="shift-row">
+      <label class="field" for="loan-amt"><span>Amount</span><input type="text" class="num" id="loan-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field" for="loan-date"><span>Since</span><input type="date" id="loan-date"></label>
+    </div>
+    <label class="field" for="loan-note"><span>Note</span><input type="text" class="txt" id="loan-note" autocomplete="off" placeholder="Optional"></label>
+    <div class="field"><span>Plan to pay it back</span>
+      <div class="seg seg-sm" role="radiogroup" aria-label="Plan">
+        <input type="radio" name="loan-plan" id="lp-none" value="none" checked><label for="lp-none">None</label>
+        <input type="radio" name="loan-plan" id="lp-monthly" value="monthly"><label for="lp-monthly">Monthly</label>
+        <input type="radio" name="loan-plan" id="lp-sell" value="sell"><label for="lp-sell">Sell</label>
+        <input type="radio" name="loan-plan" id="lp-once" value="once"><label for="lp-once">At once</label>
+      </div>
+    </div>
+    <div class="shift-row" id="lp-monthly-f" hidden>
+      <label class="field" for="lp-per"><span>Per month</span><input type="text" class="num" id="lp-per" inputmode="decimal" autocomplete="off" placeholder="500"></label>
+      <label class="field" for="lp-day"><span>On day</span><input type="number" class="num" id="lp-day" inputmode="numeric" min="1" max="31" placeholder="1"></label>
+    </div>
+    <div id="lp-sell-f" class="sec" hidden>
+      <label class="field" for="lp-item"><span>What you sell</span><input type="text" class="txt" id="lp-item" autocomplete="off" placeholder="Old camera"></label>
+      <div class="shift-row">
+        <label class="field" for="lp-price"><span>Expected price</span><input type="text" class="num" id="lp-price" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+        <label class="field" for="lp-by"><span>Sold by</span><input type="date" id="lp-by"></label>
+      </div>
+    </div>
+    <label class="field" for="lp-on" id="lp-once-f" hidden><span>Pay back on</span><input type="date" id="lp-on"></label>
+    <p class="note" id="loan-plan-t"></p>
+    <p class="err" id="loan-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="loan-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="loan-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="pay-sheet" hidden>
+  <form class="page" id="pay-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="pay-ttl">Payment</h2></div>
+    <p class="note" id="pay-info"></p>
+    <div class="shift-row">
+      <label class="field" for="pay-amt"><span>Amount</span><input type="text" class="num" id="pay-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field" for="pay-date"><span>Date</span><input type="date" id="pay-date"></label>
+    </div>
+    <p class="err" id="pay-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="pay-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
   </form>
 </div>
 
@@ -891,6 +1199,70 @@
   const LOC = DA ? "da-DK" : "en-GB";
   document.documentElement.lang = LANG;
   const DICT = {
+    // money
+    "Money": "Penge", "Overview": "Overblik", "Expenses": "Udgifter", "Loans": "Lån", "All": "Alt", "Stocks": "Aktier", "Crypto": "Krypto", "Other": "Andet",
+    "1D": "1D", "1W": "1U", "1M": "1M", "3M": "3M", "1Y": "1Å",
+    "today": "i dag", "past week": "seneste uge", "past month": "seneste måned", "past 3 months": "seneste 3 måneder", "past year": "seneste år", "all time": "i alt",
+    "Your money in one place": "Alle dine penge ét sted",
+    "Set your account balance once and 99MS keeps it up to date: pay comes in on payday, expenses, subscriptions and loan payments go out. Add your stocks and crypto with how many you own and the prices update by themselves. Tap the chart to make it bigger.": "Angiv din kontosaldo én gang, så holder 99MS den opdateret: lønnen kommer ind på lønningsdagen, og udgifter, abonnementer og afdrag på lån går ud. Tilføj dine aktier og krypto med hvor mange du ejer, så opdateres kurserne af sig selv. Tryk på grafen for at gøre den større.",
+    "Show": "Vis", "Show the chart bigger": "Vis grafen større", "Expected balance": "Forventet saldo", "Spent this month": "Brugt denne måned", "What you have": "Det har du",
+    "Add stock": "Tilføj aktie", "Add crypto": "Tilføj krypto", "Other investment": "Anden investering", "Section": "Sektion",
+    "Scan receipt": "Scan kvittering", "Add expense": "Tilføj udgift", "Edit expense": "Rediger udgift", "Subscriptions": "Abonnementer", "Every expense": "Alle udgifter",
+    "Add your stocks and crypto": "Tilføj dine aktier og krypto",
+    "Add what you buy, or tap Scan and upload a photo or screenshot of a receipt or your bank app: the AI reads it and adds the expense. Subscriptions are taken from your account on their day each month by themselves.": "Tilføj det, du køber, eller tryk på Scan og upload et billede eller skærmbillede af en kvittering eller din bankapp: AI'en læser det og tilføjer udgiften. Abonnementer trækkes automatisk fra din konto på deres dag hver måned.",
+    "Write down money you owe or that someone owes you, and make a plan to pay it back: a monthly amount, selling something, or one payment on a date. Tap I paid when money goes back, and 99MS keeps count.": "Skriv penge ned, du skylder, eller som nogen skylder dig, og lav en plan for at betale tilbage: et beløb hver måned, sælge noget eller én betaling på en dato. Tryk på Jeg har betalt, når der bliver betalt tilbage, så holder 99MS styr på resten.",
+    "Scan a receipt or screenshot": "Scan en kvittering eller et skærmbillede", "Expense": "Udgift", "Subscription": "Abonnement", "Loan": "Lån", "Stock or fund": "Aktie eller fond",
+    "Other investment or project": "Anden investering eller projekt", "Account balance": "Kontosaldo", "Close": "Luk", "Search": "Søg", "Novo, Apple, Bitcoin …": "Novo, Apple, Bitcoin …",
+    "How many you own": "Hvor mange du ejer", "Paid in total": "Betalt i alt",
+    "What is in your bank account right now? From here 99MS keeps it up to date: your pay comes in on payday, and expenses, subscriptions and loan payments go out. Correct it here whenever it drifts.": "Hvad står der på din bankkonto lige nu? Herfra holder 99MS den opdateret: din løn kommer ind på lønningsdagen, og udgifter, abonnementer og afdrag på lån går ud. Ret den her, hvis den skrider.",
+    "Balance now": "Saldo nu", "What": "Hvad", "Netto": "Netto", "Category": "Kategori", "Scan": "Scan",
+    "Upload a photo of a receipt, an order confirmation or a screenshot from your bank app. The AI reads it and adds the expense. You can check and change it afterwards.": "Upload et billede af en kvittering, en ordrebekræftelse eller et skærmbillede fra din bankapp. AI'en læser det og tilføjer udgiften. Du kan tjekke og rette den bagefter.",
+    "Choose a picture": "Vælg et billede", "Context": "Kontekst", "Optional, like: split with Mads, only my half": "Valgfri, fx: delt med Mads, kun min halvdel", "Read it": "Læs det",
+    "Add subscription": "Tilføj abonnement", "Edit subscription": "Rediger abonnement", "Per month": "Pr. måned", "Taken on day": "Trækkes den", "Ends": "Slutter",
+    "Who owes": "Hvem skylder", "I owe": "Jeg skylder", "Owes me": "Skylder mig", "Who": "Hvem", "My uncle": "Min onkel", "Since": "Siden", "Plan to pay it back": "Plan for tilbagebetaling", "Plan": "Plan",
+    "Monthly": "Månedlig", "Sell": "Sælg", "At once": "Samlet", "On day": "Den", "What you sell": "Det du sælger", "Old camera": "Gammelt kamera", "Expected price": "Forventet pris", "Sold by": "Solgt senest", "Pay back on": "Betales tilbage den",
+    "Payment": "Betaling", "Account": "Konto", "Kept up to date by itself": "Holdes opdateret af sig selv", "Tap to set your balance": "Tryk for at angive din saldo",
+    "Set your account balance to see it": "Angiv din kontosaldo for at se den", "in 30 days": "om 30 dage", "now": "nu", "pay": "løn", "subscriptions": "abonnementer", "loans": "lån",
+    "vs same time last month": "ift. samme tid sidste måned", "Add what you buy under Expenses": "Tilføj det, du køber, under Udgifter", "Nothing here yet.": "Intet her endnu.",
+    "Stock prices could not load. Check your connection.": "Aktiekurserne kunne ikke hentes. Tjek din forbindelse.", "Loading prices…": "Henter kurser…",
+    "You own": "Du ejer", "Price": "Kurs", "Paid": "Betalt", "Account now": "Konto nu", "Correct balance": "Ret saldo",
+    "Not in the list. Add it as an other investment instead, with its value.": "Ikke på listen. Tilføj den som en anden investering i stedet, med dens værdi.",
+    "Choose one in the list.": "Vælg en på listen.", "Enter how many you own, like 12 or 0,5.": "Skriv hvor mange du ejer, fx 12 eller 0,5.",
+    "Enter what you paid as a number, or leave it empty.": "Skriv hvad du gav som et tal, eller lad det være tomt.",
+    "Enter the balance as a number, like 12.500,00.": "Skriv saldoen som et tal, fx 12.500,00.", "Balance saved.": "Saldo gemt.",
+    "Groceries": "Dagligvarer", "Food & drink": "Mad & drikke", "Transport": "Transport", "Shopping": "Shopping", "Fun": "Fritid", "Bills": "Regninger", "Health": "Sundhed",
+    "scanned": "scannet", "Nothing this month. Tap Scan receipt or Add expense.": "Intet denne måned. Tryk på Scan kvittering eller Tilføj udgift.",
+    "next": "næste", "per month": "pr. måned",
+    "No subscriptions yet. Add Netflix, Spotify, your phone and the rest with the day they are taken.": "Ingen abonnementer endnu. Tilføj Netflix, Spotify, din telefon og resten med den dag, de trækkes.",
+    "Enter the amount as a number, like 89,95.": "Skriv beløbet som et tal, fx 89,95.", "Choose a date.": "Vælg en dato.",
+    "Enter the day of the month it is taken, 1 to 31.": "Skriv den dag i måneden, det trækkes, 1 til 31.",
+    "Paid back. Nice.": "Betalt tilbage. Flot.", "No plan yet. Tap Edit to make one.": "Ingen plan endnu. Tryk på Rediger for at lave en.", "that covers it": "det dækker det",
+    "Debt": "Gæld", "Lent out": "Udlånt", "left": "tilbage", "I paid": "Jeg har betalt", "I got paid": "Jeg har fået", "Owed to you": "Skyldes dig", "You owe": "Du skylder",
+    "No loans. Add one if you owe someone money, or someone owes you.": "Ingen lån. Tilføj et, hvis du skylder nogen penge, eller nogen skylder dig.",
+    "Write who the loan is with.": "Skriv hvem lånet er med.", "Enter the amount as a number, like 2000.": "Skriv beløbet som et tal, fx 2000.",
+    "Enter how much goes back each month.": "Skriv hvor meget der betales tilbage hver måned.", "Choose the date it is paid back.": "Vælg datoen, det betales tilbage.",
+    "Loan added.": "Lån tilføjet.", "You paid back": "Du har betalt tilbage", "You got paid back": "Du har fået betalt tilbage", "Enter the amount as a number, like 500.": "Skriv beløbet som et tal, fx 500.",
+    "Paid back": "Betalt tilbage",
+    "The API key was not accepted. Check it in Settings.": "API-nøglen blev ikke godkendt. Tjek den i Indstillinger.",
+    "Too many scans right now, or no credit left on the key. Try again in a minute.": "For mange scanninger lige nu, eller der er ingen kredit tilbage på nøglen. Prøv igen om et minut.",
+    "Could not reach the AI. Check your connection and try again.": "Kunne ikke nå AI'en. Tjek din forbindelse, og prøv igen.", "The AI is busy. Try again in a moment.": "AI'en har travlt. Prøv igen om lidt.",
+    "The AI could not read this picture. Add the expense by hand instead.": "AI'en kunne ikke læse billedet. Tilføj udgiften i hånden i stedet.",
+    "The answer could not be read. Try again.": "Svaret kunne ikke læses. Prøv igen.", "Something went wrong. Try again, or add the expense by hand.": "Noget gik galt. Prøv igen, eller tilføj udgiften i hånden.",
+    "Add your Anthropic API key in Settings first, under AI scanning.": "Tilføj din Anthropic API-nøgle i Indstillinger først, under AI-scanning.",
+    "Choose a picture first.": "Vælg et billede først.", "Reading the picture…": "Læser billedet…",
+    "No purchase found in the picture. Add it by hand, or try a clearer picture.": "Intet køb fundet på billedet. Tilføj det i hånden, eller prøv et tydeligere billede.",
+    "No key yet.": "Ingen nøgle endnu.", "That does not look like an Anthropic API key. It starts with sk-ant-.": "Det ligner ikke en Anthropic API-nøgle. Den starter med sk-ant-.",
+    "API key saved on this device.": "API-nøgle gemt på denne enhed.", "API key removed.": "API-nøgle fjernet.",
+    "AI scanning": "AI-scanning", "API key": "API-nøgle", "Save key": "Gem nøgle", "Remove": "Fjern",
+    "Scanning receipts uses Claude from Anthropic with your own API key. Make one at console.anthropic.com under API keys. The key is saved only on this device and is only sent to Anthropic. A scan costs about 20 øre.": "Scanning af kvitteringer bruger Claude fra Anthropic med din egen API-nøgle. Lav en på console.anthropic.com under API keys. Nøglen gemmes kun på denne enhed og sendes kun til Anthropic. En scanning koster ca. 20 øre.",
+    "Can't reach the login server right now. Your data is saved on this device.": "Kan ikke få forbindelse til login-serveren lige nu. Dine data er gemt på denne enhed.",
+    "The login server is not answering. Your data is safe on this device, and login works again when the server is back.": "Login-serveren svarer ikke. Dine data er sikre på denne enhed, og login virker igen, når serveren er tilbage.",
+    "Prices and crypto": "Kurser og krypto", "Stocks, crypto and loans": "Aktier, krypto og lån",
+    "Bank-style overview of your account, savings, stocks and crypto, with live prices and a chart": "Bankoverblik over konto, opsparing, aktier og krypto med live kurser og graf",
+    "Expenses, with AI that reads receipts and screenshots": "Udgifter, med AI der læser kvitteringer og skærmbilleder",
+    "Subscriptions with the day they are taken, and loans with a plan to pay back": "Abonnementer med den dag, de trækkes, og lån med en plan for tilbagebetaling",
+    "Add loan": "Tilføj lån", "Edit loan": "Rediger lån", "put in": "indskudt", "something": "noget",
+    "Account, savings, stocks and crypto": "Konto, opsparing, aktier og krypto",
     // tabs, headings, buttons
     "Home": "Hjem", "Portfolio": "Portefølje", "Salary": "Løn", "Calendar": "Kalender", "Savings": "Opsparing", "Settings": "Indstillinger",
     "Sections": "Sektioner", "Switch to phone view": "Skift til telefonvisning", "Phone view": "Telefonvisning", "Switch to desktop view": "Skift til computervisning", "Desktop view": "Computervisning",
@@ -1069,6 +1441,18 @@
     [/^Also use the pay settings from the backup\?$/, "Brug også lønindstillingerne fra backuppen?"],
     [/^Bring your data over from the old 99MS address\?\n\nThis adds (.+)\. Nothing already here is removed\.$/, "Vil du flytte dine data fra den gamle 99MS-adresse?\n\nDet tilføjer $1. Intet, der allerede er her, fjernes."],
     [/^Your data is here now\. Log in under Settings to sync it\.$/, "Dine data er her nu. Log ind under Indstillinger for at synkronisere dem."],
+    [/^on payday (.+)$/, "på lønningsdagen $1"], [/^(.+) in subscriptions still to come$/, "$1 i abonnementer på vej"],
+    [/^Stock prices from (.+), updated about every 10 minutes$/, "Aktiekurser fra kl. $1, opdateres ca. hvert 10. minut"], [/^crypto live (.+)$/, "krypto live $1"],
+    [/^You owe (.+)$/, "Du skylder $1"], [/^(.+) owes you$/, "$1 skylder dig"], [/^of (.+)$/, "af $1"], [/^Edit (.+)$/, "Rediger $1"], [/^Worth (.+) now$/, "Værd $1 nu"],
+    [/^Added to your (.+)\.$/, "Lagt til din $1."], [/^Expense added: (.+)\.$/, "Udgift tilføjet: $1."], [/^vs (.+)$/, "ift. $1"],
+    [/^(.+) per month · (.+) per year$/, "$1 om måneden · $2 om året"], [/^Taken on day (\d+)$/, "Trækkes den $1."], [/^Next time: (.+)$/, "Næste gang: $1"],
+    [/^Subscription added: (.+)\.$/, "Abonnement tilføjet: $1."],
+    [/^(.+) on day (\d+) each month: (.+), done (.+)$/, "$1 den $2. hver måned: $3, færdig $4"],
+    [/^Sell (.+?)(?: for about (.+?))?(?: by (.+))?$/, (m, a, b, c) => `Sælg ${a === "something" ? "noget" : a}${b ? ` for ca. ${b}` : ""}${c ? ` senest ${c}` : ""}`],
+    [/^then (.+) left$/, "så mangler $1"], [/^(.+) over for you$/, "$1 til overs til dig"], [/^([\d.,]+ (?:kr\.|€|\$)) on (.+)$/, "$1 den $2"],
+    [/^Last payment (.+), (.+)$/, "Seneste betaling $1, $2"], [/^(.+) registered\. (.+) left\.$/, "$1 registreret. $2 tilbage."],
+    [/^Added: (.+)\. Tap it to change\.$/, "Tilføjet: $1. Tryk på den for at rette."], [/^Added (\d+) expenses\. Tap one to change it\.$/, "Tilføjede $1 udgifter. Tryk på en for at rette den."],
+    [/^Key saved on this device \(…(.+)\)\.$/, "Nøgle gemt på denne enhed (…$1)."],
   ];
   const hasWords = /[A-Za-z]{2}/;
   const trCache = new Map();
@@ -1110,9 +1494,12 @@
       }
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
   }
-  const APP_VERSION = "2.2";
+  const APP_VERSION = "2.3";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "Bank-style overview of your account, savings, stocks and crypto, with live prices and a chart",
+    "Expenses, with AI that reads receipts and screenshots",
+    "Subscriptions with the day they are taken, and loans with a plan to pay back",
     "The app in Danish, with English in Settings",
     "Amounts in Danish style: 6.055,50 kr.",
     "Home shows your next shift, your next payday and what to set up",
@@ -1508,12 +1895,12 @@
         const v = JSON.parse(localStorage.getItem("salary-clock-log") || "null");
         if (v && Array.isArray(v.shifts) && Array.isArray(v.savings)) return v;
       } catch {}
-      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [], pledges: [] };
+      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [], pledges: [], holdings: [], expenses: [], subs: [], loans: [], bank: [] };
     },
     set(v) { try { localStorage.setItem("salary-clock-log", JSON.stringify(v)); return true; } catch { return false; } },
   };
   let log = logStore.get();
-  ["deleted", "items", "fixed", "planned", "skips", "goals", "supps", "pledges"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
+  ["deleted", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
   const persist = () => { if (!logStore.set(log)) toast("Could not save. This browser is blocking storage."); scheduleSync(); };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const money = (n) => fmt2.format(n);
@@ -1745,7 +2132,7 @@
 
   const PLURAL_DA = {
     "shift": ["vagt", "vagter"], "day": ["dag", "dage"], "entry": ["post", "poster"], "item": ["post", "poster"],
-    "past shift": ["tidligere vagt", "tidligere vagter"], "planned shift": ["planlagt vagt", "planlagte vagter"],
+    "past shift": ["tidligere vagt", "tidligere vagter"], "payment": ["betaling", "betalinger"], "expense": ["udgift", "udgifter"], "planned shift": ["planlagt vagt", "planlagte vagter"],
     "saved shift": ["gemt vagt", "gemte vagter"], "more shift": ["vagt mere", "vagter mere"], "goal": ["mål", "mål"],
     "hour": ["time", "timer"], "week": ["uge", "uger"], "deposit": ["indbetaling", "indbetalinger"], "supplement": ["tillæg", "tillæg"],
   };
@@ -1932,7 +2319,7 @@
       const raw = JSON.parse(await file.text());
       if (!Array.isArray(raw.shifts) || !Array.isArray(raw.savings)) throw 0;
       // Everything in the backup is added; nothing already here is removed.
-      const KEYS = ["shifts", "savings", "items", "fixed", "planned", "skips", "goals", "supps", "pledges"];
+      const KEYS = ["shifts", "savings", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank"];
       const okRec = (x) => x && typeof x === "object" && typeof x.id === "string" && x.id.length <= 80;
       const inc = { deleted: [], epoch: log.epoch };
       KEYS.forEach((k) => { inc[k] = (Array.isArray(raw[k]) ? raw[k] : []).filter(okRec).map((x) => { const y = { ...x }; delete y.live; return y; }); });
@@ -1993,7 +2380,7 @@
     else renderSettings();
   }
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") ["sheet", "save-sheet", "item-sheet", "acct-sheet"].forEach((id) => { $(id).hidden = true; });
+    if (e.key === "Escape") ["sheet", "save-sheet", "item-sheet", "acct-sheet", "add-sheet", "chart-sheet", "hold-sheet", "bank-sheet", "ex-sheet", "scan-sheet", "sub-sheet", "loan-sheet", "pay-sheet"].forEach((id) => { $(id).hidden = true; });
   });
 
   const signed = (n) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
@@ -2015,10 +2402,6 @@
     const live = liveRec();
     $("h-sav").textContent = kr(balance());
     $("h-sav-sub").textContent = live && live.savings ? "saving live" : "in your savings";
-    const mine = log.items.filter((x) => x.currency === cur);
-    const val = sum(mine, "value"), inv = sum(mine, "invested");
-    $("h-pf").textContent = kr(val);
-    $("h-pf-sub").textContent = mine.length ? `${signed(val - inv)} ${curLabel()}` : "Add an investment or project";
     const shifts = statsShifts(now);
     const d = new Date(now), wk = weekStart(now), mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
     const w = shifts.filter((x) => x.start >= wk), m = shifts.filter((x) => x.start >= mo);
@@ -2029,6 +2412,9 @@
 
   let homeSlow = 0;
   function renderHomeSlow(now) {
+    const mt = moneyTotalToday();
+    $("h-pf").textContent = kr(mt.now);
+    $("h-pf-sub").textContent = Math.abs(mt.d) > 0.004 ? `${mt.d < 0 ? "−" : "+"}${kr(Math.abs(mt.d))} ${T("today")}` : T("Account, savings, stocks and crypto");
     const cur = cfg.currency;
     const nx = calendarUsed() ? upcomingShifts(45, now).find((o) => o.start > now) : null;
     if (nx) {
@@ -2077,35 +2463,6 @@
     }).join("");
   }
 
-  // Portfolio: investments and projects, each with what went in and what it is worth now.
-  function renderPortfolio() {
-    const cur = cfg.currency;
-    const mine = log.items.filter((x) => x.currency === cur);
-    const val = sum(mine, "value"), inv = sum(mine, "invested");
-    const other = log.items.length - mine.length;
-    $("pf-total").innerHTML = `<small>${curLabel()}</small>${money(val)}`;
-    $("pf-grid").innerHTML = [
-      stat("Put in", `${kr(inv)}`, other ? `${plural(other, "item")} in other currencies not counted` : ""),
-      stat("Gain", `${signed(val - inv)} ${curLabel()}`, pct(val - inv, inv)),
-    ].join("");
-    const rows = (kind, empty) => {
-      const list = log.items.filter((x) => x.kind === kind).sort((a, b) => b.value - a.value);
-      if (!list.length) return `<p class="empty">${empty}</p>`;
-      return list.map((x) => `
-        <div class="hist-row item" role="button" tabindex="0" data-id="${esc(x.id)}">
-          <div class="d">${esc(x.name)}</div>
-          <div class="t">${x.note ? esc(x.note) : `put in ${money(x.invested)}`}</div>
-          <div class="a">${x.currency === cur ? "" : x.currency + " "}${money(x.value)}<i>${signed(x.value - x.invested)}${x.invested > 0 ? " · " + pct(x.value - x.invested, x.invested) : ""}</i></div>
-        </div>`).join("");
-    };
-    $("pf-inv").innerHTML = rows("investment", "Nothing yet. Tap Add to track an investment, like a fund, stocks or crypto.");
-    $("pf-proj").innerHTML = rows("project", "Nothing yet. Tap Add to track a project: what you have put in and what it is worth now.");
-    document.querySelectorAll("#v-portfolio .item").forEach((r) => {
-      r.addEventListener("click", () => openItem(r.dataset.id));
-      r.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openItem(r.dataset.id); } });
-    });
-  }
-
   const it = { name: $("item-name"), inv: $("item-in"), val: $("item-val"), note: $("item-note"), err: $("item-err"), del: $("item-del") };
   let editId = null;
   function openItem(id) {
@@ -2149,6 +2506,934 @@
     renderPortfolio();
     toast("Deleted.");
   });
+
+  // ---------- Money: account, savings, stocks, crypto, expenses, subscriptions and loans ----------
+  // Stock prices come from prices.json, which a GitHub Action refreshes every 10 minutes. Crypto prices are
+  // fetched live from CoinGecko. Everything is shown in your currency.
+  const PRICES_URL = "https://raw.githubusercontent.com/rodriguez594/99ms/prices/prices.json";
+  const PX_KEY = "99ms-prices";
+  const CRYPTO_LIST = {
+    bitcoin: ["BTC", "Bitcoin"], ethereum: ["ETH", "Ethereum"], solana: ["SOL", "Solana"], ripple: ["XRP", "XRP"], binancecoin: ["BNB", "BNB"],
+    cardano: ["ADA", "Cardano"], dogecoin: ["DOGE", "Dogecoin"], tron: ["TRX", "TRON"], "avalanche-2": ["AVAX", "Avalanche"], chainlink: ["LINK", "Chainlink"],
+    polkadot: ["DOT", "Polkadot"], litecoin: ["LTC", "Litecoin"], "shiba-inu": ["SHIB", "Shiba Inu"], pepe: ["PEPE", "Pepe"], sui: ["SUI", "Sui"],
+    "the-open-network": ["TON", "Toncoin"], tether: ["USDT", "Tether"], "usd-coin": ["USDC", "USD Coin"],
+  };
+  const FX_FALLBACK = { DKK: 1, EUR: 7.46, USD: 6.9, SEK: 0.65, NOK: 0.63, CHF: 7.9, GBP: 8.7 };
+  let px = (() => { try { return JSON.parse(localStorage.getItem(PX_KEY) || "null"); } catch { return null; } })();
+  let cg = {}, cgAt = 0, cgT = 0, pxT = 0, pxErr = false;
+  async function loadPrices(force) {
+    if (!force && Date.now() - pxT < 300000) return;
+    pxT = Date.now();
+    try {
+      const r = await fetch(`${PRICES_URL}?m=${Math.floor(Date.now() / 300000)}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const v = await r.json();
+      if (!v || !v.stocks || !v.fx) throw new Error("bad");
+      px = v; pxErr = false;
+      try { localStorage.setItem(PX_KEY, JSON.stringify(v)); } catch {}
+      evCache = null; renderMoneyIfOpen();
+    } catch { pxErr = true; }
+  }
+  async function loadCrypto() {
+    if (Date.now() - cgT < 60000) return;
+    cgT = Date.now();
+    try {
+      const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${Object.keys(CRYPTO_LIST).join(",")}&vs_currencies=usd,dkk,eur&include_24hr_change=true`);
+      if (!r.ok) throw new Error(r.status);
+      cg = await r.json(); cgAt = Date.now();
+      renderMoneyIfOpen();
+    } catch {}
+  }
+  const fxRate = (c) => (px && px.fx && px.fx[c]) || FX_FALLBACK[c];
+  const toCur = (v, from, to = cfg.currency) => (from === to ? v : (fxRate(from) && fxRate(to) ? (v * fxRate(from)) / fxRate(to) : null));
+  const stockSrc = (sym) => (px && px.stocks && px.stocks[sym]) || null;
+  const cryptoSrc = (id) => (px && px.crypto && px.crypto[id]) || null;
+  function assetName(h) {
+    if (h.kind === "crypto") return (CRYPTO_LIST[h.sym] || [h.sym, h.name || h.sym])[1];
+    const s = stockSrc(h.sym); return s ? s.n : h.name || h.sym;
+  }
+  const assetTicker = (h) => (h.kind === "crypto" ? (CRYPTO_LIST[h.sym] || [h.sym])[0] : h.sym.replace(/\.[A-Z]+$/, "").replace(/-/g, " "));
+  // Price of one unit, now, in your currency (null when unknown).
+  function priceNow(h, cur = cfg.currency) {
+    if (h.kind === "crypto") {
+      const live = cg[h.sym], k = cur.toLowerCase();
+      if (live && live[k] != null) return live[k];
+      if (live && live.usd != null) return toCur(live.usd, "USD", cur);
+      const s = cryptoSrc(h.sym); return s ? toCur(s.p, "USD", cur) : null;
+    }
+    const s = stockSrc(h.sym); return s ? toCur(s.p, s.c, cur) : null;
+  }
+  function dayChange(h) {
+    if (h.kind === "crypto") {
+      const live = cg[h.sym], k = cfg.currency.toLowerCase() + "_24h_change";
+      if (live && live[k] != null) return live[k];
+      const s = cryptoSrc(h.sym); return s && s.ch != null ? s.ch : null;
+    }
+    const s = stockSrc(h.sym); return s && s.pc ? ((s.p - s.pc) / s.pc) * 100 : null;
+  }
+  // Price history in your currency: daily for the past year, finer for the last week, then the live price.
+  function priceSeries(h) {
+    const s = h.kind === "crypto" ? cryptoSrc(h.sym) : stockSrc(h.sym);
+    const c = h.kind === "crypto" ? "USD" : s && s.c;
+    const out = [];
+    if (s) {
+      const w = (s.w || []).map(([m, v]) => [m * 60000, v]);
+      const cut = w.length ? w[0][0] : Infinity;
+      (s.d || []).forEach(([m, v]) => { if (m * 60000 < cut) out.push([m * 60000, toCur(v, c)]); });
+      w.forEach(([t, v]) => out.push([t, toCur(v, c)]));
+    }
+    const p = priceNow(h);
+    if (p != null) out.push([Date.now(), p]);
+    return out.filter((x) => x[1] != null);
+  }
+  function valueAt(series, t) {
+    if (!series.length) return 0;
+    if (t <= series[0][0]) return series[0][1];
+    let lo = 0, hi = series.length - 1;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (series[mid][0] <= t) lo = mid; else hi = mid - 1; }
+    return series[lo][1];
+  }
+  const curHoldings = () => log.holdings.filter((h) => h.qty > 0);
+  const holdingValue = (h) => { const p = priceNow(h); return p == null ? 0 : p * h.qty; };
+
+  // ----- Account: the balance you set, plus pay on payday, minus expenses, subscriptions and loan payments -----
+  // Each time you set the balance it is kept as a point; the account runs from the latest point before a given time.
+  const bankRecs = () => log.bank.filter((b) => b.currency === cfg.currency && isFinite(b.bal)).sort((a, b) => a.t - b.t);
+  const bankRec = () => { const r = bankRecs(); return r.length ? r[r.length - 1] : null; };
+  const CATS = [["groceries", "Groceries"], ["food", "Food & drink"], ["transport", "Transport"], ["shopping", "Shopping"], ["fun", "Fun"], ["bills", "Bills"], ["subs", "Subscriptions"], ["health", "Health"], ["other", "Other"]];
+  const catName = (k) => T((CATS.find((c) => c[0] === k) || CATS[CATS.length - 1])[1]);
+  const clampDay = (y, m, d) => new Date(y, m, Math.min(d, new Date(y, m + 1, 0).getDate()));
+  // Every day a subscription is taken between two times.
+  function subCharges(s, from, to) {
+    const out = [], start = s.from ? parseYmd(s.from).getTime() : 0, end = s.until ? parseYmd(s.until).getTime() + DAY - 1 : Infinity;
+    const a = new Date(Math.max(from, start)), d0 = new Date(a.getFullYear(), a.getMonth() - 1, 1);
+    for (let m = 0; m < 30; m++) {
+      const d = clampDay(d0.getFullYear(), d0.getMonth() + m, s.day).getTime() + 6 * HOUR;
+      if (d > to || d > end) break;
+      if (d >= from && d >= start) out.push(d);
+    }
+    return out;
+  }
+  const loanPaid = (l) => (l.payments || []).reduce((a, p) => a + p.amount, 0);
+  const loanLeft = (l) => Math.max(0, l.amount - loanPaid(l));
+  let evCache = null;
+  // Everything that moves money in or out of the account, from a year back to ten weeks ahead.
+  function moneyEvents() {
+    const now = Date.now(), cur = cfg.currency;
+    if (evCache && evCache.cur === cur && now - evCache.at < 20000) return evCache.list;
+    const from = now - 400 * DAY, to = now + 70 * DAY, list = [];
+    log.expenses.filter((e) => e.currency === cur).forEach((e) => list.push({ t: e.t, v: -e.amount, k: "expense" }));
+    log.subs.filter((s) => s.currency === cur).forEach((s) => subCharges(s, from, to).forEach((t) => list.push({ t, v: -s.amount, k: "sub", s })));
+    log.loans.filter((l) => l.currency === cur).forEach((l) => (l.payments || []).forEach((p) => list.push({ t: p.t, v: l.dir === "owe" ? -p.amount : p.amount, k: "loan" })));
+    if (cfg.payDay) {
+      for (let per = periodFor(new Date(from)); per.from.getTime() < to; per = periodFor(addDays(per.to, 1))) {
+        const d = payoutFor(per);
+        if (!d) break;
+        const t = d.getTime() + 6 * HOUR;
+        if (t < from || t > to) continue;
+        const amt = rangePlan(per.from, per.to, now).expected;
+        if (amt > 0) list.push({ t, v: amt, k: "pay", per });
+      }
+    }
+    list.sort((a, b) => a.t - b.t);
+    evCache = { at: now, cur, list };
+    return list;
+  }
+  function accountAt(t) {
+    const rs = bankRecs();
+    if (!rs.length) return null;
+    let b = rs[0];
+    rs.forEach((r) => { if (r.t <= t) b = r; });
+    if (t <= b.t) return b.bal; // before the first balance you set, it stays at that balance
+    let v = b.bal;
+    moneyEvents().forEach((e) => { if (e.t > b.t && e.t <= t) v += e.v; });
+    return v;
+  }
+  function savingsAt(t) {
+    return log.savings.filter((x) => x.currency === cfg.currency && x.t <= t).reduce((a, x) => a + txAmount(x), 0);
+  }
+  function loansAt(t) {
+    return log.loans.filter((l) => l.currency === cfg.currency && l.t <= t).reduce((a, l) => {
+      const left = l.amount - (l.payments || []).filter((p) => p.t <= t).reduce((s, p) => s + p.amount, 0);
+      return a + (l.dir === "owe" ? -1 : 1) * Math.max(0, left);
+    }, 0);
+  }
+  const itemsAt = (t) => log.items.filter((x) => x.currency === cfg.currency && (x.t || 0) <= t).reduce((a, x) => a + x.value, 0);
+  // Planned loan payments (and expected sales) between two times, signed for your account.
+  function loanPlanned(from, to) {
+    const out = [];
+    log.loans.filter((l) => l.currency === cfg.currency && loanLeft(l) > 0.004 && l.plan && l.plan.type !== "none").forEach((l) => {
+      const sign = l.dir === "owe" ? -1 : 1, p = l.plan;
+      let left = loanLeft(l);
+      if (p.type === "monthly" && p.per > 0) {
+        const n0 = new Date(from);
+        for (let m = 0; m < 120 && left > 0.004; m++) {
+          const t = clampDay(n0.getFullYear(), n0.getMonth() + m, p.day || 1).getTime() + 6 * HOUR;
+          if (t <= from) continue;
+          if (t > to) break;
+          const a = Math.min(p.per, left); left -= a; out.push({ t, v: sign * a, l });
+        }
+      } else if (p.type === "once" && p.on) {
+        const t = parseYmd(p.on).getTime() + 6 * HOUR;
+        if (t > from && t <= to) out.push({ t, v: sign * left, l });
+      } else if (p.type === "sell" && p.by) {
+        const t = parseYmd(p.by).getTime() + 6 * HOUR;
+        if (t > from && t <= to) out.push({ t, v: sign * Math.min(p.price || 0, left), l });
+      }
+    });
+    return out;
+  }
+  function expectedBalance(now = Date.now()) {
+    const acc = accountAt(now);
+    if (acc == null) return null;
+    const np = nextPayday(now);
+    const until = np ? np.date.getTime() + DAY - 1 : now + 30 * DAY;
+    const ev = moneyEvents().filter((e) => e.t > now && e.t <= until && e.k !== "expense" && e.k !== "loan");
+    const lp = loanPlanned(now, until);
+    const pay = ev.filter((e) => e.k === "pay").reduce((a, e) => a + e.v, 0);
+    const subs = ev.filter((e) => e.k === "sub").reduce((a, e) => a + e.v, 0);
+    const loans = lp.reduce((a, e) => a + e.v, 0);
+    return { value: acc + pay + subs + loans, acc, pay, subs, loans, until, payday: !!np };
+  }
+
+  // ----- Views and charts -----
+  const VIEWS = [["all", "All"], ["account", "Account"], ["savings", "Savings"], ["stocks", "Stocks"], ["crypto", "Crypto"], ["other", "Other"], ["loans", "Loans"]];
+  const RANGES = [["1d", "1D", DAY], ["1w", "1W", 7 * DAY], ["1m", "1M", 30 * DAY], ["3m", "3M", 91 * DAY], ["1y", "1Y", 365 * DAY], ["all", "All", 0]];
+  const RANGE_WORD = { "1d": "today", "1w": "past week", "1m": "past month", "3m": "past 3 months", "1y": "past year", all: "all time" };
+  const VIEW_KEY = "99ms-money-view";
+  let mView = (() => { try { return JSON.parse(localStorage.getItem(VIEW_KEY) || "{}"); } catch { return {}; } })();
+  mView = { area: mView.area || "overview", view: mView.view || "all", range: mView.range || "1m" };
+  const saveView = () => { try { localStorage.setItem(VIEW_KEY, JSON.stringify(mView)); } catch {} };
+  function viewParts(view) {
+    const hs = curHoldings();
+    const want = (k) => view === "all" || view === k;
+    const parts = [];
+    if (want("account") && bankRec()) parts.push({ at: accountAt });
+    if (want("savings")) parts.push({ at: savingsAt });
+    hs.filter((h) => want(h.kind === "crypto" ? "crypto" : "stocks")).forEach((h) => { const s = priceSeries(h); parts.push({ at: (t) => valueAt(s, t) * h.qty }); });
+    if (want("other")) parts.push({ at: itemsAt });
+    if (want("loans")) parts.push({ at: loansAt });
+    return parts;
+  }
+  function viewSeries(view, range, n = 90) {
+    const now = Date.now(), parts = viewParts(view);
+    let span = (RANGES.find((r) => r[0] === range) || RANGES[2])[2];
+    if (!span) {
+      const firsts = [...log.savings.map((x) => x.t), ...log.expenses.map((x) => x.t), ...log.loans.map((x) => x.t), ...log.items.map((x) => x.t || now), ...log.bank.map((b) => b.t)].filter((t) => t > 0);
+      span = Math.min(365 * DAY, Math.max(30 * DAY, now - Math.min(now, ...firsts)));
+    }
+    const out = [];
+    for (let i = 0; i < n; i++) { const t = now - span + (span * i) / (n - 1); out.push([t, parts.reduce((a, p) => a + (p.at(t) || 0), 0)]); }
+    return out;
+  }
+  function chartSvg(series, uidc) {
+    if (series.length < 2) return `<svg viewBox="0 0 300 120" preserveAspectRatio="none"></svg>`;
+    const vs = series.map((p) => p[1]);
+    let min = Math.min(...vs), max = Math.max(...vs);
+    if (max - min < 1e-9) { min -= 1; max += 1; }
+    const X = (i) => (i / (series.length - 1)) * 300, Y = (v) => 112 - ((v - min) / (max - min)) * 104;
+    const line = series.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+    const up = vs[vs.length - 1] >= vs[0], col = up ? "var(--up)" : "var(--down)";
+    return `<svg viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="cg-${uidc}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${col};stop-opacity:.22"/><stop offset="1" style="stop-color:${col};stop-opacity:0"/></linearGradient></defs>
+      <path d="${line}L300,120L0,120Z" fill="url(#cg-${uidc})"/>
+      <line x1="0" x2="300" y1="${Y(vs[0]).toFixed(1)}" y2="${Y(vs[0]).toFixed(1)}" style="stroke:var(--faint)" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+      <path d="${line}" fill="none" style="stroke:${col}" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    </svg>`;
+  }
+  const sgn = (n) => (n < 0 ? "−" : "+");
+  const pctTxt = (p) => `${sgn(p)}${fmt2.format(Math.abs(p))}%`;
+  function changeLine(series, range) {
+    if (series.length < 2) return { cls: "", text: "" };
+    const a = series[0][1], b = series[series.length - 1][1], d = b - a;
+    const p = Math.abs(a) > 0.004 ? (d / Math.abs(a)) * 100 : null;
+    return { cls: Math.abs(d) < 0.005 ? "" : d > 0 ? "up" : "down", text: `${sgn(d)}${kr(Math.abs(d))}${p != null ? ` (${pctTxt(p)})` : ""} · ${T(RANGE_WORD[range])}` };
+  }
+  const rangeBtns = (sel) => RANGES.map((r) => `<button type="button" data-range="${r[0]}" aria-pressed="${r[0] === sel}">${T(r[1])}</button>`).join("");
+
+  // ----- Overview -----
+  function viewsShown() {
+    const hs = curHoldings();
+    return VIEWS.filter(([k]) => k === "all" || k === "account" || k === "savings"
+      || (k === "stocks" && hs.some((h) => h.kind === "stock")) || (k === "crypto" && hs.some((h) => h.kind === "crypto"))
+      || (k === "other" && log.items.some((x) => x.currency === cfg.currency)) || (k === "loans" && log.loans.some((l) => l.currency === cfg.currency)));
+  }
+  function assetRow(o) {
+    return `<div class="asset${o.neg ? " neg" : ""}" role="button" tabindex="0" data-row="${esc(o.key)}">
+      <span class="ic">${esc(o.ic)}</span><span class="d">${esc(o.name)}</span><span class="a">${o.value}</span>
+      <span class="t">${o.sub}</span><span class="p${o.chg == null ? "" : o.chg >= 0 ? " up" : " down"}">${o.chg == null ? (o.right || "") : pctTxt(o.chg)}</span></div>`;
+  }
+  function rowsFor(view) {
+    const want = (k) => view === "all" || view === k, rows = [], now = Date.now();
+    if (want("account")) {
+      const b = bankRec(), v = accountAt(now);
+      rows.push({ key: "bank", ic: "KTO", name: T("Account"), value: b ? kr(v) : "—", sub: b ? T("Kept up to date by itself") : T("Tap to set your balance"), sort: 1e15 });
+    }
+    if (want("savings")) rows.push({ key: "savings", ic: "OPS", name: T("Savings"), value: kr(balance()), sub: liveRec() && liveRec().savings ? T("saving live") : T("in your savings"), sort: 1e15 - 1 });
+    curHoldings().filter((h) => want(h.kind === "crypto" ? "crypto" : "stocks")).forEach((h) => {
+      const p = priceNow(h), v = holdingValue(h);
+      rows.push({ key: "h:" + h.id, ic: assetTicker(h).slice(0, 4), name: assetName(h), value: p == null ? "—" : kr(v), sub: `${fmtQty(h.qty)} × ${p == null ? "—" : kr(p)}`, chg: dayChange(h), sort: v });
+    });
+    if (want("other")) log.items.filter((x) => x.currency === cfg.currency).forEach((x) => rows.push({ key: "i:" + x.id, ic: x.kind === "project" ? "PRJ" : "INV", name: x.name, value: kr(x.value), sub: x.invested > 0 ? `${T("put in")} ${kr(x.invested)}` : esc(x.note || ""), chg: x.invested > 0 ? ((x.value - x.invested) / x.invested) * 100 : null, sort: x.value }));
+    if (want("loans")) log.loans.filter((l) => l.currency === cfg.currency && loanLeft(l) > 0.004).forEach((l) => {
+      const left = loanLeft(l);
+      rows.push({ key: "l:" + l.id, ic: l.dir === "owe" ? "LÅN" : "UDL", name: l.dir === "owe" ? T(`You owe ${l.who}`) : T(`${l.who} owes you`), value: `${l.dir === "owe" ? "−" : ""}${kr(left)}`, neg: l.dir === "owe", sub: T(`of ${kr(l.amount)}`), sort: l.dir === "owe" ? -left : left });
+    });
+    return rows.sort((a, b) => b.sort - a.sort);
+  }
+  const fmtQty = (q) => new Intl.NumberFormat("da-DK", { maximumFractionDigits: q < 1 ? 8 : 4 }).format(q);
+  const updFmt = new Intl.DateTimeFormat(LOC, { hour: "2-digit", minute: "2-digit" });
+  function renderOverview() {
+    const vs = viewsShown();
+    if (!vs.some((v) => v[0] === mView.view)) mView.view = "all";
+    $("dh-views").innerHTML = vs.map(([k, n]) => `<button type="button" role="tab" data-view="${k}" aria-selected="${k === mView.view}">${T(n)}</button>`).join("");
+    const series = viewSeries(mView.view, mView.range);
+    const now = series.length ? series[series.length - 1][1] : 0;
+    $("dh-label").textContent = T((VIEWS.find((v) => v[0] === mView.view) || VIEWS[0])[1] === "All" ? "Total" : VIEWS.find((v) => v[0] === mView.view)[1]);
+    $("dh-total").textContent = kr(now);
+    const ch = changeLine(series, mView.range);
+    $("dh-chg").className = "chg " + ch.cls; $("dh-chg").textContent = ch.text;
+    $("dh-chart").innerHTML = chartSvg(series, "s");
+    $("dh-ranges").innerHTML = rangeBtns(mView.range);
+    const e = expectedBalance();
+    if (e) {
+      $("dh-exp").textContent = kr(e.value);
+      $("dh-exp-sub").textContent = `${e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")} · ${T("now")} ${kr(e.acc)}${e.pay ? ` + ${T("pay")} ${kr(e.pay)}` : ""}${e.subs ? ` − ${T("subscriptions")} ${kr(-e.subs)}` : ""}${e.loans ? ` ${e.loans < 0 ? "−" : "+"} ${T("loans")} ${kr(Math.abs(e.loans))}` : ""}`;
+    } else { $("dh-exp").textContent = "—"; $("dh-exp-sub").textContent = T("Set your account balance to see it"); }
+    const sp = monthSpend(new Date());
+    $("dh-spent").textContent = kr(sp.total);
+    $("dh-spent-sub").textContent = sp.prev > 0 ? `${pctTxt(((sp.total - sp.prevSame) / Math.max(sp.prevSame, 0.01)) * 100)} ${T("vs same time last month")}` : sp.coming > 0 ? T(`${kr(sp.coming)} in subscriptions still to come`) : T("Add what you buy under Expenses");
+    const rows = rowsFor(mView.view);
+    $("dh-list").innerHTML = rows.length ? rows.map(assetRow).join("") : `<p class="empty">${T("Nothing here yet.")}</p>`;
+    $("dh-add-stock").hidden = !["all", "stocks"].includes(mView.view);
+    $("dh-add-crypto").hidden = !["all", "crypto"].includes(mView.view);
+    $("pf-add").hidden = !["all", "other"].includes(mView.view);
+    const parts = [];
+    if (px && px.t) parts.push(T(`Stock prices from ${updFmt.format(px.t)}, updated about every 10 minutes`));
+    else parts.push(pxErr ? T("Stock prices could not load. Check your connection.") : T("Loading prices…"));
+    if (cgAt) parts.push(T(`crypto live ${updFmt.format(cgAt)}`));
+    $("dh-upd").textContent = parts.join(" · ");
+  }
+  function openRow(key) {
+    if (key === "bank") return openBank();
+    if (key === "savings") return go("savings");
+    if (key.startsWith("h:")) return openChart({ h: log.holdings.find((h) => h.id === key.slice(2)) });
+    if (key.startsWith("i:")) return openItem(key.slice(2));
+    if (key.startsWith("l:")) { mView.area = "loans"; saveView(); renderPortfolio(); }
+  }
+  $("dh-list").addEventListener("click", (e) => { const r = e.target.closest("[data-row]"); if (r) openRow(r.dataset.row); });
+  $("dh-list").addEventListener("keydown", (e) => { const r = e.target.closest("[data-row]"); if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openRow(r.dataset.row); } });
+  $("dh-views").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b) { mView.view = b.dataset.view; saveView(); renderOverview(); } });
+  $("dh-ranges").addEventListener("click", (e) => { const b = e.target.closest("[data-range]"); if (b) { mView.range = b.dataset.range; saveView(); renderOverview(); } });
+  $("dh-chart").addEventListener("click", () => openChart({ view: mView.view }));
+  $("dh-exp-card").addEventListener("click", () => (bankRec() ? openChart({ view: "account" }) : openBank()));
+  $("dh-spent-card").addEventListener("click", () => { mView.area = "expenses"; saveView(); renderPortfolio(); });
+  $("dh-add-stock").addEventListener("click", () => openHold(null, "stock"));
+  $("dh-add-crypto").addEventListener("click", () => openHold(null, "crypto"));
+
+  // ----- Big chart (tap the chart, or a stock or coin) -----
+  let chartCtx = null;
+  function openChart(ctx) {
+    if (!ctx || (ctx.h === undefined && !ctx.view)) return;
+    chartCtx = { range: mView.range, ...ctx };
+    $("chart-sheet").hidden = false;
+    renderChart();
+  }
+  function renderChart() {
+    if (!chartCtx || $("chart-sheet").hidden) return;
+    const h = chartCtx.h, range = chartCtx.range;
+    let series;
+    if (h) {
+      const ps = priceSeries(h), span = (RANGES.find((r) => r[0] === range) || RANGES[2])[2] || 365 * DAY, now = Date.now();
+      series = ps.filter((p) => p[0] >= now - span).map((p) => [p[0], p[1] * h.qty]);
+      if (series.length < 2 && ps.length) series = [[now - span, valueAt(ps, now - span) * h.qty], ...series];
+      $("cs-title").textContent = assetName(h);
+    } else {
+      series = viewSeries(chartCtx.view, range, 160);
+      const v = VIEWS.find((x) => x[0] === chartCtx.view);
+      $("cs-title").textContent = T(v && v[1] !== "All" ? v[1] : "Total");
+    }
+    chartCtx.series = series;
+    const last = series.length ? series[series.length - 1][1] : 0;
+    $("cs-total").textContent = kr(last);
+    const ch = changeLine(series, range);
+    $("cs-chg").className = "chg " + ch.cls; $("cs-chg").textContent = ch.text;
+    $("cs-chart").innerHTML = chartSvg(series, "b") + `<i class="vline" hidden></i><i class="dot" hidden></i><div class="tipbox" hidden></div>`;
+    $("cs-ranges").innerHTML = rangeBtns(range);
+    if (h) {
+      const p = priceNow(h), d = dayChange(h), v = holdingValue(h);
+      $("cs-stats").innerHTML = [
+        stat(T("You own"), fmtQty(h.qty), assetTicker(h)),
+        stat(T("Price"), p == null ? "—" : kr(p), d == null ? "" : `${pctTxt(d)} ${T("today")}`),
+        h.cost > 0 ? stat(T("Paid"), kr(h.cost), "") : "",
+        h.cost > 0 ? stat(T("Gain"), `${sgn(v - h.cost)}${kr(Math.abs(v - h.cost))}`, pctTxt(((v - h.cost) / h.cost) * 100)) : "",
+      ].join("");
+      $("cs-actions").innerHTML = `<button class="ghost" type="button" data-cs="edit">${T("Edit")}</button>`;
+    } else {
+      const e = chartCtx.view === "account" || chartCtx.view === "all" ? expectedBalance() : null;
+      $("cs-stats").innerHTML = e ? [stat(T("Expected balance"), kr(e.value), e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")), stat(T("Account now"), kr(e.acc), "")].join("") : "";
+      $("cs-actions").innerHTML = chartCtx.view === "account" ? `<button class="ghost" type="button" data-cs="bank">${T("Correct balance")}</button>` : "";
+    }
+  }
+  const tipFmt = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const tipFmtDay = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "short", year: "numeric" });
+  function scrub(e) {
+    const box = $("cs-chart"), s = chartCtx && chartCtx.series;
+    if (!s || s.length < 2) return;
+    const r = box.getBoundingClientRect();
+    const i = Math.max(0, Math.min(s.length - 1, Math.round(((e.clientX - r.left) / r.width) * (s.length - 1))));
+    const vs = s.map((p) => p[1]); let min = Math.min(...vs), max = Math.max(...vs); if (max - min < 1e-9) { min -= 1; max += 1; }
+    const x = (i / (s.length - 1)) * 100, y = ((112 - ((s[i][1] - min) / (max - min)) * 104) / 120) * 100;
+    const [vl, dot, tip] = [box.querySelector(".vline"), box.querySelector(".dot"), box.querySelector(".tipbox")];
+    vl.hidden = dot.hidden = tip.hidden = false;
+    vl.style.left = x + "%"; dot.style.left = x + "%"; dot.style.top = y + "%";
+    tip.style.left = Math.max(18, Math.min(82, x)) + "%";
+    tip.textContent = `${kr(s[i][1])} · ${(chartCtx.range === "1d" || chartCtx.range === "1w" ? tipFmt : tipFmtDay).format(s[i][0])}`;
+    $("cs-total").textContent = kr(s[i][1]);
+  }
+  function unscrub() {
+    const box = $("cs-chart");
+    box.querySelectorAll(".vline,.dot,.tipbox").forEach((x) => { x.hidden = true; });
+    if (chartCtx && chartCtx.series && chartCtx.series.length) $("cs-total").textContent = kr(chartCtx.series[chartCtx.series.length - 1][1]);
+  }
+  $("cs-chart").addEventListener("pointerdown", (e) => { $("cs-chart").setPointerCapture(e.pointerId); scrub(e); });
+  $("cs-chart").addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" || e.buttons) scrub(e); });
+  $("cs-chart").addEventListener("pointerup", unscrub);
+  $("cs-chart").addEventListener("pointerleave", unscrub);
+  $("cs-ranges").addEventListener("click", (e) => { const b = e.target.closest("[data-range]"); if (b) { chartCtx.range = b.dataset.range; renderChart(); } });
+  $("cs-close").addEventListener("click", () => { $("chart-sheet").hidden = true; chartCtx = null; });
+  $("cs-actions").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-cs]"); if (!b) return;
+    const h = chartCtx && chartCtx.h;
+    $("chart-sheet").hidden = true; chartCtx = null;
+    if (b.dataset.cs === "edit" && h) openHold(h.id, h.kind);
+    if (b.dataset.cs === "bank") openBank();
+  });
+
+  // ----- Stocks and crypto you own -----
+  let holdEdit = null, holdKind = "stock", holdSym = "";
+  function pickList(q) {
+    q = q.trim().toLowerCase();
+    let list;
+    if (holdKind === "crypto") list = Object.entries(CRYPTO_LIST).map(([id, [s, n]]) => ({ sym: id, tick: s, name: n }));
+    else list = Object.entries((px && px.stocks) || {}).map(([sym, s]) => ({ sym, tick: sym, name: s.n }));
+    if (q) list = list.filter((x) => x.name.toLowerCase().includes(q) || x.tick.toLowerCase().includes(q));
+    return list.slice(0, 40);
+  }
+  function renderPick() {
+    const list = pickList($("hold-q").value), h = { kind: holdKind };
+    $("hold-pick").innerHTML = list.length ? list.map((x) => {
+      const p = priceNow({ ...h, sym: x.sym });
+      return `<button type="button" data-sym="${esc(x.sym)}" aria-pressed="${x.sym === holdSym}"><b>${esc(x.name)}</b><small>${esc(x.tick)}</small><span>${p == null ? "" : kr(p)}</span></button>`;
+    }).join("") : `<p class="empty">${holdKind === "stock" && !px ? T("Loading prices…") : T("Not in the list. Add it as an other investment instead, with its value.")}</p>`;
+    renderHoldVal();
+  }
+  function renderHoldVal() {
+    const q = parseAmount($("hold-qty").value);
+    const p = holdSym ? priceNow({ kind: holdKind, sym: holdSym }) : null;
+    $("hold-chosen").textContent = holdSym ? `${assetName({ kind: holdKind, sym: holdSym })} · ${p == null ? "—" : kr(p)}` : T("Choose one in the list.");
+    $("hold-val").textContent = holdSym && q > 0 && p != null ? T(`Worth ${kr(q * p)} now`) : "";
+  }
+  function openHold(id, kind) {
+    const h = id ? log.holdings.find((x) => x.id === id) : null;
+    holdEdit = h ? h.id : null; holdKind = h ? h.kind : kind; holdSym = h ? h.sym : "";
+    $("hold-title").textContent = T(h ? `Edit ${assetName(h)}` : holdKind === "crypto" ? "Add crypto" : "Add stock");
+    $("hold-q").value = ""; $("hold-q-wrap").hidden = !!h;
+    $("hold-qty").value = h ? fmtQty(h.qty) : ""; $("hold-cost").value = h && h.cost ? money(h.cost) : "";
+    $("hold-err").textContent = "";
+    const del = $("hold-del"); del.hidden = !h; del.classList.remove("arm"); del.textContent = T("Delete");
+    $("hold-pick").hidden = !!h;
+    renderPick();
+    $("hold-sheet").hidden = false;
+    loadPrices(); if (holdKind === "crypto") loadCrypto();
+    if (!h) setTimeout(() => $("hold-q").focus(), 50);
+  }
+  $("hold-q").addEventListener("input", renderPick);
+  $("hold-qty").addEventListener("input", renderHoldVal);
+  $("hold-pick").addEventListener("click", (e) => { const b = e.target.closest("[data-sym]"); if (!b) return; holdSym = b.dataset.sym; renderPick(); $("hold-qty").focus(); });
+  $("hold-cancel").addEventListener("click", () => { $("hold-sheet").hidden = true; });
+  $("hold-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const qty = parseAmount($("hold-qty").value), cost = $("hold-cost").value.trim() ? parseAmount($("hold-cost").value) : 0;
+    if (!holdSym) { $("hold-err").textContent = T("Choose one in the list."); return; }
+    if (!(qty > 0)) { $("hold-err").textContent = T("Enter how many you own, like 12 or 0,5."); return; }
+    if (!(cost >= 0)) { $("hold-err").textContent = T("Enter what you paid as a number, or leave it empty."); return; }
+    const now = Date.now(), data = { kind: holdKind, sym: holdSym, qty, cost: +cost.toFixed(2), currency: cfg.currency, u: now };
+    const h = holdEdit && log.holdings.find((x) => x.id === holdEdit);
+    const same = !h && log.holdings.find((x) => x.kind === holdKind && x.sym === holdSym && x.qty > 0);
+    if (h) Object.assign(h, data);
+    else if (same) Object.assign(same, { qty: same.qty + qty, cost: +((same.cost || 0) + cost).toFixed(2), u: now });
+    else log.holdings.push({ id: uid(), t: now, ...data });
+    persist();
+    $("hold-sheet").hidden = true;
+    mView.area = "overview"; saveView(); renderPortfolio();
+    toast(same ? T(`Added to your ${assetName(same)}.`) : T("Saved."));
+  });
+  $("hold-del").addEventListener("click", () => {
+    const del = $("hold-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    log.deleted.push(holdEdit);
+    log.holdings = log.holdings.filter((x) => x.id !== holdEdit);
+    persist(); $("hold-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+
+  // ----- Account balance -----
+  function openBank() {
+    const b = bankRec();
+    $("bank-amt").value = b ? money(accountAt(Date.now())) : "";
+    $("bank-err").textContent = "";
+    $("bank-sheet").hidden = false;
+    setTimeout(() => $("bank-amt").focus(), 50);
+  }
+  $("bank-cancel").addEventListener("click", () => { $("bank-sheet").hidden = true; });
+  $("bank-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = parseAmount($("bank-amt").value);
+    if (!isFinite(v) || $("bank-amt").value.trim() === "") { $("bank-err").textContent = T("Enter the balance as a number, like 12.500,00."); return; }
+    // A correction on the same day replaces that day's point; otherwise it starts a new one.
+    const now = Date.now(), last = bankRec();
+    if (last && ymd(new Date(last.t)) === ymd(new Date(now))) Object.assign(last, { bal: +v.toFixed(2), t: now, u: now });
+    else log.bank.push({ id: uid(), currency: cfg.currency, bal: +v.toFixed(2), t: now, u: now });
+    evCache = null; persist();
+    $("bank-sheet").hidden = true; renderPortfolio(); toast(T("Balance saved."));
+  });
+
+  // ----- Expenses -----
+  let exMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  function monthSpend(d, cur = cfg.currency) {
+    const now = Date.now(), from = new Date(d.getFullYear(), d.getMonth(), 1).getTime(), to = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime() - 1;
+    const pFrom = new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime(), pTo = from - 1;
+    const exIn = (a, b) => log.expenses.filter((e) => e.currency === cur && e.t >= a && e.t <= b);
+    const subsIn = (a, b) => log.subs.filter((s) => s.currency === cur).flatMap((s) => subCharges(s, a, b).map((t) => ({ t, s })));
+    const ex = exIn(from, Math.min(to, Math.max(now, from))), sb = subsIn(from, Math.min(to, now));
+    const total = ex.reduce((a, e) => a + e.amount, 0) + sb.reduce((a, x) => a + x.s.amount, 0);
+    const coming = to > now ? subsIn(Math.max(now + 1, from), to).reduce((a, x) => a + x.s.amount, 0) : 0;
+    const prevAll = exIn(pFrom, pTo).reduce((a, e) => a + e.amount, 0) + subsIn(pFrom, pTo).reduce((a, x) => a + x.s.amount, 0);
+    const sameT = Math.min(pTo, pFrom + (Math.min(now, to) - from));
+    const prevSame = exIn(pFrom, sameT).reduce((a, e) => a + e.amount, 0) + subsIn(pFrom, sameT).reduce((a, x) => a + x.s.amount, 0);
+    return { total, coming, prev: prevAll, prevSame: to > now ? prevSame : prevAll, ex, sb, from, to };
+  }
+  const monthName = new Intl.DateTimeFormat(LOC, { month: "long", year: "numeric" });
+  const monthOnly = new Intl.DateTimeFormat(LOC, { month: "long" });
+  function renderExpenses() {
+    const sp = monthSpend(exMonth);
+    $("ex-month").textContent = monthName.format(exMonth);
+    $("ex-total").textContent = kr(sp.total);
+    const prevName = monthOnly.format(new Date(exMonth.getFullYear(), exMonth.getMonth() - 1, 1));
+    const cmp = sp.prevSame > 0 ? ((sp.total - sp.prevSame) / sp.prevSame) * 100 : null;
+    $("ex-cmp").className = "chg " + (cmp == null ? "" : cmp > 0 ? "down" : "up");
+    $("ex-cmp").textContent = [cmp == null ? "" : `${pctTxt(cmp)} ${T(`vs ${prevName}`)}`, sp.coming > 0 ? T(`${kr(sp.coming)} in subscriptions still to come`) : ""].filter(Boolean).join(" · ");
+    const by = {};
+    sp.ex.forEach((e) => { by[e.cat] = (by[e.cat] || 0) + e.amount; });
+    sp.sb.forEach((x) => { const c = x.s.cat || "subs"; by[c] = (by[c] || 0) + x.s.amount; });
+    const cats = Object.entries(by).sort((a, b) => b[1] - a[1]), top = cats.length ? cats[0][1] : 1;
+    $("ex-cats").innerHTML = cats.map(([k, v]) => `<div class="cat"><span>${esc(catName(k))}</span><b>${kr(v)}</b><i style="--w:${((v / top) * 100).toFixed(1)}%"></i></div>`).join("");
+    const rows = [...sp.ex.map((e) => ({ t: e.t, html: `<div class="hist-row item" role="button" tabindex="0" data-ex="${esc(e.id)}"><div class="d">${esc(e.name || catName(e.cat))}</div><div class="t">${dateFmt.format(e.t)} · ${esc(catName(e.cat))}${e.note ? " · " + esc(e.note) : ""}</div><div class="a">−${kr(e.amount)}${e.ai ? `<i>${T("scanned")}</i>` : ""}</div></div>` })),
+      ...sp.sb.map((x) => ({ t: x.t, html: `<div class="hist-row item" role="button" tabindex="0" data-sub="${esc(x.s.id)}"><div class="d">${esc(x.s.name)}</div><div class="t">${dateFmt.format(x.t)} · ${T("Subscription")}</div><div class="a">−${kr(x.s.amount)}</div></div>` }))].sort((a, b) => b.t - a.t);
+    $("ex-list").innerHTML = rows.length ? rows.map((r) => r.html).join("") : `<p class="empty">${T("Nothing this month. Tap Scan receipt or Add expense.")}</p>`;
+    renderSubs();
+  }
+  const nextCharge = (s, now = Date.now()) => subCharges(s, now, now + 62 * DAY)[0] || null;
+  function renderSubs() {
+    const list = log.subs.filter((s) => s.currency === cfg.currency && !(s.until && parseYmd(s.until).getTime() + DAY < Date.now()));
+    const month = list.reduce((a, s) => a + s.amount, 0);
+    $("sub-sum").textContent = list.length ? T(`${kr(month)} per month · ${kr(month * 12)} per year`) : "";
+    $("sub-list").innerHTML = list.length ? list.map((s) => ({ s, n: nextCharge(s) })).sort((a, b) => (a.n || Infinity) - (b.n || Infinity)).map(({ s, n }) =>
+      `<div class="hist-row item" role="button" tabindex="0" data-sub="${esc(s.id)}"><div class="d">${esc(s.name)}</div><div class="t">${T(`Taken on day ${s.day}`)}${n ? ` · ${T("next")} ${longDate.format(n)}` : ""}</div><div class="a">${kr(s.amount)}<i>${T("per month")}</i></div></div>`).join("")
+      : `<p class="empty">${T("No subscriptions yet. Add Netflix, Spotify, your phone and the rest with the day they are taken.")}</p>`;
+  }
+  const exClick = (e) => {
+    const r = e.target.closest("[data-ex],[data-sub]"); if (!r) return;
+    if (e.type === "keydown") { if (e.key !== "Enter" && e.key !== " ") return; e.preventDefault(); }
+    if (r.dataset.ex) openExpense(r.dataset.ex); else openSub(r.dataset.sub);
+  };
+  ["ex-list", "sub-list"].forEach((id) => { $(id).addEventListener("click", exClick); $(id).addEventListener("keydown", exClick); });
+  $("ex-prev").addEventListener("click", () => { exMonth = new Date(exMonth.getFullYear(), exMonth.getMonth() - 1, 1); renderExpenses(); });
+  $("ex-next").addEventListener("click", () => { exMonth = new Date(exMonth.getFullYear(), exMonth.getMonth() + 1, 1); renderExpenses(); });
+  const catOptions = (sel) => CATS.map(([k]) => `<option value="${k}"${k === sel ? " selected" : ""}>${esc(catName(k))}</option>`).join("");
+  let exEdit = null;
+  function openExpense(id) {
+    const x = id ? log.expenses.find((e) => e.id === id) : null;
+    exEdit = x ? x.id : null;
+    $("ex-title").textContent = T(x ? "Edit expense" : "Add expense");
+    $("ex-amt").value = x ? money(x.amount) : ""; $("ex-name").value = x ? x.name : ""; $("ex-note").value = x ? x.note || "" : "";
+    $("ex-cat").innerHTML = catOptions(x ? x.cat : "groceries");
+    $("ex-date").value = ymd(x ? new Date(x.t) : new Date());
+    $("ex-err").textContent = "";
+    const del = $("ex-del"); del.hidden = !x; del.classList.remove("arm"); del.textContent = T("Delete");
+    $("ex-sheet").hidden = false;
+    if (!x) setTimeout(() => $("ex-amt").focus(), 50);
+  }
+  $("ex-add").addEventListener("click", () => openExpense(null));
+  $("ex-cancel").addEventListener("click", () => { $("ex-sheet").hidden = true; });
+  $("ex-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const amount = parseAmount($("ex-amt").value), ds = $("ex-date").value;
+    if (!(amount > 0)) { $("ex-err").textContent = T("Enter the amount as a number, like 89,95."); return; }
+    if (!/^\d{4}-\d\d-\d\d$/.test(ds)) { $("ex-err").textContent = T("Choose a date."); return; }
+    const old = exEdit && log.expenses.find((x) => x.id === exEdit);
+    const keepTime = old && ymd(new Date(old.t)) === ds ? old.t : parseYmd(ds).getTime() + (ds === ymd(new Date()) ? Date.now() - new Date().setHours(0, 0, 0, 0) : 12 * HOUR);
+    const data = { amount: +amount.toFixed(2), name: $("ex-name").value.trim().slice(0, 60), cat: $("ex-cat").value, note: $("ex-note").value.trim().slice(0, 140), t: keepTime, u: Date.now() };
+    if (old) Object.assign(old, data);
+    else log.expenses.push({ id: uid(), currency: cfg.currency, ...data });
+    evCache = null; persist();
+    $("ex-sheet").hidden = true;
+    exMonth = new Date(new Date(data.t).getFullYear(), new Date(data.t).getMonth(), 1);
+    mView.area = "expenses"; saveView(); renderPortfolio();
+    toast(old ? T("Saved.") : T(`Expense added: ${kr(data.amount)}.`));
+  });
+  $("ex-del").addEventListener("click", () => {
+    const del = $("ex-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    log.deleted.push(exEdit); log.expenses = log.expenses.filter((x) => x.id !== exEdit);
+    evCache = null; persist(); $("ex-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+
+  // ----- Subscriptions -----
+  let subEdit = null;
+  function openSub(id) {
+    const s = id ? log.subs.find((x) => x.id === id) : null;
+    subEdit = s ? s.id : null;
+    $("sub-ttl").textContent = T(s ? "Edit subscription" : "Add subscription");
+    $("sub-name").value = s ? s.name : ""; $("sub-amt").value = s ? money(s.amount) : ""; $("sub-day").value = s ? s.day : "";
+    $("sub-cat").innerHTML = catOptions(s ? s.cat || "subs" : "subs"); $("sub-until").value = s ? s.until || "" : "";
+    $("sub-err").textContent = "";
+    const del = $("sub-del"); del.hidden = !s; del.classList.remove("arm"); del.textContent = T("Delete");
+    subNextText();
+    $("sub-sheet").hidden = false;
+    if (!s) setTimeout(() => $("sub-name").focus(), 50);
+  }
+  function subNextText() {
+    const day = parseInt($("sub-day").value, 10), amt = parseAmount($("sub-amt").value);
+    const n = day >= 1 && day <= 31 ? nextCharge({ day, from: "", until: $("sub-until").value }) : null;
+    $("sub-next").textContent = n ? T(`Next time: ${longDate.format(n)}${amt > 0 ? `, ${kr(amt)}` : ""}`) : "";
+  }
+  ["sub-day", "sub-amt", "sub-until"].forEach((id) => $(id).addEventListener("input", subNextText));
+  $("sub-add").addEventListener("click", () => openSub(null));
+  $("sub-cancel").addEventListener("click", () => { $("sub-sheet").hidden = true; });
+  $("sub-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("sub-name").value.trim(), amount = parseAmount($("sub-amt").value), day = parseInt($("sub-day").value, 10);
+    if (!name) { $("sub-err").textContent = T("Give it a name."); return; }
+    if (!(amount > 0)) { $("sub-err").textContent = T("Enter the amount as a number, like 89,95."); return; }
+    if (!(day >= 1 && day <= 31)) { $("sub-err").textContent = T("Enter the day of the month it is taken, 1 to 31."); return; }
+    const old = subEdit && log.subs.find((x) => x.id === subEdit);
+    const data = { name: name.slice(0, 60), amount: +amount.toFixed(2), day, cat: $("sub-cat").value, until: $("sub-until").value || "", u: Date.now() };
+    if (old) Object.assign(old, data);
+    else log.subs.push({ id: uid(), currency: cfg.currency, from: ymd(new Date()), ...data });
+    evCache = null; persist();
+    $("sub-sheet").hidden = true; mView.area = "expenses"; saveView(); renderPortfolio();
+    toast(old ? T("Saved.") : T(`Subscription added: ${data.name}.`));
+  });
+  $("sub-del").addEventListener("click", () => {
+    const del = $("sub-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    log.deleted.push(subEdit); log.subs = log.subs.filter((x) => x.id !== subEdit);
+    evCache = null; persist(); $("sub-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+
+  // ----- Loans -----
+  const monthYear = new Intl.DateTimeFormat(LOC, { month: "short", year: "numeric" });
+  function loanPlanText(l, left = loanLeft(l)) {
+    if (left <= 0.004) return T("Paid back. Nice.");
+    const p = l.plan || { type: "none" };
+    if (p.type === "monthly" && p.per > 0) {
+      const n = Math.ceil(left / p.per - 1e-9), first = nextDayOf(p.day || 1), last = clampDay(first.getFullYear(), first.getMonth() + n - 1, p.day || 1);
+      return T(`${kr(p.per)} on day ${p.day || 1} each month: ${plural(n, "payment")}, done ${monthYear.format(last)}`);
+    }
+    if (p.type === "sell") {
+      const rest = left - (p.price || 0);
+      return T(`Sell ${p.item || "something"}${p.price ? ` for about ${kr(p.price)}` : ""}${p.by ? ` by ${longDate.format(parseYmd(p.by))}` : ""}`) + (p.price ? (rest > 0.004 ? ` · ${T(`then ${kr(rest)} left`)}` : rest < -0.004 ? ` · ${T(`${kr(-rest)} over for you`)}` : ` · ${T("that covers it")}`) : "");
+    }
+    if (p.type === "once" && p.on) return T(`${kr(left)} on ${longDate.format(parseYmd(p.on))}`);
+    return T("No plan yet. Tap Edit to make one.");
+  }
+  function nextDayOf(day, now = new Date()) {
+    let d = clampDay(now.getFullYear(), now.getMonth(), day);
+    if (d < new Date(now.toDateString())) d = clampDay(now.getFullYear(), now.getMonth() + 1, day);
+    return d;
+  }
+  const loanTitle = (l) => (l.dir === "owe" ? T(`You owe ${l.who}`) : T(`${l.who} owes you`));
+  function renderLoans() {
+    const mine = log.loans.filter((l) => l.currency === cfg.currency);
+    const owe = mine.filter((l) => l.dir === "owe").reduce((a, l) => a + loanLeft(l), 0), owed = mine.filter((l) => l.dir === "owed").reduce((a, l) => a + loanLeft(l), 0);
+    $("ln-sum").innerHTML = [stat(T("You owe"), kr(owe), ""), stat(T("Owed to you"), kr(owed), "")].join("");
+    const sorted = mine.slice().sort((a, b) => (loanLeft(a) > 0.004 ? 0 : 1) - (loanLeft(b) > 0.004 ? 0 : 1) || b.t - a.t);
+    $("ln-list").innerHTML = sorted.length ? sorted.map((l) => {
+      const left = loanLeft(l), paid = loanPaid(l), done = left <= 0.004;
+      const last = (l.payments || []).slice().sort((a, b) => b.t - a.t)[0];
+      return `<div class="loan${done ? " done" : ""}" data-id="${esc(l.id)}">
+        <div class="loan-head"><b>${esc(loanTitle(l))}</b><span>${T(l.dir === "owe" ? "Debt" : "Lent out")}</span></div>
+        <div class="amt">${kr(left)} <small>${T("left")} · ${T(`of ${kr(l.amount)}`)}</small></div>
+        <div class="track"><i style="width:${Math.min(100, (paid / l.amount) * 100).toFixed(1)}%"></i></div>
+        <div class="m">${esc(loanPlanText(l, left))}${last ? `<br>${T(`Last payment ${kr(last.amount)}, ${longDate.format(last.t)}`)}` : ""}${l.note ? `<br>${esc(l.note)}` : ""}</div>
+        <div class="a">${done ? "" : `<button type="button" data-act="pay">${T(l.dir === "owe" ? "I paid" : "I got paid")}</button>`}<button type="button" data-act="edit">${T("Edit")}</button></div>
+      </div>`;
+    }).join("") : `<p class="empty">${T("No loans. Add one if you owe someone money, or someone owes you.")}</p>`;
+  }
+  $("ln-list").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const id = b.closest("[data-id]").dataset.id;
+    if (b.dataset.act === "pay") openPay(id); else openLoan(id);
+  });
+  let loanEdit = null;
+  const planType = () => document.querySelector("input[name=loan-plan]:checked").value;
+  function loanFormPlan() {
+    const t = planType();
+    $("lp-monthly-f").hidden = t !== "monthly"; $("lp-sell-f").hidden = t !== "sell"; $("lp-once-f").hidden = t !== "once";
+    const amt = parseAmount($("loan-amt").value), l = loanEdit && log.loans.find((x) => x.id === loanEdit);
+    const left = l ? Math.max(0, amt - loanPaid(l)) : amt;
+    const plan = readPlan();
+    const ready = plan.type === "monthly" ? plan.per > 0 : plan.type === "once" ? !!plan.on : plan.type === "sell";
+    $("loan-plan-t").textContent = amt > 0 && ready ? loanPlanText({ plan }, left) : "";
+  }
+  function readPlan() {
+    const t = planType();
+    if (t === "monthly") return { type: t, per: parseAmount($("lp-per").value) || 0, day: Math.min(31, Math.max(1, parseInt($("lp-day").value, 10) || 1)) };
+    if (t === "sell") return { type: t, item: $("lp-item").value.trim().slice(0, 60), price: parseAmount($("lp-price").value) || 0, by: $("lp-by").value || "" };
+    if (t === "once") return { type: t, on: $("lp-on").value || "" };
+    return { type: "none" };
+  }
+  function openLoan(id) {
+    const l = id ? log.loans.find((x) => x.id === id) : null;
+    loanEdit = l ? l.id : null;
+    $("loan-ttl").textContent = T(l ? "Edit loan" : "Add loan");
+    $(l && l.dir === "owed" ? "ld-owed" : "ld-owe").checked = true;
+    $("loan-who").value = l ? l.who : ""; $("loan-amt").value = l ? money(l.amount) : ""; $("loan-note").value = l ? l.note || "" : "";
+    $("loan-date").value = ymd(l ? new Date(l.t) : new Date());
+    const p = (l && l.plan) || { type: "none" };
+    $("lp-" + p.type).checked = true;
+    $("lp-per").value = p.per ? money(p.per) : ""; $("lp-day").value = p.day || "";
+    $("lp-item").value = p.item || ""; $("lp-price").value = p.price ? money(p.price) : ""; $("lp-by").value = p.by || ""; $("lp-on").value = p.on || "";
+    $("loan-err").textContent = "";
+    const del = $("loan-del"); del.hidden = !l; del.classList.remove("arm"); del.textContent = T("Delete");
+    loanFormPlan();
+    $("loan-sheet").hidden = false;
+    if (!l) setTimeout(() => $("loan-who").focus(), 50);
+  }
+  document.querySelectorAll("input[name=loan-plan]").forEach((r) => r.addEventListener("change", loanFormPlan));
+  ["loan-amt", "lp-per", "lp-day", "lp-item", "lp-price", "lp-by", "lp-on"].forEach((id) => $(id).addEventListener("input", loanFormPlan));
+  $("ln-add").addEventListener("click", () => openLoan(null));
+  $("loan-cancel").addEventListener("click", () => { $("loan-sheet").hidden = true; });
+  $("loan-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const who = $("loan-who").value.trim(), amount = parseAmount($("loan-amt").value), ds = $("loan-date").value || ymd(new Date());
+    const plan = readPlan();
+    if (!who) { $("loan-err").textContent = T("Write who the loan is with."); return; }
+    if (!(amount > 0)) { $("loan-err").textContent = T("Enter the amount as a number, like 2000."); return; }
+    if (plan.type === "monthly" && !(plan.per > 0)) { $("loan-err").textContent = T("Enter how much goes back each month."); return; }
+    if (plan.type === "once" && !plan.on) { $("loan-err").textContent = T("Choose the date it is paid back."); return; }
+    const old = loanEdit && log.loans.find((x) => x.id === loanEdit);
+    const data = { dir: document.querySelector("input[name=loan-dir]:checked").value, who: who.slice(0, 60), amount: +amount.toFixed(2), t: parseYmd(ds).getTime() + 12 * HOUR, note: $("loan-note").value.trim().slice(0, 140), plan, u: Date.now() };
+    if (old) Object.assign(old, data);
+    else log.loans.push({ id: uid(), currency: cfg.currency, payments: [], ...data });
+    evCache = null; persist();
+    $("loan-sheet").hidden = true; mView.area = "loans"; saveView(); renderPortfolio();
+    toast(old ? T("Saved.") : T("Loan added."));
+  });
+  $("loan-del").addEventListener("click", () => {
+    const del = $("loan-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    log.deleted.push(loanEdit); log.loans = log.loans.filter((x) => x.id !== loanEdit);
+    evCache = null; persist(); $("loan-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+  let payLoan = null;
+  function openPay(id) {
+    const l = log.loans.find((x) => x.id === id); if (!l) return;
+    payLoan = l.id;
+    const left = loanLeft(l), p = l.plan || {};
+    const sugg = p.type === "monthly" && p.per > 0 ? Math.min(p.per, left) : p.type === "sell" && p.price > 0 ? Math.min(p.price, left) : left;
+    $("pay-ttl").textContent = T(l.dir === "owe" ? "You paid back" : "You got paid back");
+    $("pay-info").textContent = `${loanTitle(l)} · ${kr(left)} ${T("left")}`;
+    $("pay-amt").value = money(sugg); $("pay-date").value = ymd(new Date()); $("pay-err").textContent = "";
+    $("pay-sheet").hidden = false;
+  }
+  $("pay-cancel").addEventListener("click", () => { $("pay-sheet").hidden = true; });
+  $("pay-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const l = log.loans.find((x) => x.id === payLoan); if (!l) return;
+    const amount = parseAmount($("pay-amt").value), ds = $("pay-date").value || ymd(new Date());
+    if (!(amount > 0)) { $("pay-err").textContent = T("Enter the amount as a number, like 500."); return; }
+    l.payments = [...(l.payments || []), { id: uid(), t: ds === ymd(new Date()) ? Date.now() : parseYmd(ds).getTime() + 12 * HOUR, amount: +amount.toFixed(2) }];
+    l.u = Date.now();
+    evCache = null; persist();
+    $("pay-sheet").hidden = true; renderPortfolio();
+    if (loanLeft(l) <= 0.004) showDone(T("Paid back"), loanTitle(l).replace(/^You owe /, ""));
+    else toast(T(`${kr(amount)} registered. ${kr(loanLeft(l))} left.`));
+  });
+
+  // ----- Scan a receipt or screenshot with Claude -----
+  // Uses your own Anthropic API key, kept only on this device. The SDK is bundled next to the app and loaded on first scan.
+  const AI_KEY = "99ms-ai-key";
+  const aiKey = () => { try { return localStorage.getItem(AI_KEY) || ""; } catch { return ""; } };
+  let sdkMod = null;
+  const SCAN_SCHEMA = {
+    type: "object", additionalProperties: false, required: ["expenses"],
+    properties: { expenses: { type: "array", items: {
+      type: "object", additionalProperties: false, required: ["name", "amount", "currency", "date", "category", "note"],
+      properties: {
+        name: { type: "string" }, amount: { type: "number" }, currency: { type: "string", enum: ["DKK", "EUR", "USD"] },
+        date: { type: "string" }, category: { type: "string", enum: CATS.map((c) => c[0]) }, note: { type: "string" },
+      },
+    } } },
+  };
+  const SCAN_SYSTEM = `You read pictures of receipts, order confirmations and screenshots from bank or card apps, and list the purchases in them for a personal budget app.
+- One entry per purchase. A receipt is one purchase: use the total paid, not the line items. A bank screenshot can show several purchases: list each payment going out.
+- Skip money coming in (salary, refunds, transfers to the user).
+- amount is the positive amount paid, as a number. Danish amounts use a comma for decimals and dots for thousands: "1.234,50" is 1234.5.
+- currency is DKK, EUR or USD as shown; "kr." and "DKK" mean DKK.
+- date is YYYY-MM-DD. If the year is missing, use the current year. If no date is shown, use today's date.
+- name is the shop or service, short, like "Netto" or "Spotify".
+- category is the closest of: groceries, food (restaurants, cafés, takeaway), transport, shopping, fun, bills, subs (subscriptions), health, other.
+- note is a few words that help later, or an empty string. Write it in ${DA ? "Danish" : "English"}.
+- Follow the user's context. If they say they only paid part, use that part.
+- If the picture shows no purchase, return an empty list.`;
+  async function imageToJpeg(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const scale = Math.min(1, 1568 / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(img.naturalWidth * scale)); c.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      return c.toDataURL("image/jpeg", 0.85).split(",")[1];
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function scanImage(file, ctx) {
+    if (!sdkMod) sdkMod = await import("./vendor/anthropic-sdk-0.131.0.mjs");
+    const Anthropic = sdkMod.default;
+    const client = new Anthropic({ apiKey: aiKey(), dangerouslyAllowBrowser: true, maxRetries: 1 });
+    const data = await imageToJpeg(file);
+    const req = {
+      model: "claude-opus-5-5",
+      max_tokens: 8000,
+      system: SCAN_SYSTEM,
+      output_config: { effort: "low", format: { type: "json_schema", schema: SCAN_SCHEMA } },
+      messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data } },
+        { type: "text", text: `Today is ${ymd(new Date())}. My currency is ${cfg.currency}.${ctx ? `\nContext: ${ctx}` : ""}` },
+      ] }],
+    };
+    let res;
+    try {
+      // If the model declines, the API retries on a fallback model by itself.
+      res = await client.beta.messages.create({ ...req, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+    } catch (err) {
+      if (!(err instanceof Anthropic.BadRequestError && /fallback/i.test(err.message || ""))) throw err;
+      res = await client.messages.create(req);
+    }
+    if (res.stop_reason === "refusal") throw new Error("refusal");
+    if (res.stop_reason === "max_tokens") throw new Error("too long");
+    const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+    const out = JSON.parse(text);
+    return Array.isArray(out.expenses) ? out.expenses : [];
+  }
+  function scanErr(err) {
+    const A = sdkMod && sdkMod.default;
+    if (A && err instanceof A.AuthenticationError) return T("The API key was not accepted. Check it in Settings.");
+    if (A && err instanceof A.PermissionDeniedError) return T("The API key was not accepted. Check it in Settings.");
+    if (A && err instanceof A.RateLimitError) return T("Too many scans right now, or no credit left on the key. Try again in a minute.");
+    if (A && err instanceof A.APIConnectionError) return T("Could not reach the AI. Check your connection and try again.");
+    if (A && err instanceof A.APIError && err.status >= 500) return T("The AI is busy. Try again in a moment.");
+    if (err && err.message === "refusal") return T("The AI could not read this picture. Add the expense by hand instead.");
+    if (err instanceof SyntaxError) return T("The answer could not be read. Try again.");
+    return T("Something went wrong. Try again, or add the expense by hand.");
+  }
+  let scanFile = null;
+  function openScan() {
+    scanFile = null;
+    $("scan-file").value = ""; $("scan-ctx").value = ""; $("scan-img").hidden = true; $("scan-drop-t").hidden = false;
+    $("scan-err").textContent = ""; $("scan-err").classList.remove("info");
+    $("scan-go").disabled = false; $("scan-form").classList.remove("busy");
+    if (!aiKey()) { $("scan-err").textContent = T("Add your Anthropic API key in Settings first, under AI scanning."); }
+    $("scan-sheet").hidden = false;
+  }
+  $("scan-file").addEventListener("change", () => {
+    const f = $("scan-file").files[0]; if (!f) return;
+    scanFile = f;
+    const img = $("scan-img"); img.src = URL.createObjectURL(f); img.hidden = false; $("scan-drop-t").hidden = true;
+  });
+  $("scan-cancel").addEventListener("click", () => { $("scan-sheet").hidden = true; });
+  $("scan-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const err = $("scan-err");
+    if (!aiKey()) { err.classList.remove("info"); err.textContent = T("Add your Anthropic API key in Settings first, under AI scanning."); return; }
+    if (!scanFile) { err.classList.remove("info"); err.textContent = T("Choose a picture first."); return; }
+    err.classList.add("info"); err.textContent = T("Reading the picture…");
+    $("scan-go").disabled = true; $("scan-form").classList.add("busy");
+    try {
+      const found = await scanImage(scanFile, $("scan-ctx").value.trim().slice(0, 500));
+      const now = Date.now(), added = [];
+      found.forEach((x) => {
+        if (!(x.amount > 0)) return;
+        const c = ["DKK", "EUR", "USD"].includes(x.currency) ? x.currency : cfg.currency;
+        const amount = c === cfg.currency ? x.amount : toCur(x.amount, c);
+        if (!(amount > 0)) return;
+        const day = /^\d{4}-\d\d-\d\d$/.test(x.date) && parseYmd(x.date).getTime() <= now + DAY ? x.date : ymd(new Date());
+        const note = [x.note, c !== cfg.currency ? `${fmt2.format(x.amount)} ${curLabel(c)}` : ""].filter(Boolean).join(" · ").slice(0, 140);
+        const rec = { id: uid(), currency: cfg.currency, amount: +amount.toFixed(2), name: String(x.name || "").slice(0, 60), cat: CATS.some((k) => k[0] === x.category) ? x.category : "other", note, t: parseYmd(day).getTime() + (day === ymd(new Date()) ? now - new Date().setHours(0, 0, 0, 0) : 12 * HOUR), ai: true, u: now };
+        log.expenses.push(rec); added.push(rec);
+      });
+      $("scan-go").disabled = false; $("scan-form").classList.remove("busy");
+      if (!added.length) { err.classList.remove("info"); err.textContent = T("No purchase found in the picture. Add it by hand, or try a clearer picture."); return; }
+      evCache = null; persist();
+      $("scan-sheet").hidden = true;
+      exMonth = new Date(new Date(added[0].t).getFullYear(), new Date(added[0].t).getMonth(), 1);
+      mView.area = "expenses"; saveView(); go("portfolio"); renderPortfolio();
+      toast(added.length === 1 ? T(`Added: ${added[0].name || catName(added[0].cat)}, ${kr(added[0].amount)}. Tap it to change.`) : T(`Added ${added.length} expenses. Tap one to change it.`));
+    } catch (ex) {
+      $("scan-go").disabled = false; $("scan-form").classList.remove("busy");
+      err.classList.remove("info"); err.textContent = scanErr(ex);
+    }
+  });
+  $("ex-scan").addEventListener("click", openScan);
+  function renderAiKey() {
+    const k = aiKey();
+    $("ai-status").textContent = k ? T(`Key saved on this device (…${k.slice(-4)}).`) : T("No key yet.");
+    $("ai-key").value = ""; $("ai-del").hidden = !k;
+  }
+  $("ai-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const k = $("ai-key").value.trim();
+    if (!/^sk-ant-[A-Za-z0-9_-]{20,}$/.test(k)) { $("ai-status").textContent = T("That does not look like an Anthropic API key. It starts with sk-ant-."); return; }
+    try { localStorage.setItem(AI_KEY, k); } catch {}
+    renderAiKey(); toast(T("API key saved on this device."));
+  });
+  $("ai-del").addEventListener("click", () => { try { localStorage.removeItem(AI_KEY); } catch {} renderAiKey(); toast(T("API key removed.")); });
+  renderAiKey();
+
+  // ----- The Add menu, sections and live updates -----
+  $("m-add").addEventListener("click", () => { $("add-sheet").hidden = false; });
+  $("add-cancel").addEventListener("click", () => { $("add-sheet").hidden = true; });
+  $("add-sheet").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-add]"); if (!b) return;
+    $("add-sheet").hidden = true;
+    ({ scan: openScan, expense: () => openExpense(null), sub: () => openSub(null), loan: () => openLoan(null), stock: () => openHold(null, "stock"), crypto: () => openHold(null, "crypto"), item: () => openItem(null), bank: openBank })[b.dataset.add]();
+  });
+  document.querySelectorAll("input[name=m-area]").forEach((r) => r.addEventListener("change", () => { mView.area = r.value; saveView(); renderPortfolio(); }));
+  function renderPortfolio() {
+    $("ma-" + { overview: "ov", expenses: "ex", loans: "ln" }[mView.area]).checked = true;
+    ["overview", "expenses", "loans"].forEach((k) => { $("mp-" + k).hidden = k !== mView.area; });
+    if (mView.area === "overview") renderOverview();
+    else if (mView.area === "expenses") renderExpenses();
+    else renderLoans();
+    loadPrices(); loadCrypto();
+  }
+  function renderMoneyIfOpen() {
+    if (tab === "portfolio" && mView.area === "overview") renderOverview();
+    if (!$("chart-sheet").hidden) renderChart();
+    if (!$("hold-sheet").hidden) renderPick();
+  }
+  setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    if (tab === "portfolio" || tab === "home") { loadPrices(); if (curHoldings().some((h) => h.kind === "crypto") || tab === "portfolio") loadCrypto(); }
+    if (tab === "portfolio" && mView.area === "overview" && $("chart-sheet").hidden) renderOverview();
+  }, 5000);
+  // Total for the Home card: everything you have, and how it moved today.
+  function moneyTotalToday() {
+    const s = viewSeries("all", "1d", 2);
+    return { now: s[1][1], d: s[1][1] - s[0][1], base: s[0][1] };
+  }
 
   // Settings
   function renderSettings() {
@@ -3178,6 +4463,8 @@
       goals: byId(L.goals || [], r.goals || []),
       supps: byId(L.supps || [], r.supps || []),
       pledges: byId(L.pledges || [], r.pledges || []),
+      holdings: byId(L.holdings || [], r.holdings || []), expenses: byId(L.expenses || [], r.expenses || []), subs: byId(L.subs || [], r.subs || []),
+      loans: byId(L.loans || [], r.loans || []), bank: byId(L.bank || [], r.bank || []),
       deleted,
       epoch: Math.max(le, re) || undefined,
     } };
@@ -3219,10 +4506,11 @@
     }
   }
 
-  let syncLoadErr = false;
+  let syncLoadErr = false, syncDown = false;
   function acctLine() {
     if (!SYNC.url) return "";
     if (!sb) return syncLoadErr ? "Sync could not load. Check your connection and reopen the app." : "Connecting…";
+    if (!user && syncDown) return T("The login server is not answering. Your data is safe on this device, and login works again when the server is back.");
     if (!user) return "Not logged in. Log in to sync across devices.";
     return syncErr || (lastSynced ? `Synced as ${user.email} · ${hhmm(new Date(lastSynced))}` : `Logged in as ${user.email}`);
   }
@@ -3245,6 +4533,8 @@
     const linkErr = /error_code=|error_description=/.test(location.hash);
     try { await loadScript(SUPABASE_JS); } catch { syncLoadErr = true; renderAcct(); if (firstRunPending) { firstRunPending = false; openWizard(); } return; }
     sb = window.supabase.createClient(SYNC.url, SYNC.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    // Free Supabase projects can be paused; then the address stops answering and login cannot work.
+    fetch(`${SYNC.url}/auth/v1/health`, { headers: { apikey: SYNC.anonKey } }).then(() => { syncDown = false; }, () => { syncDown = true; renderAcct(); });
     const { data } = await sb.auth.getSession();
     user = data.session ? data.session.user : null;
     if (fromLink || linkErr) history.replaceState(null, "", location.pathname + location.search);
@@ -3303,6 +4593,7 @@
     info("Sending…"); acct.btn.disabled = true;
     const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
     acct.btn.disabled = false;
+    if (error && /load failed|failed to fetch|networkerror|network request/i.test(error.message || "")) return fail(T("Can't reach the login server right now. Your data is saved on this device."));
     if (error) return fail(/rate|seconds/i.test(error.message || "") ? "Too many emails in a short time. Wait a minute and try again." : error.message || "Could not send the email. Try again.");
     acct.btn.textContent = "Send a new link";
     info(`Sent to ${email}. Open the email on this device and tap the link. This page logs you in by itself when you do.`);
