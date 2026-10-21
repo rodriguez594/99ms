@@ -1,0 +1,24 @@
+name: network check
+on:
+  push:
+    paths: [".github/workflows/check.yml"]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set +e
+          H=ayiretwrdtfkeakoinnj.supabase.co
+          echo "== dns"; getent hosts $H; dig +short $H; dig +short CNAME $H
+          echo "== supabase health"; curl -sS -m 20 -i https://$H/auth/v1/health -H "apikey: x" | head -20
+          O="Origin: https://99ms.dk"
+          for u in \
+            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=dkk&include_24hr_change=true" \
+            "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT" \
+            "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1d&interval=1d" \
+            "https://query2.finance.yahoo.com/v8/finance/chart/NOVO-B.CO?range=1mo&interval=1d" \
+            "https://stooq.com/q/l/?s=aapl.us&f=sd2t2ohlcvn&h&e=csv" \
+            "https://api.frankfurter.app/latest?from=USD&to=DKK,EUR" \
+            ; do
+            echo "== $u"; curl -sS -m 20 -D - -o /tmp/b -H "$O" -A "Mozilla/5.0" "$u" | grep -i '^HTTP\|access-control-allow-origin'; head -c 400 /tmp/b; echo
+          done
