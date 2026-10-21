@@ -4447,12 +4447,9 @@
   // ---------- Account and sync (Cloudflare) ----------
   // You log in with a passkey: Face ID, Touch ID or the phone's screen lock. No password and no email is sent.
   // The API is part of the Cloudflare Worker that serves the app (worker/ in this repo); each account's data is one D1 document.
-  const WORKER_URL = "";
   const API = (() => {
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { try { return localStorage.getItem("99ms-api") || ""; } catch { return ""; } }
-    // 99ms.dk is still served by GitHub Pages, so the app calls the Worker at its workers.dev address.
-    // Passkeys belong to the page's domain (99ms.dk), so they work wherever the API runs.
-    return location.hostname.endsWith(".workers.dev") || !WORKER_URL ? "/api" : WORKER_URL + "/api";
+    return "/api"; // the same Worker serves the app and the API
   })();
   const SESSION_KEY = "99ms-session";
   let session = (() => { try { const v = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); return v && v.token ? v : null; } catch { return null; } })();
