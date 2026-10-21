@@ -4447,9 +4447,12 @@
   // ---------- Account and sync (Cloudflare) ----------
   // You log in with a passkey: Face ID, Touch ID or the phone's screen lock. No password and no email is sent.
   // The API is part of the Cloudflare Worker that serves the app (worker/ in this repo); each account's data is one D1 document.
+  const WORKER_URL = "";
   const API = (() => {
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { try { return localStorage.getItem("99ms-api") || ""; } catch { return ""; } }
-    return "/api"; // the same Worker serves the app and the API
+    // 99ms.dk is still served by GitHub Pages, so the app calls the Worker at its workers.dev address.
+    // Passkeys belong to the page's domain (99ms.dk), so they work wherever the API runs.
+    return location.hostname.endsWith(".workers.dev") || !WORKER_URL ? "/api" : WORKER_URL + "/api";
   })();
   const SESSION_KEY = "99ms-session";
   let session = (() => { try { const v = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); return v && v.token ? v : null; } catch { return null; } })();
@@ -4579,7 +4582,9 @@
       if (e.code === "unknown_passkey") return T("That passkey is not known here. Create an account first.");
       if (e.code === "not_verified" || e.code === "challenge_expired") return T("The passkey could not be checked. Try again.");
     }
-    return T("Something went wrong. Try again.");
+    // Show what failed, so a screenshot says where to look.
+    const why = e instanceof ApiError ? `${e.status || ""} ${e.code}`.trim() : (e && (e.name || e.message)) || "";
+    return T("Something went wrong. Try again.") + (why ? ` (${why})` : "");
   }
   const busy = (on) => { acct.btn.disabled = on; acct.login.disabled = on; };
   function afterLogin(s) {

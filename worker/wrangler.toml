@@ -1,14 +1,12 @@
-# 99MS on Cloudflare: one Worker serves the app at 99ms.dk and the login and sync API under /api.
+# 99MS on Cloudflare: one Worker serves the app and the login and sync API under /api.
 # Deployed by .github/workflows/worker.yml, which copies the app into ./public first (npm run build).
 name = "99ms"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
-routes = [
-  { pattern = "99ms.dk", custom_domain = true },
-  { pattern = "www.99ms.dk", custom_domain = true },
-]
+# 99ms.dk's DNS is at Simply.com, so the Worker runs on its workers.dev address and the app at 99ms.dk
+# calls it there. Once 99ms.dk is moved to Cloudflare, add it as a custom domain here.
 
 [assets]
 directory = "./public"
