@@ -2,9 +2,8 @@ name: worker
 # Deploys 99MS to Cloudflare: the app at 99ms.dk and its login and sync API under /api (worker/).
 # Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 on:
-  push:
-    branches: [main]
-    paths: ["worker/**", "index.html", "vendor/**", "manifest.webmanifest", "*.png", "icon.svg", ".github/workflows/worker.yml"]
+  # Cloudflare deploys the 99ms Worker from this repository itself (Workers Builds).
+  # This workflow is a manual backup and needs the two secrets above.
   workflow_dispatch:
 concurrency:
   group: worker
@@ -32,8 +31,6 @@ jobs:
       - run: npm ci
       - name: Copy the app into the Worker
         run: npm run build
-      - name: Update the database tables
-        run: npx wrangler d1 migrations apply 99ms --remote
       - name: Deploy the Worker
         run: npx wrangler deploy
       - name: Check it answers

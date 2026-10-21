@@ -33,6 +33,23 @@ const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/
 const randomId = (n = 16) => b64u(crypto.getRandomValues(new Uint8Array(n)));
 const sha256 = async (s) => b64u(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s))));
 
+// The tables are created on first use, so a deploy needs no database step.
+const SCHEMA = [
+  // Accounts log in with passkeys. Each account's app data is one JSON document.
+  "CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, created INTEGER NOT NULL)",
+  // id and public_key are base64url.
+  "CREATE TABLE IF NOT EXISTS credentials (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, public_key TEXT NOT NULL, counter INTEGER NOT NULL DEFAULT 0, transports TEXT, created INTEGER NOT NULL, last_used INTEGER)",
+  "CREATE INDEX IF NOT EXISTS credentials_user ON credentials(user_id)",
+  // kind is 'reg' or 'auth'.
+  "CREATE TABLE IF NOT EXISTS challenges (id TEXT PRIMARY KEY, challenge TEXT NOT NULL, kind TEXT NOT NULL, user_id TEXT, email TEXT, expires INTEGER NOT NULL)",
+  // Only the SHA-256 of a session token is stored; the token itself stays on the device.
+  "CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created INTEGER NOT NULL, last_used INTEGER NOT NULL)",
+  "CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id)",
+  "CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE, data TEXT NOT NULL, updated_at INTEGER NOT NULL)",
+];
+let schemaReady = null;
+const ensureSchema = (env) => (schemaReady ||= env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q))).catch((e) => { schemaReady = null; throw e; }));
+
 class HttpError extends Error {
   constructor(status, code) { super(code); this.status = status; this.code = code; }
 }
@@ -53,6 +70,7 @@ export default {
     const path = url.pathname.slice(4);
     try {
       if (path === "/health") return json({ ok: true });
+      await ensureSchema(env);
       if (!allowed) throw new HttpError(403, "origin");
       const route = `${req.method} ${path}`;
       const body = req.method === "POST" || req.method === "PUT" ? await readJson(req) : null;
