@@ -1,0 +1,32 @@
+name: prices
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/scripts/prices.py", ".github/workflows/prices.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: prices
+  cancel-in-progress: false
+jobs:
+  prices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+      - name: Fetch prices
+        run: python3 .github/scripts/prices.py "${{ github.repository }}"
+      - name: Publish to the prices branch
+        run: |
+          mkdir out && mv prices.json out/ && cd out
+          git init -q -b prices && git add prices.json
+          git -c user.name="99ms prices" -c user.email="actions@users.noreply.github.com" commit -qm "Prices $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" prices
+      # Free Supabase projects pause after a week without requests. The anon key is public (it is in index.html).
+      - name: Keep the login server awake
+        run: curl -sS -m 15 -o /dev/null -w "supabase %{http_code}\n" "https://ayiretwrdtfkeakoinnj.supabase.co/rest/v1/user_data?select=user_id&limit=1" -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5aXJldHdyZHRma2Vha29pbm5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzUwNzQsImV4cCI6MjEwNzExMTA3NH0.HUk_td6OdvWWSr7z-Sfhno3s7dyvUHc7zdrdXENYebE" || true
