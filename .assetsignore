@@ -1,0 +1,9 @@
+.*
+node_modules
+worker
+public
+wrangler.toml
+package.json
+package-lock.json
+README.md
+CNAME

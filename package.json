@@ -1,0 +1,15 @@
+{
+  "name": "99ms",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787 --local-upstream localhost:8787 --var ORIGINS:http://localhost:8787 --var RP_ID:localhost",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "14.0.3"
+  },
+  "devDependencies": {
+    "wrangler": "4.148.0"
+  }
+}

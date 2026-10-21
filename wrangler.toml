@@ -1,0 +1,27 @@
+# 99MS on Cloudflare: the "99ms" Worker serves this folder's app at 99ms.dk and the passkey login and
+# sync API under /api (worker/src/index.js). Cloudflare deploys it from the repository root with
+# "npx wrangler deploy"; .assetsignore keeps everything but the app's files out of the site.
+name = "99ms"
+main = "worker/src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+routes = [
+  { pattern = "99ms.dk", custom_domain = true },
+  { pattern = "www.99ms.dk", custom_domain = true },
+]
+
+[assets]
+directory = "."
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[vars]
+# Pages allowed to log in, and the domain passkeys belong to.
+ORIGINS = "https://99ms.dk,https://www.99ms.dk"
+RP_ID = "99ms.dk"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "99ms"
+database_id = "c300d4cf-c494-4da7-ab2c-778c7cb98b8f"
