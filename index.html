@@ -721,7 +721,7 @@
     <section class="sec" aria-labelledby="se-acct">
       <h3 class="sec-title" id="se-acct">Account</h3>
       <p class="note" id="acct-status">Connecting…</p>
-      <div class="row-actions"><button class="ghost" type="button" id="acct-open" hidden>Log in</button></div>
+      <div class="row-actions"><button class="ghost" type="button" id="acct-open" hidden>Log in</button><button class="ghost" type="button" id="acct-addpk" hidden>Add passkey on this device</button></div>
     </section>
 
     <section class="sec" aria-labelledby="se-ai">
@@ -1048,9 +1048,11 @@
 <div class="sheet" id="acct-sheet" hidden>
   <form class="page" id="acct-form" novalidate style="width:min(100%,22rem)">
     <div class="brand">99MS</div>
-    <p class="note">Log in to keep your shifts, savings and portfolio synced on every device. No password needed: we email you a link, and your account is created the first time.</p>
-    <label class="field" for="acct-email"><span>Email</span><input type="email" id="acct-email" autocomplete="email" inputmode="email" placeholder="you@example.com"></label>
-    <button class="go" type="submit" id="send-btn">Email me a login link</button>
+    <p class="note">Log in to keep your shifts, money and settings synced on every device. There is no password: you use a passkey, which is Face ID, Touch ID or your phone's code. On iPhone it follows your Apple account to your other devices.</p>
+    <button class="go" type="button" id="pk-login">Log in with passkey</button>
+    <p class="note">New here? Create an account. Your email is only the account's name; 99MS never sends you mail.</p>
+    <label class="field" for="acct-email"><span>Email</span><input type="email" id="acct-email" autocomplete="username webauthn" inputmode="email" placeholder="you@example.com"></label>
+    <button class="ghost" type="submit" id="send-btn">Create account</button>
     <p class="err" id="acct-err"></p>
     <button class="ghost" type="button" id="acct-cancel">Cancel</button>
   </form>
@@ -1199,6 +1201,17 @@
   const LOC = DA ? "da-DK" : "en-GB";
   document.documentElement.lang = LANG;
   const DICT = {
+    "Log in with a passkey (Face ID or Touch ID), with your data on Cloudflare": "Log ind med en passkey (Face ID eller Touch ID), med dine data hos Cloudflare",
+    "Log in with passkey": "Log ind med passkey", "Create account": "Opret konto", "Add passkey on this device": "Tilføj passkey på denne enhed",
+    "Log in to keep your shifts, money and settings synced on every device. There is no password: you use a passkey, which is Face ID, Touch ID or your phone's code. On iPhone it follows your Apple account to your other devices.": "Log ind for at have dine vagter, penge og indstillinger synkroniseret på alle dine enheder. Der er ingen adgangskode: du bruger en passkey, altså Face ID, Touch ID eller din telefons kode. På iPhone følger den din Apple-konto til dine andre enheder.",
+    "New here? Create an account. Your email is only the account's name; 99MS never sends you mail.": "Ny her? Opret en konto. Din e-mail er kun kontoens navn; 99MS sender dig aldrig mails.",
+    "Waiting for your passkey…": "Venter på din passkey…", "No passkey was used. If you have no account yet, create one below.": "Der blev ikke brugt nogen passkey. Har du ikke en konto endnu, så opret en nedenfor.",
+    "This device already has a passkey for this account. Tap Log in with passkey.": "Denne enhed har allerede en passkey til kontoen. Tryk på Log ind med passkey.",
+    "There is already an account with that email. Tap Log in with passkey.": "Der findes allerede en konto med den e-mail. Tryk på Log ind med passkey.",
+    "That passkey is not known here. Create an account first.": "Den passkey kendes ikke her. Opret en konto først.",
+    "The passkey could not be checked. Try again.": "Passkeyen kunne ikke tjekkes. Prøv igen.", "Something went wrong. Try again.": "Noget gik galt. Prøv igen.",
+    "Passkey saved on this device.": "Passkey gemt på denne enhed.", "You were logged out. Log in again to sync.": "Du blev logget ud. Log ind igen for at synkronisere.",
+    "Enter your email address.": "Skriv din e-mailadresse.",
     // money
     "Money": "Penge", "Overview": "Overblik", "Expenses": "Udgifter", "Loans": "Lån", "All": "Alt", "Stocks": "Aktier", "Crypto": "Krypto", "Other": "Andet",
     "1D": "1D", "1W": "1U", "1M": "1M", "3M": "3M", "1Y": "1Å",
@@ -1494,9 +1507,10 @@
       }
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
   }
-  const APP_VERSION = "2.3";
+  const APP_VERSION = "2.4";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "Log in with a passkey (Face ID or Touch ID), with your data on Cloudflare",
     "Bank-style overview of your account, savings, stocks and crypto, with live prices and a chart",
     "Expenses, with AI that reads receipts and screenshots",
     "Subscriptions with the day they are taken, and loans with a plan to pay back",
@@ -4423,21 +4437,38 @@
     cfg = { amount: cfg.amount, period: cfg.period, currency: cfg.currency || "DKK", mode: "today", shiftStart: "", shiftEnd: "", breakAt: "", payStart: 1, payDay: 0, setupDone: false };
     store.set(cfg); logStore.set(log); curCache.sec = -1; saveKey = ""; breakKey = "";
     if (sb && user) {
-      try { await sb.from("user_data").upsert({ user_id: user.id, data: { cfg, log }, updated_at: new Date().toISOString() }); } catch {}
+      try { await api("PUT", "/data", { data: { cfg, log } }); } catch {}
     }
     apply(); renderTab();
     toast("Everything was erased. Let's set you up again.");
     openWizard();
   });
 
-  // ---------- Account and sync (Supabase) ----------
-  // Fill these in from Supabase: Project Settings → API. The anon key is meant to be public;
-  // row level security keeps every account's data private.
-  const SYNC = {
-    url: "https://ayiretwrdtfkeakoinnj.supabase.co",
-    anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5aXJldHdyZHRma2Vha29pbm5qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1MzUwNzQsImV4cCI6MjEwNzExMTA3NH0.HUk_td6OdvWWSr7z-Sfhno3s7dyvUHc7zdrdXENYebE",
-  };
-  const SUPABASE_JS = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js";
+  // ---------- Account and sync (Cloudflare) ----------
+  // You log in with a passkey: Face ID, Touch ID or the phone's screen lock. No password and no email is sent.
+  // The API is a Cloudflare Worker with a D1 database (worker/ in this repo); each account's data is one document.
+  const API = (() => {
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { try { return localStorage.getItem("99ms-api") || ""; } catch { return ""; } }
+    return "https://api.99ms.dk";
+  })();
+  const SESSION_KEY = "99ms-session";
+  let session = (() => { try { const v = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); return v && v.token ? v : null; } catch { return null; } })();
+  function saveSession(v) {
+    session = v; user = v ? { email: v.email } : null;
+    try { if (v) localStorage.setItem(SESSION_KEY, JSON.stringify(v)); else localStorage.removeItem(SESSION_KEY); } catch {}
+  }
+  class ApiError extends Error { constructor(status, code) { super(code); this.status = status; this.code = code; } }
+  async function api(method, path, body) {
+    let r;
+    try {
+      r = await fetch(API + path, { method, headers: { "content-type": "application/json", ...(session ? { authorization: `Bearer ${session.token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    } catch { throw new ApiError(0, "network"); }
+    const v = await r.json().catch(() => ({}));
+    if (!r.ok) throw new ApiError(r.status, v.error || "error");
+    return v;
+  }
+  let wa = null;
+  const webauthn = async () => wa || (wa = await import("./vendor/simplewebauthn-browser-14.0.0.mjs"));
 
   function newest(a, b) { return (b.u || 0) > (a.u || 0) ? b : a; }
   function mergeData(local, remote) {
@@ -4480,12 +4511,11 @@
     if (!sb || !user || syncing) return;
     syncing = true;
     try {
-      const { data: row, error } = await sb.from("user_data").select("data").eq("user_id", user.id).maybeSingle();
-      if (error) throw error;
-      const fresh = !row && !cfg.setupDone && !log.shifts.length && !log.fixed.length && !log.planned.length;
-      const merged = mergeData({ cfg, log }, row && row.data);
-      const { error: upErr } = await sb.from("user_data").upsert({ user_id: user.id, data: merged, updated_at: new Date().toISOString() });
-      if (upErr) throw upErr;
+      const row = await api("GET", "/data");
+      const fresh = !row.data && !cfg.setupDone && !log.shifts.length && !log.fixed.length && !log.planned.length;
+      const merged = mergeData({ cfg, log }, row.data);
+      // Only write when something differs from what the server has.
+      if (JSON.stringify(merged) !== JSON.stringify(row.data)) await api("PUT", "/data", { data: merged });
       const changed = JSON.stringify(merged.cfg) !== JSON.stringify(cfg) || JSON.stringify(merged.log) !== JSON.stringify(log);
       if (changed) {
         cfg = merged.cfg; log = merged.log;
@@ -4496,20 +4526,20 @@
         setTimeout(checkPay, 300);
       }
       lastSynced = Date.now(); syncErr = "";
-      if (firstRunPending) { firstRunPending = false; if (!row && $("wiz").hidden) openWizard(); }
+      if (firstRunPending) { firstRunPending = false; if (!row.data && $("wiz").hidden) openWizard(); }
       else if (fresh && $("wiz").hidden) openWizard();
     } catch (e) {
-      syncErr = navigator.onLine === false ? "Offline. Will sync when you are back online." : "Sync failed. Retrying soon.";
+      if (e.status === 401) { saveSession(null); syncErr = ""; toast(T("You were logged out. Log in again to sync.")); }
+      else syncErr = navigator.onLine === false || e.code === "network" ? "Offline. Will sync when you are back online." : "Sync failed. Retrying soon.";
     } finally {
       syncing = false;
       renderAcct();
     }
   }
 
-  let syncLoadErr = false, syncDown = false;
+  let syncDown = false;
   function acctLine() {
-    if (!SYNC.url) return "";
-    if (!sb) return syncLoadErr ? "Sync could not load. Check your connection and reopen the app." : "Connecting…";
+    if (!API) return "";
     if (!user && syncDown) return T("The login server is not answering. Your data is safe on this device, and login works again when the server is back.");
     if (!user) return "Not logged in. Log in to sync across devices.";
     return syncErr || (lastSynced ? `Synced as ${user.email} · ${hhmm(new Date(lastSynced))}` : `Logged in as ${user.email}`);
@@ -4518,88 +4548,92 @@
     $("acct-status").textContent = acctLine();
     $("h-acct").textContent = acctLine();
     $("acct-open").hidden = !sb;
-    $("acct-open").textContent = user ? "Log out" : "Log in";
-  }
-
-  function loadScript(src) {
-    return new Promise((res, rej) => { const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = rej; document.head.appendChild(t); });
+    $("acct-open").textContent = user ? T("Log out") : T("Log in");
+    $("acct-addpk").hidden = !user;
   }
 
   let firstRunPending = false;
-  async function initSync() {
-    if (!SYNC.url || !SYNC.anonKey) return;
-    // A login link lands here with the session, or an error, in the URL hash.
-    const fromLink = /access_token=/.test(location.hash);
-    const linkErr = /error_code=|error_description=/.test(location.hash);
-    try { await loadScript(SUPABASE_JS); } catch { syncLoadErr = true; renderAcct(); if (firstRunPending) { firstRunPending = false; openWizard(); } return; }
-    sb = window.supabase.createClient(SYNC.url, SYNC.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-    // Free Supabase projects can be paused; then the address stops answering and login cannot work.
-    fetch(`${SYNC.url}/auth/v1/health`, { headers: { apikey: SYNC.anonKey } }).then(() => { syncDown = false; }, () => { syncDown = true; renderAcct(); });
-    const { data } = await sb.auth.getSession();
-    user = data.session ? data.session.user : null;
-    if (fromLink || linkErr) history.replaceState(null, "", location.pathname + location.search);
-    if (fromLink && user) loggedIn();
-    else if (linkErr) toast("That login link has expired or was already used. Send a new one from Settings.");
-    sb.auth.onAuthStateChange((_e, session) => {
-      const was = user && user.id;
-      user = session ? session.user : null;
-      renderAcct();
-      if (user && !was && !$("acct-sheet").hidden) loggedIn();
-      if (user && user.id !== was) syncNow();
-    });
+  function initSync() {
+    if (!API) return;
+    sb = true;
+    user = session ? { email: session.email } : null;
+    fetch(API + "/health").then((r) => { syncDown = !r.ok; renderAcct(); }, () => { syncDown = true; renderAcct(); });
     renderAcct();
     if (user) syncNow();
     else if (firstRunPending) { firstRunPending = false; openWizard(); }
     setInterval(() => { if (user && document.visibilityState === "visible") syncNow(); }, 20000);
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { checkLinkLogin(); scheduleSync(100); } });
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") scheduleSync(100); });
     window.addEventListener("online", () => scheduleSync(100));
   }
 
-  // The link from the email usually opens in a new tab. This tab picks up the session that tab saved.
-  let waitT = null, waitEnd = null;
-  const stopWaiting = () => { clearInterval(waitT); clearTimeout(waitEnd); waitT = null; };
-  async function checkLinkLogin() {
-    if (!sb || user) return;
-    const { data } = await sb.auth.getSession();
-    if (!data.session || user) return;
-    user = data.session.user;
-    renderAcct();
-    if (!$("acct-sheet").hidden) loggedIn(); else stopWaiting();
-    syncNow();
-  }
-
-  const acct = { email: $("acct-email"), err: $("acct-err"), btn: $("send-btn") };
+  const acct = { email: $("acct-email"), err: $("acct-err"), btn: $("send-btn"), login: $("pk-login") };
   const info = (t) => { acct.err.textContent = t; acct.err.classList.add("info"); };
   const fail = (t) => { acct.err.textContent = t; acct.err.classList.remove("info"); };
+  function authErr(e) {
+    if (e && e.name === "NotAllowedError") return T("No passkey was used. If you have no account yet, create one below.");
+    if (e && e.name === "InvalidStateError") return T("This device already has a passkey for this account. Tap Log in with passkey.");
+    if (e instanceof ApiError) {
+      if (e.code === "network") return T("Can't reach the login server right now. Your data is saved on this device.");
+      if (e.code === "exists") return T("There is already an account with that email. Tap Log in with passkey.");
+      if (e.code === "bad_email") return T("Enter your email address.");
+      if (e.code === "unknown_passkey") return T("That passkey is not known here. Create an account first.");
+      if (e.code === "not_verified" || e.code === "challenge_expired") return T("The passkey could not be checked. Try again.");
+    }
+    return T("Something went wrong. Try again.");
+  }
+  const busy = (on) => { acct.btn.disabled = on; acct.login.disabled = on; };
+  function afterLogin(s) {
+    saveSession(s);
+    lastSynced = 0; syncErr = "";
+    $("acct-sheet").hidden = true;
+    renderAcct();
+    showDone("Logged in", "Your data now syncs across devices");
+    syncNow();
+  }
   $("acct-open").addEventListener("click", async () => {
     if (user) {
-      await sb.auth.signOut();
-      user = null; renderAcct();
+      try { await api("POST", "/auth/logout", {}); } catch {}
+      saveSession(null); renderAcct();
       toast("Logged out. Your data stays on this device.");
       return;
     }
-    fail("");
-    acct.btn.textContent = "Email me a login link"; acct.btn.disabled = false;
+    fail(""); busy(false);
     $("acct-sheet").hidden = false;
-    setTimeout(() => acct.email.focus(), 50);
   });
-  $("acct-cancel").addEventListener("click", () => { $("acct-sheet").hidden = true; stopWaiting(); });
-
-  // Email link login: Supabase emails a link that logs you in, and creates the account the first time.
+  $("acct-cancel").addEventListener("click", () => { $("acct-sheet").hidden = true; });
+  acct.login.addEventListener("click", async () => {
+    busy(true); info(T("Waiting for your passkey…"));
+    try {
+      const { startAuthentication } = await webauthn();
+      const o = await api("POST", "/auth/login/options", {});
+      const response = await startAuthentication({ optionsJSON: o.options });
+      afterLogin(await api("POST", "/auth/login/verify", { challengeId: o.challengeId, response }));
+    } catch (e) { fail(authErr(e)); }
+    busy(false);
+  });
+  // New account: the email is only the account's name. The phone then saves a passkey for 99ms.dk.
   $("acct-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const email = acct.email.value.trim();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Enter your email address.");
-    info("Sending…"); acct.btn.disabled = true;
-    const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
-    acct.btn.disabled = false;
-    if (error && /load failed|failed to fetch|networkerror|network request/i.test(error.message || "")) return fail(T("Can't reach the login server right now. Your data is saved on this device."));
-    if (error) return fail(/rate|seconds/i.test(error.message || "") ? "Too many emails in a short time. Wait a minute and try again." : error.message || "Could not send the email. Try again.");
-    acct.btn.textContent = "Send a new link";
-    info(`Sent to ${email}. Open the email on this device and tap the link. This page logs you in by itself when you do.`);
-    stopWaiting();
-    waitT = setInterval(checkLinkLogin, 2500);
-    waitEnd = setTimeout(stopWaiting, 15 * 60000);
+    const email = acct.email.value.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) return fail(T("Enter your email address."));
+    busy(true); info(T("Waiting for your passkey…"));
+    try {
+      const { startRegistration } = await webauthn();
+      const o = await api("POST", "/auth/register/options", { email });
+      const response = await startRegistration({ optionsJSON: o.options });
+      afterLogin(await api("POST", "/auth/register/verify", { challengeId: o.challengeId, response }));
+    } catch (err) { fail(authErr(err)); }
+    busy(false);
+  });
+  // Logged in: save a passkey on this device too, for a computer or phone that does not share your passkeys.
+  $("acct-addpk").addEventListener("click", async () => {
+    try {
+      const { startRegistration } = await webauthn();
+      const o = await api("POST", "/auth/register/options", {});
+      const response = await startRegistration({ optionsJSON: o.options });
+      await api("POST", "/auth/register/verify", { challengeId: o.challengeId, response });
+      toast(T("Passkey saved on this device."));
+    } catch (e) { toast(authErr(e)); }
   });
 
   // Checkmark, then back to the app.
@@ -4608,11 +4642,6 @@
     d.querySelector("p").textContent = title; d.querySelector("span").textContent = sub;
     d.hidden = true; void d.offsetWidth; d.hidden = false; // restart the animation
     setTimeout(() => { d.hidden = true; }, 1900);
-  }
-  function loggedIn() {
-    stopWaiting();
-    $("acct-sheet").hidden = true;
-    showDone("Logged in", "Your data now syncs across devices");
   }
 
   // ---------- Moving in from the old address ----------
@@ -4669,7 +4698,7 @@
   // First run: ask the setup questions, unless a logged-in account already has data (the first sync decides).
   if (!saved && !moved) {
     firstRunPending = true;
-    if (!SYNC.url) { firstRunPending = false; openWizard(); }
+    if (!API) { firstRunPending = false; openWizard(); }
     else setTimeout(() => { if (firstRunPending && !user) { firstRunPending = false; openWizard(); } }, 4000);
   }
   requestAnimationFrame(frame);

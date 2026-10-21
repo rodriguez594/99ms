@@ -1,0 +1,15 @@
+{
+  "name": "99ms-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local --port 8787 --var ORIGINS:http://localhost:8799 --var RP_ID:localhost",
+    "deploy": "wrangler d1 migrations apply 99ms --remote && wrangler deploy"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "14.0.3"
+  },
+  "devDependencies": {
+    "wrangler": "4.148.0"
+  }
+}
