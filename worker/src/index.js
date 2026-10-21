@@ -1,4 +1,5 @@
-// 99MS API: passkey login and data sync, on Cloudflare Workers with D1.
+// 99MS on Cloudflare: the app is served as static assets, and this Worker answers /api with
+// passkey login and data sync, stored in D1. Paths below are under /api.
 //
 //   POST /auth/register/options  { email }            -> { challengeId, options }   new account (or a new passkey when logged in)
 //   POST /auth/register/verify   { challengeId, response } -> { token, email }
@@ -38,15 +39,18 @@ class HttpError extends Error {
 
 export default {
   async fetch(req, env) {
+    const url = new URL(req.url);
+    if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
+    // Same-origin GETs carry no Origin header; the page then is this Worker's own address.
+    const origin = req.headers.get("origin") || url.origin;
     const origins = env.ORIGINS.split(",").map((o) => o.trim());
-    const origin = req.headers.get("origin") || "";
     const allowed = origins.includes(origin);
     const cors = allowed
       ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "GET, PUT, POST, OPTIONS", "access-control-max-age": "86400", vary: "origin" }
       : {};
     const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...cors } });
     if (req.method === "OPTIONS") return new Response(null, { status: allowed ? 204 : 403, headers: cors });
-    const path = new URL(req.url).pathname;
+    const path = url.pathname.slice(4);
     try {
       if (path === "/health") return json({ ok: true });
       if (!allowed) throw new HttpError(403, "origin");
@@ -54,9 +58,9 @@ export default {
       const body = req.method === "POST" || req.method === "PUT" ? await readJson(req) : null;
       switch (route) {
         case "POST /auth/register/options": return json(await registerOptions(env, req, body));
-        case "POST /auth/register/verify": return json(await registerVerify(env, origin, body));
+        case "POST /auth/register/verify": return json(await registerVerify(env, origins, body));
         case "POST /auth/login/options": return json(await loginOptions(env));
-        case "POST /auth/login/verify": return json(await loginVerify(env, origin, body));
+        case "POST /auth/login/verify": return json(await loginVerify(env, origins, body));
         case "POST /auth/logout": return json(await logout(env, req));
         case "GET /me": { const u = await requireUser(env, req); return json({ email: u.email }); }
         case "GET /data": return json(await getData(env, req));
@@ -140,11 +144,11 @@ async function registerOptions(env, req, body) {
   return { challengeId, options };
 }
 
-async function registerVerify(env, origin, body) {
+async function registerVerify(env, origins, body) {
   const c = await takeChallenge(env, body && body.challengeId, "reg");
   let v;
   try {
-    v = await verifyRegistrationResponse({ response: body.response, expectedChallenge: c.challenge, expectedOrigin: origin, expectedRPID: env.RP_ID, requireUserVerification: false });
+    v = await verifyRegistrationResponse({ response: body.response, expectedChallenge: c.challenge, expectedOrigin: origins, expectedRPID: env.RP_ID, requireUserVerification: false });
   } catch { throw new HttpError(400, "not_verified"); }
   if (!v.verified) throw new HttpError(400, "not_verified");
   const cred = v.registrationInfo.credential, now = Date.now();
@@ -166,7 +170,7 @@ async function loginOptions(env) {
   return { challengeId: await saveChallenge(env, { challenge: options.challenge, kind: "auth" }), options };
 }
 
-async function loginVerify(env, origin, body) {
+async function loginVerify(env, origins, body) {
   const c = await takeChallenge(env, body && body.challengeId, "auth");
   const id = body && body.response && body.response.id;
   if (typeof id !== "string" || id.length > 1400) throw new HttpError(400, "bad_response");
@@ -175,7 +179,7 @@ async function loginVerify(env, origin, body) {
   let v;
   try {
     v = await verifyAuthenticationResponse({
-      response: body.response, expectedChallenge: c.challenge, expectedOrigin: origin, expectedRPID: env.RP_ID, requireUserVerification: false,
+      response: body.response, expectedChallenge: c.challenge, expectedOrigin: origins, expectedRPID: env.RP_ID, requireUserVerification: false,
       credential: { id: row.id, publicKey: unb64u(row.public_key), counter: row.counter, transports: row.transports ? JSON.parse(row.transports) : undefined },
     });
   } catch { throw new HttpError(400, "not_verified"); }

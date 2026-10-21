@@ -1,10 +1,11 @@
 {
-  "name": "99ms-api",
+  "name": "99ms",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --local --port 8787 --var ORIGINS:http://localhost:8799 --var RP_ID:localhost",
-    "deploy": "wrangler d1 migrations apply 99ms --remote && wrangler deploy"
+    "build": "rm -rf public && mkdir public && cp -r ../index.html ../vendor ../icon.svg ../icon-192.png ../icon-512.png ../apple-touch-icon.png ../manifest.webmanifest public/",
+    "dev": "npm run build && wrangler dev --local --port 8787 --local-upstream localhost:8787 --var ORIGINS:http://localhost:8787 --var RP_ID:localhost",
+    "deploy": "npm run build && wrangler d1 migrations apply 99ms --remote && wrangler deploy"
   },
   "dependencies": {
     "@simplewebauthn/server": "14.0.3"

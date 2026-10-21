@@ -1,10 +1,10 @@
 name: worker
-# Deploys the login and sync API (worker/) to Cloudflare at api.99ms.dk.
+# Deploys 99MS to Cloudflare: the app at 99ms.dk and its login and sync API under /api (worker/).
 # Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 on:
   push:
     branches: [main]
-    paths: ["worker/**", ".github/workflows/worker.yml"]
+    paths: ["worker/**", "index.html", "vendor/**", "manifest.webmanifest", "*.png", "icon.svg", ".github/workflows/worker.yml"]
   workflow_dispatch:
 concurrency:
   group: worker
@@ -30,11 +30,13 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
+      - name: Copy the app into the Worker
+        run: npm run build
       - name: Update the database tables
         run: npx wrangler d1 migrations apply 99ms --remote
       - name: Deploy the Worker
         run: npx wrangler deploy
       - name: Check it answers
         run: |
-          sleep 5
-          curl -sS -m 20 https://api.99ms.dk/health || echo "api.99ms.dk is not answering yet; a new custom domain can take a few minutes."
+          sleep 10
+          curl -sS -m 20 https://99ms.dk/api/health || echo "99ms.dk is not answering from Cloudflare yet; a new custom domain can take a few minutes."

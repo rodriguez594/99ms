@@ -1,14 +1,23 @@
-# The 99MS login and sync API, served at api.99ms.dk. Deployed by .github/workflows/worker.yml.
-name = "99ms-api"
+# 99MS on Cloudflare: one Worker serves the app at 99ms.dk and the login and sync API under /api.
+# Deployed by .github/workflows/worker.yml, which copies the app into ./public first (npm run build).
+name = "99ms"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
-routes = [{ pattern = "api.99ms.dk", custom_domain = true }]
+routes = [
+  { pattern = "99ms.dk", custom_domain = true },
+  { pattern = "www.99ms.dk", custom_domain = true },
+]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 [vars]
-# Pages allowed to use the API, and the domain passkeys belong to.
-ORIGINS = "https://99ms.dk,https://www.99ms.dk,https://prod.99ms.dk"
+# Pages allowed to log in, and the domain passkeys belong to.
+ORIGINS = "https://99ms.dk,https://www.99ms.dk"
 RP_ID = "99ms.dk"
 
 [[d1_databases]]
