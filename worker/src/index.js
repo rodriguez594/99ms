@@ -61,7 +61,9 @@ export default {
     // Same-origin GETs carry no Origin header; the page then is this Worker's own address.
     const origin = req.headers.get("origin") || url.origin;
     const origins = env.ORIGINS.split(",").map((o) => o.trim());
-    const allowed = origins.includes(origin);
+    // The Worker's own workers.dev address is allowed too, for testing before 99ms.dk points here.
+    const allowed = origins.includes(origin) || /^https:\/\/99ms\.[a-z0-9-]+\.workers\.dev$/.test(origin);
+    const site = { origins: allowed ? [...new Set([...origins, origin])] : origins, rpID: rpFor(env, origin) };
     const cors = allowed
       ? { "access-control-allow-origin": origin, "access-control-allow-headers": "authorization, content-type", "access-control-allow-methods": "GET, PUT, POST, OPTIONS", "access-control-max-age": "86400", vary: "origin" }
       : {};
@@ -75,10 +77,10 @@ export default {
       const route = `${req.method} ${path}`;
       const body = req.method === "POST" || req.method === "PUT" ? await readJson(req) : null;
       switch (route) {
-        case "POST /auth/register/options": return json(await registerOptions(env, req, body));
-        case "POST /auth/register/verify": return json(await registerVerify(env, origins, body));
-        case "POST /auth/login/options": return json(await loginOptions(env));
-        case "POST /auth/login/verify": return json(await loginVerify(env, origins, body));
+        case "POST /auth/register/options": return json(await registerOptions(env, site, req, body));
+        case "POST /auth/register/verify": return json(await registerVerify(env, site, body));
+        case "POST /auth/login/options": return json(await loginOptions(env, site));
+        case "POST /auth/login/verify": return json(await loginVerify(env, site, body));
         case "POST /auth/logout": return json(await logout(env, req));
         case "GET /me": { const u = await requireUser(env, req); return json({ email: u.email }); }
         case "GET /data": return json(await getData(env, req));
@@ -92,6 +94,14 @@ export default {
     }
   },
 };
+
+// Passkeys belong to a domain: 99ms.dk (and its subdomains) in production, otherwise the page's own host.
+function rpFor(env, origin) {
+  if (env.RP_ID === "localhost") return env.RP_ID;
+  let host = "";
+  try { host = new URL(origin).hostname; } catch {}
+  return host === env.RP_ID || host.endsWith("." + env.RP_ID) || !host ? env.RP_ID : host;
+}
 
 async function readJson(req) {
   const text = await req.text();
@@ -137,7 +147,7 @@ async function takeChallenge(env, id, kind) {
 }
 
 // A new account needs an email nobody uses yet. Logged in, the same call adds a passkey to your account.
-async function registerOptions(env, req, body) {
+async function registerOptions(env, site, req, body) {
   const me = await sessionUser(env, req);
   let userId, email;
   if (me) { userId = me.id; email = me.email; }
@@ -150,7 +160,7 @@ async function registerOptions(env, req, body) {
   const existing = (await env.DB.prepare("SELECT id, transports FROM credentials WHERE user_id = ?").bind(userId).all()).results;
   const options = await generateRegistrationOptions({
     rpName: "99MS",
-    rpID: env.RP_ID,
+    rpID: site.rpID,
     userName: email,
     userDisplayName: email,
     userID: unb64u(userId),
@@ -162,11 +172,11 @@ async function registerOptions(env, req, body) {
   return { challengeId, options };
 }
 
-async function registerVerify(env, origins, body) {
+async function registerVerify(env, site, body) {
   const c = await takeChallenge(env, body && body.challengeId, "reg");
   let v;
   try {
-    v = await verifyRegistrationResponse({ response: body.response, expectedChallenge: c.challenge, expectedOrigin: origins, expectedRPID: env.RP_ID, requireUserVerification: false });
+    v = await verifyRegistrationResponse({ response: body.response, expectedChallenge: c.challenge, expectedOrigin: site.origins, expectedRPID: site.rpID, requireUserVerification: false });
   } catch { throw new HttpError(400, "not_verified"); }
   if (!v.verified) throw new HttpError(400, "not_verified");
   const cred = v.registrationInfo.credential, now = Date.now();
@@ -183,12 +193,12 @@ async function registerVerify(env, origins, body) {
 }
 
 // No email needed to log in: the phone offers the passkeys it has for 99ms.dk.
-async function loginOptions(env) {
-  const options = await generateAuthenticationOptions({ rpID: env.RP_ID, userVerification: "preferred" });
+async function loginOptions(env, site) {
+  const options = await generateAuthenticationOptions({ rpID: site.rpID, userVerification: "preferred" });
   return { challengeId: await saveChallenge(env, { challenge: options.challenge, kind: "auth" }), options };
 }
 
-async function loginVerify(env, origins, body) {
+async function loginVerify(env, site, body) {
   const c = await takeChallenge(env, body && body.challengeId, "auth");
   const id = body && body.response && body.response.id;
   if (typeof id !== "string" || id.length > 1400) throw new HttpError(400, "bad_response");
@@ -197,7 +207,7 @@ async function loginVerify(env, origins, body) {
   let v;
   try {
     v = await verifyAuthenticationResponse({
-      response: body.response, expectedChallenge: c.challenge, expectedOrigin: origins, expectedRPID: env.RP_ID, requireUserVerification: false,
+      response: body.response, expectedChallenge: c.challenge, expectedOrigin: site.origins, expectedRPID: site.rpID, requireUserVerification: false,
       credential: { id: row.id, publicKey: unb64u(row.public_key), counter: row.counter, transports: row.transports ? JSON.parse(row.transports) : undefined },
     });
   } catch { throw new HttpError(400, "not_verified"); }
