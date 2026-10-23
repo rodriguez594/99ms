@@ -465,6 +465,10 @@
   .chart-big .vline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--dim); pointer-events: none; }
   .chart-big .dot { position: absolute; width: 9px; height: 9px; border-radius: 50%; background: var(--fg); transform: translate(-50%, -50%); pointer-events: none; }
   .chart-big .tipbox { top: -2.2rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip { border: 1px solid var(--faint); background: none; color: var(--fg); border-radius: 999px; padding: 0.4rem 0.75rem; font: 0.72rem var(--font-clock); cursor: pointer; }
+  .chip:focus-visible { outline: 1px solid var(--fg); }
+  .acct .amt small { font: 0.75rem var(--font-ui); color: var(--dim); }
 </style>
 
 <button class="view-toggle" id="view-toggle" type="button" hidden aria-label="Switch to phone view" title="Phone view">
@@ -475,24 +479,44 @@
 <div class="view" id="v-home" hidden>
   <div class="page tight">
     <div class="page-head"><div class="brand">99MS</div><span class="note" id="h-date"></span></div>
-    <div class="tip" data-tip="home" hidden><b>How 99MS works</b><p>This is your overview. Add your shifts in Calendar and 99MS counts your pay by itself: live during a shift, and every finished shift goes into your stats. Tap a card to open that part.</p><button class="link" type="button" data-tip-ok="home">Got it</button></div>
-    <button class="card" type="button" data-go="salary">
-      <span class="card-k" id="h-sal-label">Earned today</span>
-      <b class="card-big"><small id="h-cur">kr.</small><span id="h-int">0</span><span class="frac" id="h-frac">.0000</span></b>
-      <em id="h-sal-sub"></em>
-    </button>
+    <div class="tip" data-tip="money" hidden><b>Your money in one place</b><p>This is everything you have: your accounts, savings, stocks and crypto, and how it moves. Add your accounts and their balance under Money; pay comes in on payday, and expenses, subscriptions and loan payments go out by themselves. Tap the chart to make it bigger.</p><button class="link" type="button" data-tip-ok="money">Got it</button></div>
+    <div class="pills" id="dh-views" role="tablist" aria-label="Show"></div>
+    <section class="dash-head">
+      <span class="card-k" id="dh-label">Total</span>
+      <div class="dash-total" id="dh-total">0,00 kr.</div>
+      <div class="chg" id="dh-chg"></div>
+      <button class="chart-btn" type="button" id="dh-chart" aria-label="Show the chart bigger"></button>
+      <div class="ranges" id="dh-ranges"></div>
+    </section>
+    <div class="grid2 m-cards">
+      <button class="card" type="button" id="dh-exp-card"><span class="card-k">Expected balance</span><b id="dh-exp">—</b><em id="dh-exp-sub"></em></button>
+      <button class="card" type="button" id="dh-spent-card"><span class="card-k">Spent this month</span><b id="dh-spent">—</b><em id="dh-spent-sub"></em></button>
+    </div>
     <section class="sec" id="h-start" hidden aria-labelledby="h-start-title">
       <h3 class="sec-title" id="h-start-title">Get started</h3>
       <div class="steps" id="h-steps"></div>
     </section>
-    <div class="grid2 home-grid">
-      <button class="card" type="button" data-go="calendar"><span class="card-k">Next shift</span><b id="h-next">—</b><em id="h-next-sub"></em></button>
-      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">Next payday</span><b id="h-pay">—</b><em id="h-pay-sub"></em></button>
-      <button class="card" type="button" data-go="savings"><span class="card-k">Savings</span><b id="h-sav">0.00</b><em id="h-sav-sub"></em></button>
-      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This month</span><b id="h-mo">0.00</b><em id="h-mo-sub"></em></button>
-      <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This week</span><b id="h-wk">0.00</b><em id="h-wk-sub"></em></button>
-      <button class="card" type="button" data-go="portfolio"><span class="card-k">Money</span><b id="h-pf">0.00</b><em id="h-pf-sub"></em></button>
-    </div>
+    <section class="sec" aria-labelledby="h-sal-title">
+      <h3 class="sec-title" id="h-sal-title">Salary</h3>
+      <button class="card" type="button" data-go="salary">
+        <span class="card-k" id="h-sal-label">Earned today</span>
+        <b class="card-big"><small id="h-cur">kr.</small><span id="h-int">0</span><span class="frac" id="h-frac">.0000</span></b>
+        <em id="h-sal-sub"></em>
+      </button>
+      <div class="grid2 home-grid">
+        <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">Next pay</span><b id="h-pay">—</b><em id="h-pay-sub"></em></button>
+        <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This pay period</span><b id="h-per">—</b><em id="h-per-sub"></em></button>
+        <button class="card" type="button" data-go="calendar"><span class="card-k">Next shift</span><b id="h-next">—</b><em id="h-next-sub"></em></button>
+        <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This month</span><b id="h-mo">0.00</b><em id="h-mo-sub"></em></button>
+      </div>
+      <div class="hist" id="h-payouts"></div>
+    </section>
+    <section class="sec" aria-labelledby="dh-list-title">
+      <h3 class="sec-title" id="dh-list-title">What you have</h3>
+      <div class="hist" id="dh-list"></div>
+      <div class="row-actions"><button class="ghost" type="button" id="dh-add-acct">Add account</button><button class="ghost" type="button" id="dh-add-stock">Add stock</button><button class="ghost" type="button" id="dh-add-crypto">Add crypto</button><button class="ghost" type="button" id="pf-add">Other investment</button></div>
+    </section>
+    <p class="note" id="dh-upd"></p>
     <p class="note" id="h-acct"></p>
   </div>
 </div>
@@ -501,31 +525,15 @@
   <div class="page">
     <div class="page-head"><h2>Money</h2><button class="ghost" type="button" id="m-add">Add</button></div>
     <div class="seg m-area" role="radiogroup" aria-label="Section">
-      <input type="radio" name="m-area" id="ma-ov" value="overview" checked><label for="ma-ov">Overview</label>
+      <input type="radio" name="m-area" id="ma-ac" value="accounts" checked><label for="ma-ac">Accounts</label>
       <input type="radio" name="m-area" id="ma-ex" value="expenses"><label for="ma-ex">Expenses</label>
       <input type="radio" name="m-area" id="ma-ln" value="loans"><label for="ma-ln">Loans</label>
     </div>
 
-    <div class="m-pane" id="mp-overview">
-      <div class="tip" data-tip="money" hidden><b>Your money in one place</b><p>Set your account balance once and 99MS keeps it up to date: pay comes in on payday, expenses, subscriptions and loan payments go out. Add your stocks and crypto with how many you own and the prices update by themselves. Tap the chart to make it bigger.</p><button class="link" type="button" data-tip-ok="money">Got it</button></div>
-      <div class="pills" id="dh-views" role="tablist" aria-label="Show"></div>
-      <section class="dash-head">
-        <span class="card-k" id="dh-label">Total</span>
-        <div class="dash-total" id="dh-total">0,00 kr.</div>
-        <div class="chg" id="dh-chg"></div>
-        <button class="chart-btn" type="button" id="dh-chart" aria-label="Show the chart bigger"></button>
-        <div class="ranges" id="dh-ranges"></div>
-      </section>
-      <div class="grid2 m-cards">
-        <button class="card" type="button" id="dh-exp-card"><span class="card-k">Expected balance</span><b id="dh-exp">—</b><em id="dh-exp-sub"></em></button>
-        <button class="card" type="button" id="dh-spent-card"><span class="card-k">Spent this month</span><b id="dh-spent">—</b><em id="dh-spent-sub"></em></button>
-      </div>
-      <section class="sec" aria-labelledby="dh-list-title">
-        <h3 class="sec-title" id="dh-list-title">What you have</h3>
-        <div class="hist" id="dh-list"></div>
-        <div class="row-actions"><button class="ghost" type="button" id="dh-add-stock">Add stock</button><button class="ghost" type="button" id="dh-add-crypto">Add crypto</button><button class="ghost" type="button" id="pf-add">Other investment</button></div>
-      </section>
-      <p class="note" id="dh-upd"></p>
+    <div class="m-pane" id="mp-accounts">
+      <div class="tip" data-tip="accounts" hidden><b>Accounts and cards</b><p>Add your bank accounts, like Lønkonto, Opsparing and Aktiesparekonto, with reg. and account number, and the cards that belong to them. Mark the account your pay goes into, and set each balance once: 99MS keeps it up to date.</p><button class="link" type="button" data-tip-ok="accounts">Got it</button></div>
+      <div class="loans" id="ac-list"></div>
+      <div class="row-actions"><button class="go" type="button" id="ac-add">Add account</button><button class="ghost" type="button" id="cd-add">Add card</button><button class="ghost" type="button" id="tf-open">Transfer</button></div>
     </div>
 
     <div class="m-pane" id="mp-expenses" hidden>
@@ -622,8 +630,16 @@
         <button class="ghost" type="submit" data-dir="-1">Withdraw</button>
         <button class="ghost" type="submit" data-dir="1">Deposit</button>
       </form>
+      <label class="field" for="sv-acct"><span>From or to account</span><select id="sv-acct"></select></label>
       <p class="err" id="sv-err"></p>
       <div class="note" id="sv-split"></div>
+    </section>
+
+    <section class="sec" aria-labelledby="sv-earn-title">
+      <h3 class="sec-title" id="sv-earn-title">From your pay</h3>
+      <p class="note">Pay you have already earned. Put a shift's pay into savings; it leaves your salary account when the pay arrives.</p>
+      <div class="cal-list" id="sv-earned"></div>
+      <div class="row-actions"><button class="ghost" type="button" id="sv-earn-all" hidden>All to savings</button></div>
     </section>
 
     <section class="sec" aria-labelledby="pq-title">
@@ -879,7 +895,9 @@
       <button class="step" type="button" data-add="stock"><span>Stock or fund</span><span>›</span></button>
       <button class="step" type="button" data-add="crypto"><span>Crypto</span><span>›</span></button>
       <button class="step" type="button" data-add="item"><span>Other investment or project</span><span>›</span></button>
-      <button class="step" type="button" data-add="bank"><span>Account balance</span><span>›</span></button>
+      <button class="step" type="button" data-add="acct"><span>Bank account</span><span>›</span></button>
+      <button class="step" type="button" data-add="card"><span>Card</span><span>›</span></button>
+      <button class="step" type="button" data-add="transfer"><span>Transfer between accounts</span><span>›</span></button>
     </div>
     <button class="ghost" type="button" id="add-cancel">Cancel</button>
   </div>
@@ -917,15 +935,61 @@
   </form>
 </div>
 
-<div class="sheet" id="bank-sheet" hidden>
-  <form class="page" id="bank-form" novalidate style="width:min(100%,22rem)">
-    <div class="page-head"><h2>Account balance</h2></div>
-    <p class="note">What is in your bank account right now? From here 99MS keeps it up to date: your pay comes in on payday, and expenses, subscriptions and loan payments go out. Correct it here whenever it drifts.</p>
-    <label class="field" for="bank-amt"><span>Balance now</span><input type="text" class="num" id="bank-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
-    <p class="err" id="bank-err"></p>
+<div class="sheet" id="ac-sheet" hidden>
+  <form class="page" id="ac-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="ac-ttl">Add account</h2></div>
+    <label class="field" for="ac-name"><span>Name</span><input type="text" class="txt" id="ac-name" autocomplete="off" placeholder="Lønkonto"></label>
+    <label class="field" for="ac-kind"><span>Type</span><select id="ac-kind"></select></label>
+    <div class="shift-row">
+      <label class="field" for="ac-reg"><span>Reg. no.</span><input type="text" class="txt" id="ac-reg" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="1234"></label>
+      <label class="field" for="ac-no"><span>Account no.</span><input type="text" class="txt" id="ac-no" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="Optional"></label>
+    </div>
+    <label class="check" for="ac-salary"><input type="checkbox" id="ac-salary"> <span>My pay goes into this account</span></label>
+    <label class="field" for="ac-bal"><span>Balance now</span><input type="text" class="num" id="ac-bal" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+    <p class="note" id="ac-bal-note">What is in the account right now. From here 99MS keeps it up to date. Correct it whenever it drifts.</p>
+    <p class="err" id="ac-err"></p>
     <div class="btns">
-      <button class="ghost" type="button" id="bank-cancel">Cancel</button>
+      <button class="ghost" type="button" id="ac-cancel">Cancel</button>
       <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="ac-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="cd-sheet" hidden>
+  <form class="page" id="cd-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2 id="cd-ttl">Add card</h2></div>
+    <label class="field" for="cd-name"><span>Name</span><input type="text" class="txt" id="cd-name" autocomplete="off" placeholder="Visa Debit"></label>
+    <div class="shift-row">
+      <label class="field" for="cd-num"><span>Last 4 digits</span><input type="text" class="txt" id="cd-num" inputmode="numeric" autocomplete="off" maxlength="23" placeholder="1234"></label>
+      <label class="field" for="cd-exp"><span>Expires</span><input type="text" class="txt" id="cd-exp" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="MM/YY"></label>
+    </div>
+    <p class="note">99MS only keeps the last 4 digits, enough to tell your cards apart. Never type the security code.</p>
+    <label class="field" for="cd-acct"><span>Takes money from</span><select id="cd-acct"></select></label>
+    <p class="err" id="cd-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="cd-cancel">Cancel</button>
+      <button class="go" type="submit">Save</button>
+    </div>
+    <button class="ghost danger" type="button" id="cd-del" hidden>Delete</button>
+  </form>
+</div>
+
+<div class="sheet" id="tf-sheet" hidden>
+  <form class="page" id="tf-form" novalidate style="width:min(100%,22rem)">
+    <div class="page-head"><h2>Transfer</h2></div>
+    <div class="shift-row">
+      <label class="field" for="tf-from"><span>From</span><select id="tf-from"></select></label>
+      <label class="field" for="tf-to"><span>To</span><select id="tf-to"></select></label>
+    </div>
+    <div class="shift-row">
+      <label class="field" for="tf-amt"><span>Amount</span><input type="text" class="num" id="tf-amt" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+      <label class="field" for="tf-date"><span>Date</span><input type="date" id="tf-date"></label>
+    </div>
+    <p class="err" id="tf-err"></p>
+    <div class="btns">
+      <button class="ghost" type="button" id="tf-cancel">Cancel</button>
+      <button class="go" type="submit">Move money</button>
     </div>
   </form>
 </div>
@@ -939,6 +1003,7 @@
       <label class="field" for="ex-cat"><span>Category</span><select id="ex-cat"></select></label>
       <label class="field" for="ex-date"><span>Date</span><input type="date" id="ex-date"></label>
     </div>
+    <label class="field" for="ex-pay"><span>Paid with</span><select id="ex-pay"></select></label>
     <label class="field" for="ex-note"><span>Note</span><input type="text" class="txt" id="ex-note" autocomplete="off" placeholder="Optional"></label>
     <p class="err" id="ex-err"></p>
     <div class="btns">
@@ -976,6 +1041,7 @@
       <label class="field" for="sub-cat"><span>Category</span><select id="sub-cat"></select></label>
       <label class="field" for="sub-until"><span>Ends</span><input type="date" id="sub-until"></label>
     </div>
+    <label class="field" for="sub-pay"><span>Taken from</span><select id="sub-pay"></select></label>
     <p class="note" id="sub-next"></p>
     <p class="err" id="sub-err"></p>
     <div class="btns">
@@ -1201,6 +1267,81 @@
   const LOC = DA ? "da-DK" : "en-GB";
   document.documentElement.lang = LANG;
   const DICT = {
+    "Savings (99MS)": "Opsparing (99MS)",
+    "to savings and other accounts": "til opsparing og andre konti",
+    "Next pay": "Næste løn",
+    "This pay period": "Denne lønperiode",
+    "Add account": "Tilføj konto",
+    "Accounts": "Konti",
+    "Accounts and cards": "Konti og kort",
+    "This is everything you have: your accounts, savings, stocks and crypto, and how it moves. Add your accounts and their balance under Money; pay comes in on payday, and expenses, subscriptions and loan payments go out by themselves. Tap the chart to make it bigger.": "Her er alt, hvad du har: dine konti, opsparing, aktier og krypto, og hvordan det udvikler sig. Tilføj dine konti og deres saldo under Penge; lønnen kommer ind på lønningsdagen, og udgifter, abonnementer og afdrag på lån går ud af sig selv. Tryk på grafen for at gøre den større.",
+    "Add your bank accounts, like Lønkonto, Opsparing and Aktiesparekonto, with reg. and account number, and the cards that belong to them. Mark the account your pay goes into, and set each balance once: 99MS keeps it up to date.": "Tilføj dine bankkonti, fx lønkonto, opsparing og aktiesparekonto, med reg.nr. og kontonr., og de kort der hører til. Markér den konto, din løn går ind på, og angiv hver saldo én gang: 99MS holder den opdateret.",
+    "Edit account": "Rediger konto",
+    "Reg. no.": "Reg.nr.",
+    "Account no.": "Kontonr.",
+    "My pay goes into this account": "Min løn går ind på denne konto",
+    "What is in the account right now. From here 99MS keeps it up to date. Correct it whenever it drifts.": "Det, der står på kontoen lige nu. Herfra holder 99MS den opdateret. Ret den, hvis den skrider.",
+    "Add card": "Tilføj kort",
+    "Edit card": "Rediger kort",
+    "Last 4 digits": "Sidste 4 cifre",
+    "Expires": "Udløber",
+    "MM/YY": "MM/ÅÅ",
+    "99MS only keeps the last 4 digits, enough to tell your cards apart. Never type the security code.": "99MS gemmer kun de sidste 4 cifre – nok til at kende dine kort fra hinanden. Skriv aldrig kontrolcifrene.",
+    "Takes money from": "Trækker penge fra",
+    "Transfer": "Overfør",
+    "Move money": "Overfør penge",
+    "Bank account": "Bankkonto",
+    "Card": "Kort",
+    "Transfer between accounts": "Overfør mellem konti",
+    "Paid with": "Betalt med",
+    "Taken from": "Trækkes fra",
+    "From or to account": "Fra eller til konto",
+    "From your pay": "Fra din løn",
+    "Pay you have already earned. Put a shift's pay into savings; it leaves your salary account when the pay arrives.": "Løn, du allerede har tjent. Læg en vagts løn i opsparingen; pengene trækkes fra din lønkonto, når lønnen kommer.",
+    "All to savings": "Alt til opsparing",
+    "Salary account": "Lønkonto",
+    "Everyday account": "Budgetkonto",
+    "Savings account": "Opsparingskonto",
+    "Aktiesparekonto": "Aktiesparekonto",
+    "Pension": "Pension",
+    "Other account": "Anden konto",
+    "Reg.": "Reg.",
+    "Hide number": "Skjul nummer",
+    "Show number": "Vis nummer",
+    "Copy": "Kopiér",
+    "Set balance": "Angiv saldo",
+    "No balance yet": "Ingen saldo endnu",
+    "pay comes in here": "lønnen kommer ind her",
+    "No accounts yet. Add your Lønkonto first, then the others, like Opsparing or Aktiesparekonto.": "Ingen konti endnu. Tilføj din lønkonto først og så de andre, fx opsparing eller aktiesparekonto.",
+    "In 99MS, with your goals": "I 99MS, med dine mål",
+    "Open": "Åbn",
+    "Cards without an account": "Kort uden konto",
+    "Copied.": "Kopieret.",
+    "Could not copy here. Tap Show number instead.": "Kunne ikke kopiere her. Tryk på Vis nummer i stedet.",
+    "The reg. no. is 4 digits.": "Reg.nr. er 4 cifre.",
+    "The account no. is up to 14 digits.": "Kontonr. er højst 14 cifre.",
+    "No account": "Ingen konto",
+    "Enter the last 4 digits of the card.": "Skriv de sidste 4 cifre af kortet.",
+    "Write the expiry date as MM/YY, like 08/28.": "Skriv udløbsdatoen som MM/ÅÅ, fx 08/28.",
+    "Card saved. Only the last 4 digits are kept.": "Kort gemt. Kun de sidste 4 cifre gemmes.",
+    "Card added.": "Kort tilføjet.",
+    "Choose two different accounts.": "Vælg to forskellige konti.",
+    "Enter an amount above 0.": "Skriv et beløb over 0.",
+    "No accounts yet": "Ingen konti endnu",
+    "No shifts in the coming pay periods": "Ingen vagter i de kommende lønperioder",
+    "Expected pay": "Forventet løn",
+    "paid": "udbetalt",
+    "No earned pay waiting. Finished shifts from this and the last pay period show up here.": "Ingen tjent løn venter. Færdige vagter fra denne og sidste lønperiode vises her.",
+    "To savings": "Til opsparing",
+    "Add your bank account": "Tilføj din bankkonto",
+    "Lønkonto, Opsparing, Aktiesparekonto …": "Lønkonto, opsparing, aktiesparekonto …",
+    "Tap to set the balance": "Tryk for at angive saldoen",
+    "Number": "Nummer",
+    "Accounts now": "Konti nu",
+    "Add your accounts and their balance to see it": "Tilføj dine konti og deres saldo for at se den",
+    "Accounts, cards and transfers, with reg. and account numbers": "Konti, kort og overførsler, med reg.nr. og kontonr.",
+    "Money overview on Home, with your salary: next pay, this period and past payouts": "Pengeoverblik på Hjem, med din løn: næste løn, denne periode og tidligere udbetalinger",
+    "Put pay you have already earned into savings": "Læg løn, du allerede har tjent, i opsparingen",
     "Log in with a passkey (Face ID or Touch ID), with your data on Cloudflare": "Log ind med en passkey (Face ID eller Touch ID), med dine data hos Cloudflare",
     "Log in with passkey": "Log ind med passkey", "Create account": "Opret konto", "Add passkey on this device": "Tilføj passkey på denne enhed",
     "Log in to keep your shifts, money and settings synced on every device. There is no password: you use a passkey, which is Face ID, Touch ID or your phone's code. On iPhone it follows your Apple account to your other devices.": "Log ind for at have dine vagter, penge og indstillinger synkroniseret på alle dine enheder. Der er ingen adgangskode: du bruger en passkey, altså Face ID, Touch ID eller din telefons kode. På iPhone følger den din Apple-konto til dine andre enheder.",
@@ -1466,6 +1607,8 @@
     [/^Last payment (.+), (.+)$/, "Seneste betaling $1, $2"], [/^(.+) registered\. (.+) left\.$/, "$1 registreret. $2 tilbage."],
     [/^Added: (.+)\. Tap it to change\.$/, "Tilføjet: $1. Tryk på den for at rette."], [/^Added (\d+) expenses\. Tap one to change it\.$/, "Tilføjede $1 udgifter. Tryk på en for at rette den."],
     [/^Key saved on this device \(…(.+)\)\.$/, "Nøgle gemt på denne enhed (…$1)."],
+    [/^Account added: (.+)\.$/, "Konto tilføjet: $1."], [/^Moved (.+) from (.+) to (.+)\.$/, "Flyttede $1 fra $2 til $3."],
+    [/^earned of about (.+) · (.+)$/, "tjent af ca. $1 · $2"], [/^All to savings \((.+)\)$/, "Alt til opsparing ($1)"], [/^(.+) put into savings\.$/, "$1 lagt i opsparingen."],
   ];
   const hasWords = /[A-Za-z]{2}/;
   const trCache = new Map();
@@ -1507,9 +1650,12 @@
       }
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
   }
-  const APP_VERSION = "2.4";
+  const APP_VERSION = "2.5";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "Money overview on Home, with your salary: next pay, this period and past payouts",
+    "Accounts, cards and transfers, with reg. and account numbers",
+    "Put pay you have already earned into savings",
     "Log in with a passkey (Face ID or Touch ID), with your data on Cloudflare",
     "Bank-style overview of your account, savings, stocks and crypto, with live prices and a chart",
     "Expenses, with AI that reads receipts and screenshots",
@@ -1909,12 +2055,12 @@
         const v = JSON.parse(localStorage.getItem("salary-clock-log") || "null");
         if (v && Array.isArray(v.shifts) && Array.isArray(v.savings)) return v;
       } catch {}
-      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [], pledges: [], holdings: [], expenses: [], subs: [], loans: [], bank: [] };
+      return { shifts: [], savings: [], items: [], deleted: [], fixed: [], planned: [], skips: [], goals: [], supps: [], pledges: [], holdings: [], expenses: [], subs: [], loans: [], bank: [], accounts: [], cards: [], transfers: [] };
     },
     set(v) { try { localStorage.setItem("salary-clock-log", JSON.stringify(v)); return true; } catch { return false; } },
   };
   let log = logStore.get();
-  ["deleted", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
+  ["deleted", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank", "accounts", "cards", "transfers"].forEach((k) => { if (!Array.isArray(log[k])) log[k] = []; });
   const persist = () => { if (!logStore.set(log)) toast("Could not save. This browser is blocking storage."); scheduleSync(); };
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   const money = (n) => fmt2.format(n);
@@ -2308,7 +2454,8 @@
     const bal = freeBalance();
     if (svDir < 0 && n > bal + 0.001) { err.textContent = `You only have ${kr(bal)} outside your goals. Take money out of a goal first.`; return; }
     err.textContent = "";
-    log.savings.push({ id: uid(), t: Date.now(), amount: svDir * +n.toFixed(2), currency: cfg.currency, kind: svDir < 0 ? "withdraw" : "deposit", u: Date.now() });
+    log.savings.push({ id: uid(), t: Date.now(), amount: svDir * +n.toFixed(2), currency: cfg.currency, kind: svDir < 0 ? "withdraw" : "deposit", ...($("sv-acct").value ? { acct: $("sv-acct").value } : {}), u: Date.now() });
+    evCache = null;
     persist();
     $("sv-amount").value = "";
     renderSavings();
@@ -2333,7 +2480,7 @@
       const raw = JSON.parse(await file.text());
       if (!Array.isArray(raw.shifts) || !Array.isArray(raw.savings)) throw 0;
       // Everything in the backup is added; nothing already here is removed.
-      const KEYS = ["shifts", "savings", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank"];
+      const KEYS = ["shifts", "savings", "items", "fixed", "planned", "skips", "goals", "supps", "pledges", "holdings", "expenses", "subs", "loans", "bank", "accounts", "cards", "transfers"];
       const okRec = (x) => x && typeof x === "object" && typeof x.id === "string" && x.id.length <= 80;
       const inc = { deleted: [], epoch: log.epoch };
       KEYS.forEach((k) => { inc[k] = (Array.isArray(raw[k]) ? raw[k] : []).filter(okRec).map((x) => { const y = { ...x }; delete y.live; return y; }); });
@@ -2386,7 +2533,7 @@
   $("to-stats").addEventListener("click", (e) => { e.stopPropagation(); $("sal-stats").scrollIntoView({ behavior: "smooth" }); });
   $("v-salary").addEventListener("scroll", poke, { passive: true });
   function renderTab() {
-    if (tab === "home") renderHome();
+    if (tab === "home") { homeMoney = 0; renderHome(); }
     else if (tab === "portfolio") renderPortfolio();
     else if (tab === "salary") renderStats();
     else if (tab === "calendar") renderCal();
@@ -2394,7 +2541,7 @@
     else renderSettings();
   }
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") ["sheet", "save-sheet", "item-sheet", "acct-sheet", "add-sheet", "chart-sheet", "hold-sheet", "bank-sheet", "ex-sheet", "scan-sheet", "sub-sheet", "loan-sheet", "pay-sheet"].forEach((id) => { $(id).hidden = true; });
+    if (e.key === "Escape") ["sheet", "save-sheet", "item-sheet", "acct-sheet", "add-sheet", "chart-sheet", "hold-sheet", "ac-sheet", "cd-sheet", "tf-sheet", "ex-sheet", "scan-sheet", "sub-sheet", "loan-sheet", "pay-sheet"].forEach((id) => { $(id).hidden = true; });
   });
 
   const signed = (n) => `${n < 0 ? "−" : "+"}${money(Math.abs(n))}`;
@@ -2413,22 +2560,18 @@
       ? `Shift ${hhmm(new Date(cs.start))}–${cs.end ? hhmm(new Date(cs.end)) : "open"} · ${money(workPerMs() * HOUR)} / hour`
       : shiftWorker() ? `${money(workPerMs() * HOUR)} / hour while you work` : `${money(clockPerMs() * HOUR)} / hour, around the clock`;
     if (now - homeSlow > 1000) { homeSlow = now; renderHomeSlow(now); }
-    const live = liveRec();
-    $("h-sav").textContent = kr(balance());
-    $("h-sav-sub").textContent = live && live.savings ? "saving live" : "in your savings";
     const shifts = statsShifts(now);
-    const d = new Date(now), wk = weekStart(now), mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-    const w = shifts.filter((x) => x.start >= wk), m = shifts.filter((x) => x.start >= mo);
-    $("h-wk").textContent = kr(sum(w, "amount")); $("h-wk-sub").textContent = plural(w.length, "shift");
+    const d = new Date(now), mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    const m = shifts.filter((x) => x.start >= mo);
     $("h-mo").textContent = kr(sum(m, "amount")); $("h-mo-sub").textContent = plural(m.length, "shift");
     $("h-acct").textContent = acctLine();
   }
 
   let homeSlow = 0;
+  let homeMoney = 0;
   function renderHomeSlow(now) {
-    const mt = moneyTotalToday();
-    $("h-pf").textContent = kr(mt.now);
-    $("h-pf-sub").textContent = Math.abs(mt.d) > 0.004 ? `${mt.d < 0 ? "−" : "+"}${kr(Math.abs(mt.d))} ${T("today")}` : T("Account, savings, stocks and crypto");
+    // The money overview is heavier; refresh it every few seconds.
+    if (now - homeMoney > 4000 && $("chart-sheet").hidden) { homeMoney = now; renderOverview(); renderPaySection(now); }
     const cur = cfg.currency;
     const nx = calendarUsed() ? upcomingShifts(45, now).find((o) => o.start > now) : null;
     if (nx) {
@@ -2438,13 +2581,6 @@
       $("h-next").textContent = "—";
       $("h-next-sub").textContent = calendarUsed() ? "Nothing in the next 6 weeks" : "Add your shifts in Calendar";
     }
-    const np = nextPayday(now);
-    if (np) {
-      const days = Math.round((np.date - new Date(new Date(now).toDateString())) / DAY);
-      $("h-pay").textContent = days === 0 ? "Today" : longDate.format(np.date);
-      const amt = rangePlan(np.per.from, np.per.to, now).expected;
-      $("h-pay-sub").textContent = `${days ? `in ${plural(days, "day")} · ` : ""}${amt > 0 ? `about ${kr(amt)}` : `no shifts in ${rangeText(np.per)}`}`;
-    } else { $("h-pay").textContent = "—"; $("h-pay-sub").textContent = "Set the day your money arrives"; }
     const steps = [];
     if (!cfg.setupDone) steps.push(["Answer the setup questions", "Start", () => openWizard()]);
     if (!calendarUsed()) steps.push(["Add the shifts you work", "Calendar", () => go("calendar")]);
@@ -2464,6 +2600,9 @@
     $("sv-split").textContent = inGoals > 0.004 ? `Free ${kr(freeBalance())} · in goals ${kr(inGoals)}` : "";
     tickGoals();
     if ($("pq-expected")) renderExpected();
+    renderEarned();
+    const svSel = $("sv-acct").value;
+    $("sv-acct").innerHTML = acctOptions(svSel, `<option value="">${T("No account")}</option>`);
     const list = log.savings.filter((t) => t.currency === cur).sort((a, b) => b.t - a.t).slice(0, 100);
     const box = $("sv-hist");
     if (!list.length) { box.innerHTML = `<p class="empty">Nothing yet. Saved shifts can pay into savings, and you can deposit or withdraw above.</p>`; return; }
@@ -2610,10 +2749,39 @@
   const curHoldings = () => log.holdings.filter((h) => h.qty > 0);
   const holdingValue = (h) => { const p = priceNow(h); return p == null ? 0 : p * h.qty; };
 
-  // ----- Account: the balance you set, plus pay on payday, minus expenses, subscriptions and loan payments -----
-  // Each time you set the balance it is kept as a point; the account runs from the latest point before a given time.
-  const bankRecs = () => log.bank.filter((b) => b.currency === cfg.currency && isFinite(b.bal)).sort((a, b) => a.t - b.t);
-  const bankRec = () => { const r = bankRecs(); return r.length ? r[r.length - 1] : null; };
+  // ----- Accounts: your bank accounts, each from the balance you last set. Pay comes into the salary account on
+  // payday; expenses, subscriptions and loan payments leave the account (or card) they are paid with; transfers and
+  // money put into savings move between them. -----
+  const ACCT_KINDS = [["pay", "Salary account"], ["spend", "Everyday account"], ["savings", "Savings account"], ["ask", "Aktiesparekonto"], ["pension", "Pension"], ["other", "Other account"]];
+  const ACCT_IC = { pay: "LØN", spend: "KTO", savings: "OPS", ask: "ASK", pension: "PEN", other: "KTO" };
+  const kindName = (k) => T((ACCT_KINDS.find((x) => x[0] === k) || ACCT_KINDS[5])[1]);
+  const accts = () => log.accounts.filter((a) => a.currency === cfg.currency).sort((a, b) => (b.salary ? 1 : 0) - (a.salary ? 1 : 0) || a.t - b.t);
+  const acctById = (id) => log.accounts.find((a) => a.id === id) || null;
+  const salaryAcct = () => { const l = accts(); return l.find((a) => a.salary) || l[0] || null; };
+  const spendAcct = () => { const l = accts(); return l.find((a) => a.kind === "spend") || salaryAcct(); };
+  const cardById = (id) => log.cards.find((c) => c.id === id) || null;
+  // The account something is paid from: its card's account, its own, or the everyday account.
+  function payAcctOf(x) {
+    const c = x.card && cardById(x.card);
+    const id = (c && c.acct) || x.acct;
+    return (id && acctById(id) ? id : (spendAcct() || {}).id) || null;
+  }
+  const bankRecs = (id) => log.bank.filter((b) => b.acct === id && isFinite(b.bal)).sort((a, b) => a.t - b.t);
+  const lastBal = (id) => { const r = bankRecs(id); return r.length ? r[r.length - 1] : null; };
+  const anyBalance = () => accts().some((a) => lastBal(a.id));
+  // Before accounts there was one balance; it becomes the salary account (same id on every device).
+  function migrateBank() {
+    const loose = log.bank.filter((b) => !b.acct);
+    if (!loose.length) return;
+    const now = Date.now();
+    loose.forEach((b) => {
+      const id = "acct-pay-" + b.currency;
+      if (!log.accounts.some((a) => a.id === id)) log.accounts.push({ id, name: T("Salary account"), kind: "pay", salary: true, reg: "", number: "", currency: b.currency, t: b.t, u: now });
+      b.acct = id; b.u = now;
+    });
+    logStore.set(log);
+  }
+  migrateBank();
   const CATS = [["groceries", "Groceries"], ["food", "Food & drink"], ["transport", "Transport"], ["shopping", "Shopping"], ["fun", "Fun"], ["bills", "Bills"], ["subs", "Subscriptions"], ["health", "Health"], ["other", "Other"]];
   const catName = (k) => T((CATS.find((c) => c[0] === k) || CATS[CATS.length - 1])[1]);
   const clampDay = (y, m, d) => new Date(y, m, Math.min(d, new Date(y, m + 1, 0).getDate()));
@@ -2630,39 +2798,66 @@
   }
   const loanPaid = (l) => (l.payments || []).reduce((a, p) => a + p.amount, 0);
   const loanLeft = (l) => Math.max(0, l.amount - loanPaid(l));
+  // When a shift's pay reaches the salary account: the payday after its pay period.
+  function paydayOfShift(id) {
+    const x = log.shifts.find((s) => s.id === id);
+    const d = x && cfg.payDay ? payoutFor(periodFor(new Date(x.start))) : null;
+    return d ? d.getTime() + 6 * HOUR : null;
+  }
   let evCache = null;
-  // Everything that moves money in or out of the account, from a year back to ten weeks ahead.
+  // Everything that moves money in or out of an account (field a), from a year back to ten weeks ahead.
   function moneyEvents() {
     const now = Date.now(), cur = cfg.currency;
     if (evCache && evCache.cur === cur && now - evCache.at < 20000) return evCache.list;
-    const from = now - 400 * DAY, to = now + 70 * DAY, list = [];
-    log.expenses.filter((e) => e.currency === cur).forEach((e) => list.push({ t: e.t, v: -e.amount, k: "expense" }));
-    log.subs.filter((s) => s.currency === cur).forEach((s) => subCharges(s, from, to).forEach((t) => list.push({ t, v: -s.amount, k: "sub", s })));
-    log.loans.filter((l) => l.currency === cur).forEach((l) => (l.payments || []).forEach((p) => list.push({ t: p.t, v: l.dir === "owe" ? -p.amount : p.amount, k: "loan" })));
-    if (cfg.payDay) {
+    const from = now - 400 * DAY, to = now + 70 * DAY, list = [], sal = (salaryAcct() || {}).id || null;
+    log.expenses.filter((e) => e.currency === cur).forEach((e) => list.push({ t: e.t, v: -e.amount, k: "expense", a: payAcctOf(e) }));
+    log.subs.filter((s) => s.currency === cur).forEach((s) => { const a = payAcctOf(s); subCharges(s, from, to).forEach((t) => list.push({ t, v: -s.amount, k: "sub", s, a })); });
+    log.loans.filter((l) => l.currency === cur).forEach((l) => (l.payments || []).forEach((p) => list.push({ t: p.t, v: l.dir === "owe" ? -p.amount : p.amount, k: "loan", a: p.acct || l.acct || sal })));
+    // Money into or out of savings leaves or reaches an account; shift pay leaves the salary account on its payday.
+    log.savings.filter((x) => x.currency === cur && !x.live && !x.goalId && (x.acct || x.kind === "shift")).forEach((x) => {
+      const a = x.acct || sal;
+      if (!a) return;
+      const t = x.payAt || (x.kind === "shift" && x.shiftId ? paydayOfShift(x.shiftId) : null) || x.t;
+      list.push({ t, v: -x.amount, k: "save", a });
+    });
+    log.transfers.filter((x) => x.currency === cur).forEach((x) => { list.push({ t: x.t, v: -x.amount, k: "move", a: x.from }); list.push({ t: x.t, v: x.amount, k: "move", a: x.to }); });
+    if (cfg.payDay && sal) {
       for (let per = periodFor(new Date(from)); per.from.getTime() < to; per = periodFor(addDays(per.to, 1))) {
         const d = payoutFor(per);
         if (!d) break;
         const t = d.getTime() + 6 * HOUR;
         if (t < from || t > to) continue;
         const amt = rangePlan(per.from, per.to, now).expected;
-        if (amt > 0) list.push({ t, v: amt, k: "pay", per });
+        if (amt > 0) list.push({ t, v: amt, k: "pay", per, a: sal });
       }
     }
     list.sort((a, b) => a.t - b.t);
     evCache = { at: now, cur, list };
     return list;
   }
-  function accountAt(t) {
-    const rs = bankRecs();
+  // The salary paid out on each payday, a year back and ten weeks ahead (also without an account).
+  function payouts() {
+    const now = Date.now(), out = [];
+    if (!cfg.payDay) return out;
+    for (let per = periodFor(new Date(now - 400 * DAY)); per.from.getTime() < now + 70 * DAY; per = periodFor(addDays(per.to, 1))) {
+      const d = payoutFor(per);
+      if (!d) break;
+      const amt = rangePlan(per.from, per.to, now).expected;
+      if (amt > 0) out.push({ t: d.getTime() + 6 * HOUR, v: amt, per });
+    }
+    return out;
+  }
+  function accountAt(id, t) {
+    const rs = bankRecs(id);
     if (!rs.length) return null;
     let b = rs[0];
     rs.forEach((r) => { if (r.t <= t) b = r; });
     if (t <= b.t) return b.bal; // before the first balance you set, it stays at that balance
     let v = b.bal;
-    moneyEvents().forEach((e) => { if (e.t > b.t && e.t <= t) v += e.v; });
+    moneyEvents().forEach((e) => { if (e.a === id && e.t > b.t && e.t <= t) v += e.v; });
     return v;
   }
+  const accountsAt = (t) => accts().reduce((s, a) => s + (accountAt(a.id, t) || 0), 0);
   function savingsAt(t) {
     return log.savings.filter((x) => x.currency === cfg.currency && x.t <= t).reduce((a, x) => a + txAmount(x), 0);
   }
@@ -2697,32 +2892,35 @@
     });
     return out;
   }
+  // What your accounts hold on the next payday: now, plus pay, minus subscriptions and planned loan payments.
   function expectedBalance(now = Date.now()) {
-    const acc = accountAt(now);
-    if (acc == null) return null;
+    const withBal = accts().filter((a) => lastBal(a.id));
+    if (!withBal.length) return null;
+    const ids = new Set(withBal.map((a) => a.id)), sal = salaryAcct();
+    const acc = withBal.reduce((s, a) => s + accountAt(a.id, now), 0);
     const np = nextPayday(now);
     const until = np ? np.date.getTime() + DAY - 1 : now + 30 * DAY;
-    const ev = moneyEvents().filter((e) => e.t > now && e.t <= until && e.k !== "expense" && e.k !== "loan");
-    const lp = loanPlanned(now, until);
-    const pay = ev.filter((e) => e.k === "pay").reduce((a, e) => a + e.v, 0);
-    const subs = ev.filter((e) => e.k === "sub").reduce((a, e) => a + e.v, 0);
-    const loans = lp.reduce((a, e) => a + e.v, 0);
-    return { value: acc + pay + subs + loans, acc, pay, subs, loans, until, payday: !!np };
+    const ev = moneyEvents().filter((e) => e.t > now && e.t <= until && ids.has(e.a));
+    const sumK = (k) => ev.filter((e) => e.k === k).reduce((a, e) => a + e.v, 0);
+    const lp = sal && ids.has(sal.id) ? loanPlanned(now, until).reduce((a, e) => a + e.v, 0) : 0;
+    const pay = sumK("pay"), subs = sumK("sub"), loans = lp + sumK("loan"), other = sumK("expense") + sumK("save") + sumK("move");
+    return { value: acc + pay + subs + loans + other, acc, pay, subs, loans, other, until, payday: !!np };
   }
 
   // ----- Views and charts -----
-  const VIEWS = [["all", "All"], ["account", "Account"], ["savings", "Savings"], ["stocks", "Stocks"], ["crypto", "Crypto"], ["other", "Other"], ["loans", "Loans"]];
+  const VIEWS = [["all", "All"], ["accounts", "Accounts"], ["savings", "Savings"], ["stocks", "Stocks"], ["crypto", "Crypto"], ["other", "Other"], ["loans", "Loans"]];
   const RANGES = [["1d", "1D", DAY], ["1w", "1W", 7 * DAY], ["1m", "1M", 30 * DAY], ["3m", "3M", 91 * DAY], ["1y", "1Y", 365 * DAY], ["all", "All", 0]];
   const RANGE_WORD = { "1d": "today", "1w": "past week", "1m": "past month", "3m": "past 3 months", "1y": "past year", all: "all time" };
   const VIEW_KEY = "99ms-money-view";
   let mView = (() => { try { return JSON.parse(localStorage.getItem(VIEW_KEY) || "{}"); } catch { return {}; } })();
-  mView = { area: mView.area || "overview", view: mView.view || "all", range: mView.range || "1m" };
+  mView = { area: ["accounts", "expenses", "loans"].includes(mView.area) ? mView.area : "accounts", view: mView.view === "account" ? "accounts" : mView.view || "all", range: mView.range || "1m" };
   const saveView = () => { try { localStorage.setItem(VIEW_KEY, JSON.stringify(mView)); } catch {} };
   function viewParts(view) {
     const hs = curHoldings();
     const want = (k) => view === "all" || view === k;
     const parts = [];
-    if (want("account") && bankRec()) parts.push({ at: accountAt });
+    if (view.startsWith("acct:")) { const id = view.slice(5); return lastBal(id) ? [{ at: (t) => accountAt(id, t) || 0 }] : []; }
+    if (want("accounts") && anyBalance()) parts.push({ at: accountsAt });
     if (want("savings")) parts.push({ at: savingsAt });
     hs.filter((h) => want(h.kind === "crypto" ? "crypto" : "stocks")).forEach((h) => { const s = priceSeries(h); parts.push({ at: (t) => valueAt(s, t) * h.qty }); });
     if (want("other")) parts.push({ at: itemsAt });
@@ -2733,7 +2931,7 @@
     const now = Date.now(), parts = viewParts(view);
     let span = (RANGES.find((r) => r[0] === range) || RANGES[2])[2];
     if (!span) {
-      const firsts = [...log.savings.map((x) => x.t), ...log.expenses.map((x) => x.t), ...log.loans.map((x) => x.t), ...log.items.map((x) => x.t || now), ...log.bank.map((b) => b.t)].filter((t) => t > 0);
+      const firsts = [...log.savings.map((x) => x.t), ...log.expenses.map((x) => x.t), ...log.loans.map((x) => x.t), ...log.items.map((x) => x.t || now), ...log.bank.map((b) => b.t), ...log.transfers.map((x) => x.t)].filter((t) => t > 0);
       span = Math.min(365 * DAY, Math.max(30 * DAY, now - Math.min(now, ...firsts)));
     }
     const out = [];
@@ -2768,7 +2966,7 @@
   // ----- Overview -----
   function viewsShown() {
     const hs = curHoldings();
-    return VIEWS.filter(([k]) => k === "all" || k === "account" || k === "savings"
+    return VIEWS.filter(([k]) => k === "all" || k === "accounts" || k === "savings"
       || (k === "stocks" && hs.some((h) => h.kind === "stock")) || (k === "crypto" && hs.some((h) => h.kind === "crypto"))
       || (k === "other" && log.items.some((x) => x.currency === cfg.currency)) || (k === "loans" && log.loans.some((l) => l.currency === cfg.currency)));
   }
@@ -2779,9 +2977,13 @@
   }
   function rowsFor(view) {
     const want = (k) => view === "all" || view === k, rows = [], now = Date.now();
-    if (want("account")) {
-      const b = bankRec(), v = accountAt(now);
-      rows.push({ key: "bank", ic: "KTO", name: T("Account"), value: b ? kr(v) : "—", sub: b ? T("Kept up to date by itself") : T("Tap to set your balance"), sort: 1e15 });
+    if (want("accounts")) {
+      const list = accts(), sal = salaryAcct();
+      list.forEach((a, i) => {
+        const b = lastBal(a.id);
+        rows.push({ key: "a:" + a.id, ic: ACCT_IC[a.kind] || "KTO", name: a.name, value: b ? kr(accountAt(a.id, now)) : "—", sub: b ? esc(acctNoText(a, false) || kindName(a.kind)) + (sal && a.id === sal.id ? ` · ${T("pay comes in here")}` : "") : T("Tap to set the balance"), sort: 2e15 - i });
+      });
+      if (!list.length) rows.push({ key: "addacct", ic: "+", name: T("Add your bank account"), value: "", sub: T("Lønkonto, Opsparing, Aktiesparekonto …"), sort: 2e15 });
     }
     if (want("savings")) rows.push({ key: "savings", ic: "OPS", name: T("Savings"), value: kr(balance()), sub: liveRec() && liveRec().savings ? T("saving live") : T("in your savings"), sort: 1e15 - 1 });
     curHoldings().filter((h) => want(h.kind === "crypto" ? "crypto" : "stocks")).forEach((h) => {
@@ -2803,7 +3005,8 @@
     $("dh-views").innerHTML = vs.map(([k, n]) => `<button type="button" role="tab" data-view="${k}" aria-selected="${k === mView.view}">${T(n)}</button>`).join("");
     const series = viewSeries(mView.view, mView.range);
     const now = series.length ? series[series.length - 1][1] : 0;
-    $("dh-label").textContent = T((VIEWS.find((v) => v[0] === mView.view) || VIEWS[0])[1] === "All" ? "Total" : VIEWS.find((v) => v[0] === mView.view)[1]);
+    const vw = VIEWS.find((v) => v[0] === mView.view) || VIEWS[0];
+    $("dh-label").textContent = T(vw[0] === "all" ? "Total" : vw[1]);
     $("dh-total").textContent = kr(now);
     const ch = changeLine(series, mView.range);
     $("dh-chg").className = "chg " + ch.cls; $("dh-chg").textContent = ch.text;
@@ -2812,8 +3015,8 @@
     const e = expectedBalance();
     if (e) {
       $("dh-exp").textContent = kr(e.value);
-      $("dh-exp-sub").textContent = `${e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")} · ${T("now")} ${kr(e.acc)}${e.pay ? ` + ${T("pay")} ${kr(e.pay)}` : ""}${e.subs ? ` − ${T("subscriptions")} ${kr(-e.subs)}` : ""}${e.loans ? ` ${e.loans < 0 ? "−" : "+"} ${T("loans")} ${kr(Math.abs(e.loans))}` : ""}`;
-    } else { $("dh-exp").textContent = "—"; $("dh-exp-sub").textContent = T("Set your account balance to see it"); }
+      $("dh-exp-sub").textContent = `${e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")} · ${T("now")} ${kr(e.acc)}${e.pay ? ` + ${T("pay")} ${kr(e.pay)}` : ""}${e.subs ? ` − ${T("subscriptions")} ${kr(-e.subs)}` : ""}${e.loans ? ` ${e.loans < 0 ? "−" : "+"} ${T("loans")} ${kr(Math.abs(e.loans))}` : ""}${Math.abs(e.other) > 0.004 ? ` ${e.other < 0 ? "−" : "+"} ${T("to savings and other accounts")} ${kr(Math.abs(e.other))}` : ""}`;
+    } else { $("dh-exp").textContent = "—"; $("dh-exp-sub").textContent = T("Add your accounts and their balance to see it"); }
     const sp = monthSpend(new Date());
     $("dh-spent").textContent = kr(sp.total);
     $("dh-spent-sub").textContent = sp.prev > 0 ? `${pctTxt(((sp.total - sp.prevSame) / Math.max(sp.prevSame, 0.01)) * 100)} ${T("vs same time last month")}` : sp.coming > 0 ? T(`${kr(sp.coming)} in subscriptions still to come`) : T("Add what you buy under Expenses");
@@ -2829,19 +3032,20 @@
     $("dh-upd").textContent = parts.join(" · ");
   }
   function openRow(key) {
-    if (key === "bank") return openBank();
+    if (key === "addacct") return openAcct(null);
+    if (key.startsWith("a:")) return openChart({ view: "acct:" + key.slice(2) });
     if (key === "savings") return go("savings");
     if (key.startsWith("h:")) return openChart({ h: log.holdings.find((h) => h.id === key.slice(2)) });
     if (key.startsWith("i:")) return openItem(key.slice(2));
-    if (key.startsWith("l:")) { mView.area = "loans"; saveView(); renderPortfolio(); }
+    if (key.startsWith("l:")) { mView.area = "loans"; saveView(); go("portfolio"); renderPortfolio(); }
   }
   $("dh-list").addEventListener("click", (e) => { const r = e.target.closest("[data-row]"); if (r) openRow(r.dataset.row); });
   $("dh-list").addEventListener("keydown", (e) => { const r = e.target.closest("[data-row]"); if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openRow(r.dataset.row); } });
   $("dh-views").addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b) { mView.view = b.dataset.view; saveView(); renderOverview(); } });
   $("dh-ranges").addEventListener("click", (e) => { const b = e.target.closest("[data-range]"); if (b) { mView.range = b.dataset.range; saveView(); renderOverview(); } });
   $("dh-chart").addEventListener("click", () => openChart({ view: mView.view }));
-  $("dh-exp-card").addEventListener("click", () => (bankRec() ? openChart({ view: "account" }) : openBank()));
-  $("dh-spent-card").addEventListener("click", () => { mView.area = "expenses"; saveView(); renderPortfolio(); });
+  $("dh-exp-card").addEventListener("click", () => (anyBalance() ? openChart({ view: "accounts" }) : openAcct(null)));
+  $("dh-spent-card").addEventListener("click", () => { mView.area = "expenses"; saveView(); go("portfolio"); renderPortfolio(); });
   $("dh-add-stock").addEventListener("click", () => openHold(null, "stock"));
   $("dh-add-crypto").addEventListener("click", () => openHold(null, "crypto"));
 
@@ -2864,8 +3068,8 @@
       $("cs-title").textContent = assetName(h);
     } else {
       series = viewSeries(chartCtx.view, range, 160);
-      const v = VIEWS.find((x) => x[0] === chartCtx.view);
-      $("cs-title").textContent = T(v && v[1] !== "All" ? v[1] : "Total");
+      const v = VIEWS.find((x) => x[0] === chartCtx.view), ac = chartCtx.view.startsWith("acct:") && acctById(chartCtx.view.slice(5));
+      $("cs-title").textContent = ac ? ac.name : T(v && v[0] !== "all" ? v[1] : "Total");
     }
     chartCtx.series = series;
     const last = series.length ? series[series.length - 1][1] : 0;
@@ -2884,9 +3088,11 @@
       ].join("");
       $("cs-actions").innerHTML = `<button class="ghost" type="button" data-cs="edit">${T("Edit")}</button>`;
     } else {
-      const e = chartCtx.view === "account" || chartCtx.view === "all" ? expectedBalance() : null;
-      $("cs-stats").innerHTML = e ? [stat(T("Expected balance"), kr(e.value), e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")), stat(T("Account now"), kr(e.acc), "")].join("") : "";
-      $("cs-actions").innerHTML = chartCtx.view === "account" ? `<button class="ghost" type="button" data-cs="bank">${T("Correct balance")}</button>` : "";
+      const ac = chartCtx.view.startsWith("acct:") && acctById(chartCtx.view.slice(5));
+      const e = chartCtx.view === "accounts" || chartCtx.view === "all" ? expectedBalance() : null;
+      $("cs-stats").innerHTML = ac ? [stat(T("Type"), esc(kindName(ac.kind)), ""), ac.reg || ac.number ? stat(T("Number"), esc(acctNoText(ac, false)), "") : ""].join("")
+        : e ? [stat(T("Expected balance"), kr(e.value), e.payday ? T(`on payday ${longDate.format(e.until)}`) : T("in 30 days")), stat(T("Accounts now"), kr(e.acc), "")].join("") : "";
+      $("cs-actions").innerHTML = ac ? `<button class="ghost" type="button" data-cs="bal">${T("Correct balance")}</button><button class="ghost" type="button" data-cs="tf">${T("Transfer")}</button><button class="ghost" type="button" data-cs="acct">${T("Edit")}</button>` : "";
     }
   }
   const tipFmt = new Intl.DateTimeFormat(LOC, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -2918,10 +3124,12 @@
   $("cs-close").addEventListener("click", () => { $("chart-sheet").hidden = true; chartCtx = null; });
   $("cs-actions").addEventListener("click", (e) => {
     const b = e.target.closest("[data-cs]"); if (!b) return;
-    const h = chartCtx && chartCtx.h;
+    const h = chartCtx && chartCtx.h, acId = chartCtx && chartCtx.view && chartCtx.view.startsWith("acct:") ? chartCtx.view.slice(5) : null;
     $("chart-sheet").hidden = true; chartCtx = null;
     if (b.dataset.cs === "edit" && h) openHold(h.id, h.kind);
-    if (b.dataset.cs === "bank") openBank();
+    if (b.dataset.cs === "bal" && acId) openAcct(acId, true);
+    if (b.dataset.cs === "acct" && acId) openAcct(acId);
+    if (b.dataset.cs === "tf" && acId) openTransfer(acId);
   });
 
   // ----- Stocks and crypto you own -----
@@ -2980,7 +3188,7 @@
     else log.holdings.push({ id: uid(), t: now, ...data });
     persist();
     $("hold-sheet").hidden = true;
-    mView.area = "overview"; saveView(); renderPortfolio();
+    go("home"); renderOverview();
     toast(same ? T(`Added to your ${assetName(same)}.`) : T("Saved."));
   });
   $("hold-del").addEventListener("click", () => {
@@ -2991,26 +3199,222 @@
     persist(); $("hold-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
   });
 
-  // ----- Account balance -----
-  function openBank() {
-    const b = bankRec();
-    $("bank-amt").value = b ? money(accountAt(Date.now())) : "";
-    $("bank-err").textContent = "";
-    $("bank-sheet").hidden = false;
-    setTimeout(() => $("bank-amt").focus(), 50);
+  // ----- Accounts and cards (Money → Accounts) -----
+  const maskNo = (n) => (n ? "•••• " + String(n).slice(-4) : "");
+  const acctNoText = (a, show) => [a.reg ? `${T("Reg.")} ${a.reg}` : "", a.number ? `${T("Account no.")} ${show ? a.number : maskNo(a.number)}` : ""].filter(Boolean).join(" · ");
+  const cardText = (c) => `${c.name || T("Card")} •• ${c.last4}${c.exp ? " · " + c.exp : ""}`;
+  const acctOptions = (sel, extra = "") => extra + accts().map((a) => `<option value="${esc(a.id)}"${a.id === sel ? " selected" : ""}>${esc(a.name)}</option>`).join("");
+  const shownNo = new Set();
+  function renderAccounts() {
+    migrateBank();
+    const now = Date.now(), sal = salaryAcct();
+    const cards = (id) => log.cards.filter((c) => c.acct === id);
+    const card = (c) => `<button type="button" class="chip" data-card="${esc(c.id)}">${esc(cardText(c))}</button>`;
+    const html = accts().map((a) => {
+      const b = lastBal(a.id), v = b ? accountAt(a.id, now) : null, cs = cards(a.id), show = shownNo.has(a.id);
+      return `<div class="loan acct" data-id="${esc(a.id)}">
+        <div class="loan-head"><b>${esc(a.name)}</b><span>${esc(kindName(a.kind))}${sal && a.id === sal.id ? " · " + T("pay comes in here") : ""}</span></div>
+        <div class="amt">${v == null ? `<small>${T("No balance yet")}</small>` : kr(v)}</div>
+        ${a.reg || a.number ? `<div class="m">${esc(acctNoText(a, show))}</div>` : ""}
+        ${cs.length ? `<div class="chips">${cs.map(card).join("")}</div>` : ""}
+        <div class="a">${a.number ? `<button type="button" data-act="show">${T(show ? "Hide number" : "Show number")}</button><button type="button" data-act="copy">${T("Copy")}</button>` : ""}<button type="button" data-act="bal">${T(b ? "Correct balance" : "Set balance")}</button><button type="button" data-act="tf">${T("Transfer")}</button><button type="button" data-act="edit">${T("Edit")}</button></div>
+      </div>`;
+    }).join("");
+    const loose = log.cards.filter((c) => !c.acct || !acctById(c.acct));
+    $("ac-list").innerHTML = (html || `<p class="empty">${T("No accounts yet. Add your Lønkonto first, then the others, like Opsparing or Aktiesparekonto.")}</p>`)
+      + `<div class="loan acct" data-id="savings"><div class="loan-head"><b>${T("Savings")}</b><span>${T("In 99MS, with your goals")}</span></div><div class="amt">${kr(balance())}</div><div class="a"><button type="button" data-act="open-sav">${T("Open")}</button><button type="button" data-act="tf">${T("Transfer")}</button></div></div>`
+      + (loose.length ? `<div class="loan acct"><div class="loan-head"><b>${T("Cards without an account")}</b></div><div class="chips">${loose.map(card).join("")}</div></div>` : "");
   }
-  $("bank-cancel").addEventListener("click", () => { $("bank-sheet").hidden = true; });
-  $("bank-form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const v = parseAmount($("bank-amt").value);
-    if (!isFinite(v) || $("bank-amt").value.trim() === "") { $("bank-err").textContent = T("Enter the balance as a number, like 12.500,00."); return; }
-    // A correction on the same day replaces that day's point; otherwise it starts a new one.
-    const now = Date.now(), last = bankRec();
-    if (last && ymd(new Date(last.t)) === ymd(new Date(now))) Object.assign(last, { bal: +v.toFixed(2), t: now, u: now });
-    else log.bank.push({ id: uid(), currency: cfg.currency, bal: +v.toFixed(2), t: now, u: now });
-    evCache = null; persist();
-    $("bank-sheet").hidden = true; renderPortfolio(); toast(T("Balance saved."));
+  $("ac-list").addEventListener("click", async (e) => {
+    const c = e.target.closest("[data-card]");
+    if (c) return openCard(c.dataset.card);
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const id = b.closest("[data-id]").dataset.id, a = acctById(id), act = b.dataset.act;
+    if (act === "open-sav") return go("savings");
+    if (act === "tf") return openTransfer(id);
+    if (act === "edit") return openAcct(id);
+    if (act === "bal") return openAcct(id, true);
+    if (act === "show") { if (shownNo.has(id)) shownNo.delete(id); else shownNo.add(id); return renderAccounts(); }
+    if (act === "copy" && a) {
+      try { await navigator.clipboard.writeText([a.reg, a.number].filter(Boolean).join(" ")); toast(T("Copied.")); } catch { toast(T("Could not copy here. Tap Show number instead.")); }
+    }
   });
+  $("ac-add").addEventListener("click", () => openAcct(null));
+  $("cd-add").addEventListener("click", () => openCard(null));
+  $("tf-open").addEventListener("click", () => openTransfer(null));
+  $("dh-add-acct").addEventListener("click", () => openAcct(null));
+
+  let acEdit = null;
+  function openAcct(id, focusBal) {
+    const a = id ? acctById(id) : null, first = !accts().length;
+    acEdit = a ? a.id : null;
+    $("ac-ttl").textContent = T(a ? "Edit account" : "Add account");
+    $("ac-name").value = a ? a.name : first ? T("Salary account") : "";
+    $("ac-kind").innerHTML = ACCT_KINDS.map(([k]) => `<option value="${k}"${k === (a ? a.kind : first ? "pay" : "spend") ? " selected" : ""}>${esc(kindName(k))}</option>`).join("");
+    $("ac-reg").value = a ? a.reg || "" : ""; $("ac-no").value = a ? a.number || "" : "";
+    $("ac-salary").checked = a ? !!a.salary : first;
+    const b = a && lastBal(a.id);
+    $("ac-bal").value = b ? money(accountAt(a.id, Date.now())) : "";
+    $("ac-err").textContent = "";
+    const del = $("ac-del"); del.hidden = !a; del.classList.remove("arm"); del.textContent = T("Delete");
+    $("ac-sheet").hidden = false;
+    setTimeout(() => (focusBal ? $("ac-bal") : $("ac-name")).focus(), 50);
+  }
+  $("ac-cancel").addEventListener("click", () => { $("ac-sheet").hidden = true; });
+  $("ac-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("ac-err"), name = $("ac-name").value.trim(), reg = $("ac-reg").value.replace(/\s/g, ""), number = $("ac-no").value.replace(/[\s-]/g, "");
+    const balTxt = $("ac-bal").value.trim(), bal = balTxt ? parseAmount(balTxt) : null;
+    if (!name) { err.textContent = T("Give it a name."); return; }
+    if (reg && !/^\d{4}$/.test(reg)) { err.textContent = T("The reg. no. is 4 digits."); return; }
+    if (number && !/^\d{4,14}$/.test(number)) { err.textContent = T("The account no. is up to 14 digits."); return; }
+    if (balTxt && !isFinite(bal)) { err.textContent = T("Enter the balance as a number, like 12.500,00."); return; }
+    const now = Date.now(), old = acEdit && acctById(acEdit);
+    const data = { name: name.slice(0, 40), kind: $("ac-kind").value, reg, number, salary: $("ac-salary").checked, u: now };
+    let a = old;
+    if (old) Object.assign(old, data);
+    else { a = { id: uid(), currency: cfg.currency, t: now, ...data }; log.accounts.push(a); }
+    if (a.salary) accts().forEach((x) => { if (x.id !== a.id && x.salary) { x.salary = false; x.u = now; } });
+    if (bal != null) {
+      const cur = lastBal(a.id), was = cur ? accountAt(a.id, now) : null;
+      if (was == null || Math.abs(was - bal) > 0.004) {
+        // A correction on the same day replaces that day's point; otherwise it starts a new one.
+        if (cur && ymd(new Date(cur.t)) === ymd(new Date(now))) Object.assign(cur, { bal: +bal.toFixed(2), t: now, u: now });
+        else log.bank.push({ id: uid(), acct: a.id, currency: cfg.currency, bal: +bal.toFixed(2), t: now, u: now });
+      }
+    }
+    evCache = null; persist();
+    $("ac-sheet").hidden = true; renderPortfolio(); if (tab === "home") renderOverview();
+    toast(old ? T("Saved.") : T(`Account added: ${a.name}.`));
+  });
+  $("ac-del").addEventListener("click", () => {
+    const del = $("ac-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    const id = acEdit, now = Date.now();
+    log.deleted.push(id, ...log.bank.filter((b) => b.acct === id).map((b) => b.id));
+    log.accounts = log.accounts.filter((a) => a.id !== id);
+    log.bank = log.bank.filter((b) => b.acct !== id);
+    log.cards.forEach((c) => { if (c.acct === id) { c.acct = ""; c.u = now; } });
+    evCache = null; persist(); $("ac-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+
+  let cdEdit = null;
+  function openCard(id) {
+    const c = id ? cardById(id) : null;
+    cdEdit = c ? c.id : null;
+    $("cd-ttl").textContent = T(c ? "Edit card" : "Add card");
+    $("cd-name").value = c ? c.name : ""; $("cd-num").value = c ? c.last4 : ""; $("cd-exp").value = c ? c.exp || "" : "";
+    $("cd-acct").innerHTML = acctOptions(c ? c.acct : (spendAcct() || {}).id, `<option value="">${T("No account")}</option>`);
+    $("cd-err").textContent = "";
+    const del = $("cd-del"); del.hidden = !c; del.classList.remove("arm"); del.textContent = T("Delete");
+    $("cd-sheet").hidden = false;
+    if (!c) setTimeout(() => $("cd-name").focus(), 50);
+  }
+  $("cd-cancel").addEventListener("click", () => { $("cd-sheet").hidden = true; });
+  $("cd-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("cd-err"), digits = $("cd-num").value.replace(/\D/g, ""), exp = $("cd-exp").value.trim();
+    if (digits.length < 4) { err.textContent = T("Enter the last 4 digits of the card."); return; }
+    if (exp && !/^(0[1-9]|1[0-2])\/\d\d$/.test(exp)) { err.textContent = T("Write the expiry date as MM/YY, like 08/28."); return; }
+    const old = cdEdit && cardById(cdEdit);
+    // Only the last 4 digits are kept, even if the whole number was typed.
+    const data = { name: $("cd-name").value.trim().slice(0, 40), last4: digits.slice(-4), exp, acct: $("cd-acct").value, u: Date.now() };
+    if (old) Object.assign(old, data); else log.cards.push({ id: uid(), ...data });
+    $("cd-num").value = "";
+    evCache = null; persist();
+    $("cd-sheet").hidden = true; mView.area = "accounts"; saveView(); renderPortfolio();
+    toast(digits.length > 4 ? T("Card saved. Only the last 4 digits are kept.") : old ? T("Saved.") : T("Card added."));
+  });
+  $("cd-del").addEventListener("click", () => {
+    const del = $("cd-del");
+    if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = T("Tap again to delete"); return; }
+    log.deleted.push(cdEdit); log.cards = log.cards.filter((c) => c.id !== cdEdit);
+    evCache = null; persist(); $("cd-sheet").hidden = true; renderPortfolio(); toast(T("Deleted."));
+  });
+
+  // Moving money between accounts, or into and out of savings.
+  function openTransfer(fromId) {
+    const opts = (sel) => acctOptions(sel, "") + `<option value="savings"${sel === "savings" ? " selected" : ""}>${T("Savings (99MS)")}</option>`;
+    const from = fromId || (salaryAcct() || {}).id || "savings";
+    const to = from === "savings" ? (salaryAcct() || {}).id || "" : "savings";
+    $("tf-from").innerHTML = opts(from); $("tf-to").innerHTML = opts(to);
+    $("tf-amt").value = ""; $("tf-date").value = ymd(new Date()); $("tf-err").textContent = "";
+    $("tf-sheet").hidden = false;
+    setTimeout(() => $("tf-amt").focus(), 50);
+  }
+  $("tf-cancel").addEventListener("click", () => { $("tf-sheet").hidden = true; });
+  $("tf-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const err = $("tf-err"), from = $("tf-from").value, to = $("tf-to").value, n = parseAmount($("tf-amt").value), ds = $("tf-date").value || ymd(new Date());
+    if (!from || !to || from === to) { err.textContent = T("Choose two different accounts."); return; }
+    if (!(n > 0)) { err.textContent = T("Enter an amount above 0."); return; }
+    if (from === "savings" && n > freeBalance() + 0.001) { err.textContent = T(`You only have ${kr(freeBalance())} outside your goals. Take money out of a goal first.`); return; }
+    const now = Date.now(), t = ds === ymd(new Date()) ? now : parseYmd(ds).getTime() + 12 * HOUR, amount = +n.toFixed(2);
+    if (to === "savings") log.savings.push({ id: uid(), t, amount, currency: cfg.currency, kind: "deposit", acct: from, u: now });
+    else if (from === "savings") log.savings.push({ id: uid(), t, amount: -amount, currency: cfg.currency, kind: "withdraw", acct: to, u: now });
+    else log.transfers.push({ id: uid(), t, amount, from, to, currency: cfg.currency, u: now });
+    evCache = null; persist();
+    $("tf-sheet").hidden = true; renderPortfolio(); if (tab === "savings") renderSavings();
+    const name = (id) => (id === "savings" ? T("Savings (99MS)") : (acctById(id) || {}).name || "");
+    toast(T(`Moved ${kr(amount)} from ${name(from)} to ${name(to)}.`));
+  });
+
+  // Payment choice for expenses and subscriptions: a card or an account.
+  // Without a choice, money is paid with the first card, or else taken from the everyday account.
+  const defaultPay = () => (log.cards.length ? { card: log.cards[0].id, acct: "" } : { card: "", acct: (spendAcct() || {}).id || "" });
+  function payOptions(x) {
+    const d = x && (x.card || x.acct) ? x : defaultPay();
+    const sel = d.card ? "c:" + d.card : "a:" + (d.acct || "");
+    const cs = log.cards.map((c) => `<option value="c:${esc(c.id)}"${sel === "c:" + c.id ? " selected" : ""}>${esc(cardText(c))}</option>`).join("");
+    const as = accts().map((a) => `<option value="a:${esc(a.id)}"${sel === "a:" + a.id ? " selected" : ""}>${esc(a.name)}</option>`).join("");
+    return as || cs ? cs + as : `<option value="">${T("No accounts yet")}</option>`;
+  }
+  const readPay = (v) => (v.startsWith("c:") ? { card: v.slice(2), acct: "" } : v.startsWith("a:") ? { card: "", acct: v.slice(2) } : { card: "", acct: "" });
+
+  // ----- Salary on Home: next pay, this period, and what was paid out -----
+  function renderPaySection(now = Date.now()) {
+    const pays = payouts(), next = pays.find((e) => e.t > now), past = pays.filter((e) => e.t <= now).slice(-4).reverse(), sal = salaryAcct();
+    if (next) {
+      const days = Math.round((new Date(next.t).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / DAY);
+      $("h-pay").textContent = kr(next.v);
+      $("h-pay-sub").textContent = `${days === 0 ? T("today") : longDate.format(next.t)}${days > 0 ? ` · ${T(`in ${plural(days, "day")}`)}` : ""}${sal ? ` · ${T(`to ${sal.name}`)}` : ""}`;
+    } else { $("h-pay").textContent = "—"; $("h-pay-sub").textContent = cfg.payDay ? T("No shifts in the coming pay periods") : T("Set the day your money arrives"); }
+    const per = periodFor(new Date(now)), rp = rangePlan(per.from, per.to, now);
+    $("h-per").textContent = kr(rp.earned);
+    $("h-per-sub").textContent = T(`earned of about ${kr(rp.expected)} · ${rangeText(per)}`);
+    const rows = [...(next ? [{ ...next, coming: true }] : []), ...past];
+    $("h-payouts").innerHTML = rows.map((e) => `<div class="hist-row"><div class="d">${T(e.coming ? "Expected pay" : "Pay")} · ${esc(rangeText(e.per))}</div><div class="t">${longDate.format(e.t)}${e.coming ? "" : ` · ${T("paid")}`}</div><div class="a">${kr(e.v)}</div></div>`).join("");
+  }
+
+  // ----- Already earned pay into savings -----
+  function earnedShifts(now = Date.now()) {
+    const saved = new Set(log.savings.filter((t) => t.shiftId).map((t) => t.shiftId));
+    const from = periodFor(addDays(periodFor(new Date(now)).from, -1)).from.getTime();
+    return log.shifts.filter((x) => x.currency === cfg.currency && !x.live && x.end && x.end <= now && x.start >= from && !saved.has(x.id) && amountOf(x) > 0.004).sort((a, b) => b.start - a.start);
+  }
+  function renderEarned() {
+    const list = earnedShifts(), total = list.reduce((a, x) => a + amountOf(x), 0);
+    $("sv-earned").innerHTML = list.length ? list.slice(0, 40).map((x) => `<div class="cal-item"><div class="t">${kr(amountOf(x))}</div><div class="m">${longDate.format(x.start)} · ${hhmm(new Date(x.start))}–${hhmm(new Date(x.end))}</div><div class="a"><button type="button" data-earn="${esc(x.id)}">${T("To savings")}</button></div></div>`).join("")
+      : `<p class="empty">${T("No earned pay waiting. Finished shifts from this and the last pay period show up here.")}</p>`;
+    $("sv-earn-all").hidden = list.length < 2;
+    $("sv-earn-all").textContent = T(`All to savings (${kr(total)})`);
+  }
+  function moveEarned(ids) {
+    const now = Date.now(), sal = salaryAcct();
+    let sumv = 0;
+    ids.forEach((id) => {
+      const x = log.shifts.find((s) => s.id === id); if (!x) return;
+      const amount = +amountOf(x).toFixed(2), pd = paydayOfShift(id);
+      // The money leaves the salary account when it arrives there on payday, or now if that has passed.
+      log.savings.push({ id: uid(), t: now, amount, currency: x.currency, shiftId: x.id, kind: "shift", acct: sal ? sal.id : "", ...(pd && pd > now ? { payAt: pd } : {}), u: now });
+      sumv += amount;
+    });
+    evCache = null; persist();
+    renderSavings();
+    toast(T(`${kr(sumv)} put into savings.`));
+  }
+  $("sv-earned").addEventListener("click", (e) => { const b = e.target.closest("[data-earn]"); if (b) moveEarned([b.dataset.earn]); });
+  $("sv-earn-all").addEventListener("click", () => moveEarned(earnedShifts().map((x) => x.id)));
 
   // ----- Expenses -----
   let exMonth = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
@@ -3072,6 +3476,7 @@
     $("ex-title").textContent = T(x ? "Edit expense" : "Add expense");
     $("ex-amt").value = x ? money(x.amount) : ""; $("ex-name").value = x ? x.name : ""; $("ex-note").value = x ? x.note || "" : "";
     $("ex-cat").innerHTML = catOptions(x ? x.cat : "groceries");
+    $("ex-pay").innerHTML = payOptions(x);
     $("ex-date").value = ymd(x ? new Date(x.t) : new Date());
     $("ex-err").textContent = "";
     const del = $("ex-del"); del.hidden = !x; del.classList.remove("arm"); del.textContent = T("Delete");
@@ -3087,7 +3492,7 @@
     if (!/^\d{4}-\d\d-\d\d$/.test(ds)) { $("ex-err").textContent = T("Choose a date."); return; }
     const old = exEdit && log.expenses.find((x) => x.id === exEdit);
     const keepTime = old && ymd(new Date(old.t)) === ds ? old.t : parseYmd(ds).getTime() + (ds === ymd(new Date()) ? Date.now() - new Date().setHours(0, 0, 0, 0) : 12 * HOUR);
-    const data = { amount: +amount.toFixed(2), name: $("ex-name").value.trim().slice(0, 60), cat: $("ex-cat").value, note: $("ex-note").value.trim().slice(0, 140), t: keepTime, u: Date.now() };
+    const data = { amount: +amount.toFixed(2), name: $("ex-name").value.trim().slice(0, 60), cat: $("ex-cat").value, note: $("ex-note").value.trim().slice(0, 140), t: keepTime, ...readPay($("ex-pay").value), u: Date.now() };
     if (old) Object.assign(old, data);
     else log.expenses.push({ id: uid(), currency: cfg.currency, ...data });
     evCache = null; persist();
@@ -3110,7 +3515,8 @@
     subEdit = s ? s.id : null;
     $("sub-ttl").textContent = T(s ? "Edit subscription" : "Add subscription");
     $("sub-name").value = s ? s.name : ""; $("sub-amt").value = s ? money(s.amount) : ""; $("sub-day").value = s ? s.day : "";
-    $("sub-cat").innerHTML = catOptions(s ? s.cat || "subs" : "subs"); $("sub-until").value = s ? s.until || "" : "";
+    $("sub-cat").innerHTML = catOptions(s ? s.cat || "subs" : "subs");
+    $("sub-pay").innerHTML = payOptions(s); $("sub-until").value = s ? s.until || "" : "";
     $("sub-err").textContent = "";
     const del = $("sub-del"); del.hidden = !s; del.classList.remove("arm"); del.textContent = T("Delete");
     subNextText();
@@ -3132,7 +3538,7 @@
     if (!(amount > 0)) { $("sub-err").textContent = T("Enter the amount as a number, like 89,95."); return; }
     if (!(day >= 1 && day <= 31)) { $("sub-err").textContent = T("Enter the day of the month it is taken, 1 to 31."); return; }
     const old = subEdit && log.subs.find((x) => x.id === subEdit);
-    const data = { name: name.slice(0, 60), amount: +amount.toFixed(2), day, cat: $("sub-cat").value, until: $("sub-until").value || "", u: Date.now() };
+    const data = { name: name.slice(0, 60), amount: +amount.toFixed(2), day, cat: $("sub-cat").value, until: $("sub-until").value || "", ...readPay($("sub-pay").value), u: Date.now() };
     if (old) Object.assign(old, data);
     else log.subs.push({ id: uid(), currency: cfg.currency, from: ymd(new Date()), ...data });
     evCache = null; persist();
@@ -3385,7 +3791,7 @@
         if (!(amount > 0)) return;
         const day = /^\d{4}-\d\d-\d\d$/.test(x.date) && parseYmd(x.date).getTime() <= now + DAY ? x.date : ymd(new Date());
         const note = [x.note, c !== cfg.currency ? `${fmt2.format(x.amount)} ${curLabel(c)}` : ""].filter(Boolean).join(" · ").slice(0, 140);
-        const rec = { id: uid(), currency: cfg.currency, amount: +amount.toFixed(2), name: String(x.name || "").slice(0, 60), cat: CATS.some((k) => k[0] === x.category) ? x.category : "other", note, t: parseYmd(day).getTime() + (day === ymd(new Date()) ? now - new Date().setHours(0, 0, 0, 0) : 12 * HOUR), ai: true, u: now };
+        const rec = { id: uid(), currency: cfg.currency, ...defaultPay(), amount: +amount.toFixed(2), name: String(x.name || "").slice(0, 60), cat: CATS.some((k) => k[0] === x.category) ? x.category : "other", note, t: parseYmd(day).getTime() + (day === ymd(new Date()) ? now - new Date().setHours(0, 0, 0, 0) : 12 * HOUR), ai: true, u: now };
         log.expenses.push(rec); added.push(rec);
       });
       $("scan-go").disabled = false; $("scan-form").classList.remove("busy");
@@ -3422,26 +3828,26 @@
   $("add-sheet").addEventListener("click", (e) => {
     const b = e.target.closest("[data-add]"); if (!b) return;
     $("add-sheet").hidden = true;
-    ({ scan: openScan, expense: () => openExpense(null), sub: () => openSub(null), loan: () => openLoan(null), stock: () => openHold(null, "stock"), crypto: () => openHold(null, "crypto"), item: () => openItem(null), bank: openBank })[b.dataset.add]();
+    ({ scan: openScan, expense: () => openExpense(null), sub: () => openSub(null), loan: () => openLoan(null), stock: () => openHold(null, "stock"), crypto: () => openHold(null, "crypto"), item: () => openItem(null), acct: () => openAcct(null), card: () => openCard(null), transfer: () => openTransfer(null) })[b.dataset.add]();
   });
   document.querySelectorAll("input[name=m-area]").forEach((r) => r.addEventListener("change", () => { mView.area = r.value; saveView(); renderPortfolio(); }));
   function renderPortfolio() {
-    $("ma-" + { overview: "ov", expenses: "ex", loans: "ln" }[mView.area]).checked = true;
-    ["overview", "expenses", "loans"].forEach((k) => { $("mp-" + k).hidden = k !== mView.area; });
-    if (mView.area === "overview") renderOverview();
+    $("ma-" + { accounts: "ac", expenses: "ex", loans: "ln" }[mView.area]).checked = true;
+    ["accounts", "expenses", "loans"].forEach((k) => { $("mp-" + k).hidden = k !== mView.area; });
+    if (mView.area === "accounts") renderAccounts();
     else if (mView.area === "expenses") renderExpenses();
     else renderLoans();
     loadPrices(); loadCrypto();
   }
   function renderMoneyIfOpen() {
-    if (tab === "portfolio" && mView.area === "overview") renderOverview();
+    if (tab === "home") renderOverview();
     if (!$("chart-sheet").hidden) renderChart();
     if (!$("hold-sheet").hidden) renderPick();
   }
   setInterval(() => {
     if (document.visibilityState !== "visible") return;
     if (tab === "portfolio" || tab === "home") { loadPrices(); if (curHoldings().some((h) => h.kind === "crypto") || tab === "portfolio") loadCrypto(); }
-    if (tab === "portfolio" && mView.area === "overview" && $("chart-sheet").hidden) renderOverview();
+    if (tab === "home" && $("chart-sheet").hidden) renderOverview();
   }, 5000);
   // Total for the Home card: everything you have, and how it moved today.
   function moneyTotalToday() {
@@ -4496,6 +4902,7 @@
       pledges: byId(L.pledges || [], r.pledges || []),
       holdings: byId(L.holdings || [], r.holdings || []), expenses: byId(L.expenses || [], r.expenses || []), subs: byId(L.subs || [], r.subs || []),
       loans: byId(L.loans || [], r.loans || []), bank: byId(L.bank || [], r.bank || []),
+      accounts: byId(L.accounts || [], r.accounts || []), cards: byId(L.cards || [], r.cards || []), transfers: byId(L.transfers || [], r.transfers || []),
       deleted,
       epoch: Math.max(le, re) || undefined,
     } };
@@ -4696,7 +5103,7 @@
   const moved = importFromHash();
   apply();
   initSync();
-  go(saved || moved ? tab : "salary");
+  go(saved || moved ? tab : "home");
   // First run: ask the setup questions, unless a logged-in account already has data (the first sync decides).
   if (!saved && !moved) {
     firstRunPending = true;
