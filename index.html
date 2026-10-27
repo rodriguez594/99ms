@@ -506,8 +506,10 @@
       <div class="grid2 home-grid">
         <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">Next pay</span><b id="h-pay">—</b><em id="h-pay-sub"></em></button>
         <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This pay period</span><b id="h-per">—</b><em id="h-per-sub"></em></button>
-        <button class="card" type="button" data-go="calendar"><span class="card-k">Next shift</span><b id="h-next">—</b><em id="h-next-sub"></em></button>
         <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This month</span><b id="h-mo">0.00</b><em id="h-mo-sub"></em></button>
+        <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">This year</span><b id="h-yr">0.00</b><em id="h-yr-sub"></em></button>
+        <button class="card" type="button" data-go="salary" data-to="stats"><span class="card-k">Total earned</span><b id="h-tot">0.00</b><em id="h-tot-sub"></em></button>
+        <button class="card" type="button" data-go="calendar"><span class="card-k">Next shift</span><b id="h-next">—</b><em id="h-next-sub"></em></button>
       </div>
       <div class="hist" id="h-payouts"></div>
     </section>
@@ -1267,6 +1269,14 @@
   const LOC = DA ? "da-DK" : "en-GB";
   document.documentElement.lang = LANG;
   const DICT = {
+    "Earned this pay period": "Tjent denne lønperiode",
+    "Earned this month": "Tjent denne måned",
+    "Earned in total": "Tjent i alt",
+    "Pay period total": "Lønperiode i alt",
+    "earned + planned": "tjent + planlagt",
+    "This year": "I år",
+    "Total earned": "Tjent i alt",
+    "Earnings for this pay period and in total, on the clock, in Stats and on Home": "Tjent i lønperioden og i alt, på uret, i statistikken og på Hjem",
     "Savings (99MS)": "Opsparing (99MS)",
     "to savings and other accounts": "til opsparing og andre konti",
     "Next pay": "Næste løn",
@@ -1609,6 +1619,7 @@
     [/^Key saved on this device \(…(.+)\)\.$/, "Nøgle gemt på denne enhed (…$1)."],
     [/^Account added: (.+)\.$/, "Konto tilføjet: $1."], [/^Moved (.+) from (.+) to (.+)\.$/, "Flyttede $1 fra $2 til $3."],
     [/^earned of about (.+) · (.+)$/, "tjent af ca. $1 · $2"], [/^All to savings \((.+)\)$/, "Alt til opsparing ($1)"], [/^(.+) put into savings\.$/, "$1 lagt i opsparingen."],
+    [/^earned \+ planned · paid out (.+)$/, "tjent + planlagt · udbetales $1"],
   ];
   const hasWords = /[A-Za-z]{2}/;
   const trCache = new Map();
@@ -1650,9 +1661,10 @@
       }
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "aria-label", "title"] });
   }
-  const APP_VERSION = "2.5";
+  const APP_VERSION = "2.6";
   const APP_RELEASED = "2026-10-20";
   const WHATS_NEW = [
+    "Earnings for this pay period and in total, on the clock, in Stats and on Home",
     "Money overview on Home, with your salary: next pay, this period and past payouts",
     "Accounts, cards and transfers, with reg. and account numbers",
     "Put pay you have already earned into savings",
@@ -1677,8 +1689,11 @@
   const ALL_MODES = [
     { key: "shift",   label: T("Earned this shift") },
     { key: "today",   label: T("Earned today") },
-    { key: "session", label: T("Since you sat down") },
+    { key: "period",  label: T("Earned this pay period") },
+    { key: "month",   label: T("Earned this month") },
     { key: "year",    label: T("Earned this year") },
+    { key: "total",   label: T("Earned in total") },
+    { key: "session", label: T("Since you sat down") },
   ];
   const $ = (id) => document.getElementById(id);
   const el = {
@@ -1731,7 +1746,7 @@
 
   // Shift workers (calendar, a daily shift or hourly pay) see what their shifts earned; salaried people see pay spread over the day.
   const shiftWorker = () => calendarUsed() || !!cfg.shiftStart || cfg.period === "hour";
-  const modes = () => ALL_MODES.filter((m) => (m.key !== "shift" || currentShift(Date.now())) && (m.key !== "session" || !shiftWorker()));
+  const modes = () => ALL_MODES.filter((m) => (m.key !== "shift" || currentShift(Date.now())) && (m.key !== "session" || !shiftWorker()) && (m.key !== "total" || shiftWorker()));
   const currentMode = () => modes().find((m) => m.key === cfg.mode) || modes()[0];
 
   function annual(c) {
@@ -1825,6 +1840,9 @@
     const d = new Date();
     if (key === "today") return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
     if (key === "year") return new Date(d.getFullYear(), 0, 1).getTime();
+    if (key === "month") return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    if (key === "period") return periodFor(d).from.getTime(); // the pay period, e.g. 19th to 18th
+    if (key === "total") return 0;
     return sessionWall;
   }
 
@@ -2348,6 +2366,12 @@
     $("st-grid").innerHTML = [
       stat("Total earned", c(total), other ? `${other} shift${other > 1 ? "s" : ""} in other currencies not counted` : ""),
       stat("Shifts", shifts.length, shifts.length ? `since ${dateFmt.format(shifts[shifts.length - 1].start)}` : ""),
+      ...(() => {
+        const per = periodFor(d), inPer = shifts.filter((x) => x.start >= per.from.getTime() && x.start < addDays(per.to, 1).getTime());
+        const pay = payoutFor(per), rp = rangePlan(per.from, per.to, now);
+        return [stat("This pay period", c(sum(inPer, "amount")), `${plural(inPer.length, "shift")} · ${rangeText(per)}`),
+                stat("Pay period total", c(Math.max(rp.expected, sum(inPer, "amount"))), pay ? `earned + planned · paid out ${longDate.format(pay)}` : "earned + planned")];
+      })(),
       stat("This week", c(sum(inRange(wk), "amount")), plural(inRange(wk).length, "shift")),
       stat("This month", c(sum(inRange(mo), "amount")), plural(inRange(mo).length, "shift")),
       ...(calendarUsed() ? (() => {
@@ -2562,7 +2586,9 @@
     if (now - homeSlow > 1000) { homeSlow = now; renderHomeSlow(now); }
     const shifts = statsShifts(now);
     const d = new Date(now), mo = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-    const m = shifts.filter((x) => x.start >= mo);
+    const m = shifts.filter((x) => x.start >= mo), y = shifts.filter((x) => x.start >= new Date(d.getFullYear(), 0, 1).getTime());
+    $("h-yr").textContent = kr(sum(y, "amount")); $("h-yr-sub").textContent = plural(y.length, "shift");
+    $("h-tot").textContent = kr(sum(shifts, "amount")); $("h-tot-sub").textContent = shifts.length ? `${plural(shifts.length, "shift")} · since ${shortDate.format(shifts[shifts.length - 1].start)}` : plural(0, "shift");
     $("h-mo").textContent = kr(sum(m, "amount")); $("h-mo-sub").textContent = plural(m.length, "shift");
     $("h-acct").textContent = acctLine();
   }
@@ -3379,9 +3405,11 @@
       $("h-pay").textContent = kr(next.v);
       $("h-pay-sub").textContent = `${days === 0 ? T("today") : longDate.format(next.t)}${days > 0 ? ` · ${T(`in ${plural(days, "day")}`)}` : ""}${sal ? ` · ${T(`to ${sal.name}`)}` : ""}`;
     } else { $("h-pay").textContent = "—"; $("h-pay-sub").textContent = cfg.payDay ? T("No shifts in the coming pay periods") : T("Set the day your money arrives"); }
+    // Earned so far counts today's running shift too, like the clock and Stats.
     const per = periodFor(new Date(now)), rp = rangePlan(per.from, per.to, now);
-    $("h-per").textContent = kr(rp.earned);
-    $("h-per-sub").textContent = T(`earned of about ${kr(rp.expected)} · ${rangeText(per)}`);
+    const earned = statsShifts(now).filter((x) => x.start >= per.from.getTime() && x.start < addDays(per.to, 1).getTime()).reduce((a, x) => a + x.amount, 0);
+    $("h-per").textContent = kr(earned);
+    $("h-per-sub").textContent = T(`earned of about ${kr(Math.max(rp.expected, earned))} · ${rangeText(per)}`);
     const rows = [...(next ? [{ ...next, coming: true }] : []), ...past];
     $("h-payouts").innerHTML = rows.map((e) => `<div class="hist-row"><div class="d">${T(e.coming ? "Expected pay" : "Pay")} · ${esc(rangeText(e.per))}</div><div class="t">${longDate.format(e.t)}${e.coming ? "" : ` · ${T("paid")}`}</div><div class="a">${kr(e.v)}</div></div>`).join("");
   }
